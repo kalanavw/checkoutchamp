@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, ShoppingCart, Package, ClipboardList, BarChart2, Settings } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, ClipboardList, BarChart2, Settings, FileText } from "lucide-react";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -23,6 +23,7 @@ const Layout = ({ children }: LayoutProps) => {
     { icon: ShoppingCart, label: "Checkout", path: "/checkout" },
     { icon: Package, label: "Products", path: "/products" },
     { icon: ClipboardList, label: "Orders", path: "/orders" },
+    { icon: FileText, label: "Invoice", path: "/invoice" },
     { icon: BarChart2, label: "Reports", path: "/reports" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
