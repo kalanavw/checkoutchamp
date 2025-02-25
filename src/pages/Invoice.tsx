@@ -1,4 +1,3 @@
-
 import { useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,10 +11,12 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { FileText, Plus, Printer, Download, Trash2 } from "lucide-react";
+import { FileText, Plus, Printer, Download, Trash2, Save } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { db } from "@/lib/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
 interface InvoiceItem {
   id: number;
@@ -24,12 +25,23 @@ interface InvoiceItem {
   price: number;
 }
 
+interface InvoiceData {
+  customerName: string;
+  customerEmail: string;
+  items: Omit<InvoiceItem, 'id'>[];
+  subtotal: number;
+  tax: number;
+  total: number;
+  createdAt: Date;
+}
+
 const Invoice = () => {
   const { toast } = useToast();
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   const addItem = () => {
     const newItem: InvoiceItem = {
@@ -51,6 +63,51 @@ const Invoice = () => {
     setItems(items.filter(item => item.id !== id));
   };
 
+  const handleSaveInvoice = async () => {
+    if (!customerName || !customerEmail || items.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields and add at least one item.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const invoiceData: InvoiceData = {
+        customerName,
+        customerEmail,
+        items: items.map(({ id, ...item }) => item),
+        subtotal,
+        tax,
+        total,
+        createdAt: new Date(),
+      };
+
+      const docRef = await addDoc(collection(db, "invoices"), invoiceData);
+
+      toast({
+        title: "Success",
+        description: "Invoice saved successfully!",
+      });
+
+      setCustomerName("");
+      setCustomerEmail("");
+      setItems([]);
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save invoice. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + tax;
@@ -67,7 +124,6 @@ const Invoice = () => {
     if (!invoiceRef.current) return;
 
     try {
-      // Show loading toast
       toast({
         title: "Generating PDF",
         description: "Please wait while we generate your invoice...",
@@ -97,7 +153,6 @@ const Invoice = () => {
       pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       pdf.save(`invoice-${Date.now()}.pdf`);
 
-      // Show success toast
       toast({
         title: "PDF Downloaded",
         description: "Your invoice has been downloaded successfully.",
@@ -127,6 +182,14 @@ const Invoice = () => {
           <Button onClick={handleDownloadPDF}>
             <Download className="mr-2 h-4 w-4" />
             Download PDF
+          </Button>
+          <Button 
+            onClick={handleSaveInvoice} 
+            disabled={isSaving}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? "Saving..." : "Save Invoice"}
           </Button>
         </div>
       </div>
