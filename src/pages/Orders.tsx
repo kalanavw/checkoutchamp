@@ -47,9 +47,9 @@ const Orders = () => {
                   <TableCell>${order.total.toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant={
-                      order.status === "completed" ? "success" :
-                      order.status === "processing" ? "warning" :
-                      "secondary"
+                      order.status === "completed" ? "default" :
+                      order.status === "processing" ? "secondary" :
+                      "outline"
                     }>
                       {order.status}
                     </Badge>
