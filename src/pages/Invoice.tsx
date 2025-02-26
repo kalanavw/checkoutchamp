@@ -11,7 +11,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { FileText, Plus, Printer, Download, Trash2, Save } from "lucide-react";
+import { FileText, Plus, Printer, Download, Trash2, Save, Barcode, Minus } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import jsPDF from "jspdf";
@@ -24,6 +24,7 @@ interface InvoiceItem {
   description: string;
   quantity: number;
   price: number;
+  discount?: number;
 }
 
 interface InvoiceData {
@@ -43,6 +44,7 @@ const Invoice = () => {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [barcodeInput, setBarcodeInput] = useState("");
   const isMobile = useIsMobile();
 
   const addItem = () => {
@@ -51,13 +53,43 @@ const Invoice = () => {
       description: "",
       quantity: 1,
       price: 0,
+      discount: 0,
     };
     setItems([...items, newItem]);
+  };
+
+  const handleBarcodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // In a real app, this would query your product database
+    // For now, we'll just add a placeholder item
+    if (barcodeInput.trim()) {
+      const newItem: InvoiceItem = {
+        id: Date.now(),
+        description: `Item (Barcode: ${barcodeInput})`,
+        quantity: 1,
+        price: 0,
+        discount: 0,
+      };
+      setItems([...items, newItem]);
+      setBarcodeInput("");
+      toast({
+        title: "Item Added",
+        description: "Product has been added to the invoice.",
+      });
+    }
   };
 
   const updateItem = (id: number, field: keyof InvoiceItem, value: string | number) => {
     setItems(items.map(item => 
       item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const adjustQuantity = (id: number, increment: boolean) => {
+    setItems(items.map(item => 
+      item.id === id 
+        ? { ...item, quantity: Math.max(1, item.quantity + (increment ? 1 : -1)) }
+        : item
     ));
   };
 
@@ -110,7 +142,12 @@ const Invoice = () => {
     }
   };
 
-  const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+  const subtotal = items.reduce((sum, item) => {
+    const itemTotal = item.quantity * item.price;
+    const discountAmount = itemTotal * ((item.discount || 0) / 100);
+    return sum + (itemTotal - discountAmount);
+  }, 0);
+  
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + tax;
 
@@ -209,6 +246,7 @@ const Invoice = () => {
             <CardTitle>Invoice Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6 p-6">
+            {/* Customer Info Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3">
                 <Label htmlFor="customerName" className="text-base">Customer Name</Label>
@@ -233,6 +271,21 @@ const Invoice = () => {
               </div>
             </div>
 
+            {/* Barcode Scanner Section */}
+            <form onSubmit={handleBarcodeSubmit} className="flex gap-2">
+              <div className="relative flex-1">
+                <Barcode className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
+                <Input
+                  value={barcodeInput}
+                  onChange={(e) => setBarcodeInput(e.target.value)}
+                  placeholder="Scan barcode or enter product code"
+                  className="pl-12 h-12"
+                />
+              </div>
+              <Button type="submit" className="h-12">Add Item</Button>
+            </form>
+
+            {/* Items Table */}
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -240,55 +293,90 @@ const Invoice = () => {
                     <TableHead className="min-w-[200px]">Description</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Price</TableHead>
+                    <TableHead>Discount (%)</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="min-w-[200px]">
-                        <Input
-                          value={item.description}
-                          onChange={(e) => updateItem(item.id, 'description', e.target.value)}
-                          placeholder="Item description"
-                          className="h-12 text-base"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value))}
-                          className="w-24 h-12 text-base"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.price}
-                          onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value))}
-                          className="w-28 h-12 text-base"
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium text-base">
-                        ${(item.quantity * item.price).toFixed(2)}
-                      </TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => removeItem(item.id)}
-                          className="h-12 w-12"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {items.map((item) => {
+                    const itemTotal = item.quantity * item.price;
+                    const discountAmount = itemTotal * ((item.discount || 0) / 100);
+                    const finalTotal = itemTotal - discountAmount;
+
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell className="min-w-[200px]">
+                          <Input
+                            value={item.description}
+                            onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                            placeholder="Item description"
+                            className="h-12 text-base"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => adjustQuantity(item.id, false)}
+                              className="h-8 w-8"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value))}
+                              className="w-20 h-12 text-base text-center"
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => adjustQuantity(item.id, true)}
+                              className="h-8 w-8"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.price}
+                            onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value))}
+                            className="w-28 h-12 text-base"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={item.discount || 0}
+                            onChange={(e) => updateItem(item.id, 'discount', parseFloat(e.target.value))}
+                            className="w-20 h-12 text-base"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium text-base">
+                          ${finalTotal.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => removeItem(item.id)}
+                            className="h-12 w-12"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
               
