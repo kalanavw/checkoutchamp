@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { FileText, Plus, Printer, Download, Trash2, Save } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { db } from "@/lib/firebase";
@@ -42,6 +43,7 @@ const Invoice = () => {
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const isMobile = useIsMobile();
 
   const addItem = () => {
     const newItem: InvoiceItem = {
@@ -168,27 +170,34 @@ const Invoice = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 w-full">
-      <div className="flex justify-between items-center">
+    <div className="p-4 md:p-6 space-y-6 w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-2">
           <FileText className="h-6 w-6" />
-          <h1 className="text-3xl font-semibold">Create Invoice</h1>
+          <h1 className="text-2xl md:text-3xl font-semibold">Create Invoice</h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            onClick={handlePrint}
+            className="flex-1 sm:flex-initial h-12 px-6"
+          >
+            <Printer className="mr-2 h-5 w-5" />
             Print
           </Button>
-          <Button onClick={handleDownloadPDF}>
-            <Download className="mr-2 h-4 w-4" />
+          <Button 
+            onClick={handleDownloadPDF}
+            className="flex-1 sm:flex-initial h-12 px-6"
+          >
+            <Download className="mr-2 h-5 w-5" />
             Download PDF
           </Button>
           <Button 
             onClick={handleSaveInvoice} 
             disabled={isSaving}
-            className="bg-green-600 hover:bg-green-700"
+            className="flex-1 sm:flex-initial h-12 px-6 bg-green-600 hover:bg-green-700"
           >
-            <Save className="mr-2 h-4 w-4" />
+            <Save className="mr-2 h-5 w-5" />
             {isSaving ? "Saving..." : "Save Invoice"}
           </Button>
         </div>
@@ -196,37 +205,39 @@ const Invoice = () => {
 
       <div ref={invoiceRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
-          <CardHeader>
+          <CardHeader className="p-6">
             <CardTitle>Invoice Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="customerName">Customer Name</Label>
+          <CardContent className="space-y-6 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="customerName" className="text-base">Customer Name</Label>
                 <Input 
                   id="customerName"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Enter customer name"
+                  className="h-12 text-base"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="customerEmail">Customer Email</Label>
+              <div className="space-y-3">
+                <Label htmlFor="customerEmail" className="text-base">Customer Email</Label>
                 <Input 
                   id="customerEmail"
                   type="email"
                   value={customerEmail}
                   onChange={(e) => setCustomerEmail(e.target.value)}
                   placeholder="Enter customer email"
+                  className="h-12 text-base"
                 />
               </div>
             </div>
 
-            <div>
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Description</TableHead>
+                    <TableHead className="min-w-[200px]">Description</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Total</TableHead>
@@ -236,11 +247,12 @@ const Invoice = () => {
                 <TableBody>
                   {items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>
+                      <TableCell className="min-w-[200px]">
                         <Input
                           value={item.description}
                           onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                           placeholder="Item description"
+                          className="h-12 text-base"
                         />
                       </TableCell>
                       <TableCell>
@@ -249,7 +261,7 @@ const Invoice = () => {
                           min="1"
                           value={item.quantity}
                           onChange={(e) => updateItem(item.id, 'quantity', parseInt(e.target.value))}
-                          className="w-20"
+                          className="w-24 h-12 text-base"
                         />
                       </TableCell>
                       <TableCell>
@@ -259,10 +271,10 @@ const Invoice = () => {
                           step="0.01"
                           value={item.price}
                           onChange={(e) => updateItem(item.id, 'price', parseFloat(e.target.value))}
-                          className="w-24"
+                          className="w-28 h-12 text-base"
                         />
                       </TableCell>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium text-base">
                         ${(item.quantity * item.price).toFixed(2)}
                       </TableCell>
                       <TableCell>
@@ -270,8 +282,9 @@ const Invoice = () => {
                           variant="ghost" 
                           size="icon"
                           onClick={() => removeItem(item.id)}
+                          className="h-12 w-12"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -282,9 +295,9 @@ const Invoice = () => {
               <Button 
                 variant="outline" 
                 onClick={addItem} 
-                className="mt-4"
+                className="mt-6 h-12 px-6"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-5 w-5" />
                 Add Item
               </Button>
             </div>
@@ -292,20 +305,20 @@ const Invoice = () => {
         </Card>
 
         <Card>
-          <CardHeader>
+          <CardHeader className="p-6">
             <CardTitle>Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between">
+          <CardContent className="space-y-4 p-6">
+            <div className="flex justify-between text-base">
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-base">
               <span>Tax (10%)</span>
               <span>${tax.toFixed(2)}</span>
             </div>
             <div className="border-t pt-4">
-              <div className="flex justify-between font-bold">
+              <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
               </div>
