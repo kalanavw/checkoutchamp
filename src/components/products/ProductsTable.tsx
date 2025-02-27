@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { Product } from "@/types/product";
 
@@ -32,6 +33,7 @@ export const ProductsTable = ({
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Location</TableHead>
             <TableHead>Price</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -40,7 +42,7 @@ export const ProductsTable = ({
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
+              <TableCell colSpan={6} className="text-center py-8">
                 <div className="flex items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin mr-2" />
                   Loading products...
@@ -49,7 +51,7 @@ export const ProductsTable = ({
             </TableRow>
           ) : products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-8">
+              <TableCell colSpan={6} className="text-center py-8">
                 No products found
               </TableCell>
             </TableRow>
@@ -69,6 +71,20 @@ export const ProductsTable = ({
                     onChange={(e) => onUpdateProduct(product.id, 'category', e.target.value)}
                     className="max-w-[150px]"
                   />
+                </TableCell>
+                <TableCell>
+                  <Select
+                    value={product.location}
+                    onValueChange={(value) => onUpdateProduct(product.id, 'location', value)}
+                  >
+                    <SelectTrigger className="max-w-[150px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="loc-1">Location 1</SelectItem>
+                      <SelectItem value="loc-2">Location 2</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </TableCell>
                 <TableCell>
                   <Input

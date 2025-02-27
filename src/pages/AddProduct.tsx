@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Plus } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -15,6 +16,7 @@ interface ProductForm {
   category: string;
   price: number;
   stock: number;
+  location: "loc-1" | "loc-2";
   barcode?: string;
 }
 
@@ -27,6 +29,7 @@ const AddProduct = () => {
     category: "General",
     price: 0,
     stock: 0,
+    location: "loc-1"
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,15 +81,33 @@ const AddProduct = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Input
-                id="category"
-                value={formData.category}
-                onChange={(e) => handleChange("category", e.target.value)}
-                placeholder="Enter category"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Input
+                  id="category"
+                  value={formData.category}
+                  onChange={(e) => handleChange("category", e.target.value)}
+                  placeholder="Enter category"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Select
+                  value={formData.location}
+                  onValueChange={(value) => handleChange("location", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="loc-1">Location 1</SelectItem>
+                    <SelectItem value="loc-2">Location 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

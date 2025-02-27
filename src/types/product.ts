@@ -5,5 +5,6 @@ export interface Product {
   price: number;
   stock: number;
   category: string;
+  location: "loc-1" | "loc-2";
   barcode?: string;
 }

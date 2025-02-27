@@ -1,5 +1,5 @@
 
-import { LayoutDashboard, ShoppingCart, Package, ClipboardList, BarChart2, Settings, FileText } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, ClipboardList, BarChart2, Settings, FileText, User } from "lucide-react";
 import { 
   Sidebar, 
   SidebarContent, 
@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -33,6 +34,20 @@ const Layout = ({ children }: LayoutProps) => {
       <div className="min-h-screen flex w-full">
         <Sidebar>
           <SidebarContent>
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="/placeholder.svg" />
+                  <AvatarFallback>
+                    <User className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <h1 className="font-semibold text-sm">Company Name</h1>
+                  <p className="text-xs text-muted-foreground">Administrator</p>
+                </div>
+              </div>
+            </div>
             <SidebarGroup>
               <SidebarGroupLabel>Menu</SidebarGroupLabel>
               <SidebarGroupContent>
@@ -53,7 +68,17 @@ const Layout = ({ children }: LayoutProps) => {
           </SidebarContent>
         </Sidebar>
         <main className="flex-1">
-          <SidebarTrigger />
+          <div className="flex items-center justify-between p-4 border-b border-border">
+            <SidebarTrigger />
+            <div className="flex items-center gap-2">
+              <Avatar>
+                <AvatarImage src="/placeholder.svg" />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          </div>
           {children}
         </main>
       </div>
