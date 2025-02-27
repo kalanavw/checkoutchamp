@@ -1,16 +1,7 @@
 
 import { useState, useEffect } from "react";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Search, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase";
@@ -21,18 +12,10 @@ import {
   updateDoc,
   doc,
   deleteDoc,
-  query,
-  where
 } from 'firebase/firestore';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
-  category: string;
-  barcode?: string;
-}
+import { ProductsTable } from "@/components/products/ProductsTable";
+import { SearchBar } from "@/components/products/SearchBar";
+import { Product } from "@/types/product";
 
 const Products = () => {
   const { toast } = useToast();
@@ -153,92 +136,18 @@ const Products = () => {
         </CardHeader>
         <CardContent>
           <div className="flex items-center mb-6">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-              <Input
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <SearchBar 
+              value={searchQuery}
+              onChange={setSearchQuery}
+            />
           </div>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <div className="flex items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                        Loading products...
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredProducts.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      No products found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <Input
-                          value={product.name}
-                          onChange={(e) => handleUpdateProduct(product.id, 'name', e.target.value)}
-                          className="max-w-[200px]"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          value={product.category}
-                          onChange={(e) => handleUpdateProduct(product.id, 'category', e.target.value)}
-                          className="max-w-[150px]"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={product.price}
-                          onChange={(e) => handleUpdateProduct(product.id, 'price', parseFloat(e.target.value))}
-                          className="max-w-[100px]"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Input
-                          type="number"
-                          value={product.stock}
-                          onChange={(e) => handleUpdateProduct(product.id, 'stock', parseInt(e.target.value))}
-                          className="max-w-[100px]"
-                        />
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <ProductsTable
+            products={filteredProducts}
+            loading={loading}
+            onUpdateProduct={handleUpdateProduct}
+            onDeleteProduct={handleDeleteProduct}
+          />
         </CardContent>
       </Card>
     </div>
