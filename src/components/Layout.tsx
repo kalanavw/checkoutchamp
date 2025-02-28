@@ -87,7 +87,7 @@ const Layout = ({ children }: LayoutProps) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
         <Sidebar>
-          <SidebarContent>
+          <SidebarContent className="flex flex-col h-full overflow-hidden">
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-md bg-green-600 flex items-center justify-center text-white font-bold">
@@ -99,7 +99,7 @@ const Layout = ({ children }: LayoutProps) => {
                 </div>
               </div>
             </div>
-            <SidebarGroup>
+            <SidebarGroup className="flex-shrink-0">
               <SidebarGroupLabel>Menu</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -121,8 +121,8 @@ const Layout = ({ children }: LayoutProps) => {
             </SidebarGroup>
           </SidebarContent>
         </Sidebar>
-        <main className="flex-1">
-          <div className="flex items-center justify-between p-4 border-b border-border bg-green-50 dark:bg-green-900/20 h-16">
+        <main className="flex-1 flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b border-border bg-green-50 dark:bg-green-900/20 h-16 flex-shrink-0">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
               <span className="font-medium text-green-800 dark:text-green-300">Inventory Management System</span>
@@ -169,7 +169,9 @@ const Layout = ({ children }: LayoutProps) => {
               </DropdownMenu>
             </div>
           </div>
-          {children}
+          <div className="flex-1 overflow-auto">
+            {children}
+          </div>
         </main>
       </div>
     </SidebarProvider>
