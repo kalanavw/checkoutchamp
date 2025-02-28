@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ArrowLeft } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { Badge } from "@/components/ui/badge";
@@ -82,31 +82,74 @@ const AddProduct = () => {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <Card className="shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-t-lg">
+    <div className="h-full flex flex-col p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => navigate("/products")}
+            className="h-9 w-9"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-semibold text-green-800 dark:text-green-300">Add New Product</h1>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button 
+            variant="outline"
+            onClick={() => navigate("/products")}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={loading} 
+            className="bg-green-600 hover:bg-green-700"
+          >
+            {loading ? "Adding..." : "Save Product"}
+          </Button>
+        </div>
+      </div>
+      
+      <Card className="shadow-lg flex-1 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-t-lg px-6">
           <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-300">
-            <Plus className="h-6 w-6" />
-            Add New Product
+            <Plus className="h-5 w-5" />
+            Product Information
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-6 overflow-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
-                placeholder="Enter product name"
-                required
-                className="h-10"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Product Name*</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                  placeholder="Enter product name"
+                  required
+                  className="h-10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="barcode">Barcode (Optional)</Label>
+                <Input
+                  id="barcode"
+                  value={formData.barcode || ""}
+                  onChange={(e) => handleChange("barcode", e.target.value)}
+                  placeholder="Enter barcode"
+                  className="h-10"
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Category*</Label>
                 <Input
                   id="category"
                   value={formData.category}
@@ -127,11 +170,27 @@ const AddProduct = () => {
                   className="h-10"
                 />
               </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="location">Storage Location*</Label>
+                <Select
+                  value={formData.location}
+                  onValueChange={(value) => handleChange("location", value)}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="loc-1">Location 1</SelectItem>
+                    <SelectItem value="loc-2">Location 2</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="costPrice">Cost Price</Label>
+                <Label htmlFor="costPrice">Cost Price*</Label>
                 <Input
                   id="costPrice"
                   type="number"
@@ -146,7 +205,7 @@ const AddProduct = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="sellingPrice">Selling Price</Label>
+                <Label htmlFor="sellingPrice">Selling Price*</Label>
                 <Input
                   id="sellingPrice"
                   type="number"
@@ -173,11 +232,9 @@ const AddProduct = () => {
                   className="h-10"
                 />
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
               <div className="space-y-2">
-                <Label htmlFor="stock">Stock</Label>
+                <Label htmlFor="stock">Initial Stock*</Label>
                 <Input
                   id="stock"
                   type="number"
@@ -189,46 +246,17 @@ const AddProduct = () => {
                   className="h-10"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Select
-                  value={formData.location}
-                  onValueChange={(value) => handleChange("location", value)}
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="loc-1">Location 1</SelectItem>
-                    <SelectItem value="loc-2">Location 2</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="grnNumber">GRN Number (Optional)</Label>
-                <Input
-                  id="grnNumber"
-                  value={formData.grnNumber || ""}
-                  onChange={(e) => handleChange("grnNumber", e.target.value)}
-                  placeholder="Enter GRN number"
-                  className="h-10"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="barcode">Barcode (Optional)</Label>
-                <Input
-                  id="barcode"
-                  value={formData.barcode || ""}
-                  onChange={(e) => handleChange("barcode", e.target.value)}
-                  placeholder="Enter barcode"
-                  className="h-10"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="grnNumber">GRN Number (Optional)</Label>
+              <Input
+                id="grnNumber"
+                value={formData.grnNumber || ""}
+                onChange={(e) => handleChange("grnNumber", e.target.value)}
+                placeholder="Enter GRN number"
+                className="h-10"
+              />
             </div>
 
             <div className="space-y-2">
@@ -259,19 +287,6 @@ const AddProduct = () => {
                   </Badge>
                 ))}
               </div>
-            </div>
-
-            <div className="flex justify-end gap-4 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate("/products")}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading} className="bg-green-600 hover:bg-green-700">
-                {loading ? "Adding..." : "Add Product"}
-              </Button>
             </div>
           </form>
         </CardContent>
