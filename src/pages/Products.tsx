@@ -65,11 +65,13 @@ const Products = () => {
 
   const fetchProductsCount = async () => {
     try {
-      const productsCollection = collection(db, "products") as CollectionReference<DocumentData>;
-      let q = productsCollection;
+      const productsCollection = collection(db, "products");
+      let q;
       
       if (locationFilter) {
         q = query(productsCollection, where("location", "==", locationFilter));
+      } else {
+        q = productsCollection;
       }
       
       const snapshot = await getDocs(q);
@@ -84,7 +86,7 @@ const Products = () => {
   const fetchProducts = async (direction: 'next' | 'prev' | 'first' = 'first') => {
     setLoading(true);
     try {
-      const productsCollection = collection(db, "products") as CollectionReference<DocumentData>;
+      const productsCollection = collection(db, "products");
       let q;
       
       if (locationFilter) {
@@ -111,10 +113,23 @@ const Products = () => {
         setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
       }
       
-      const productsData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Product[];
+      const productsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          name: data.name || "",
+          costPrice: data.costPrice || 0,
+          sellingPrice: data.sellingPrice || 0,
+          stock: data.stock || 0,
+          category: data.category || "",
+          subcategory: data.subcategory || "",
+          location: data.location || "loc-1",
+          keywords: data.keywords || [],
+          discount: data.discount || 0,
+          grnNumber: data.grnNumber,
+          barcode: data.barcode
+        } as Product;
+      });
       
       setProducts(productsData);
     } catch (error) {
