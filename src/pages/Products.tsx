@@ -53,6 +53,7 @@ const Products = () => {
       price: 0,
       stock: 0,
       category: "General",
+      location: "loc-1" as const, // Add location field with default value
     };
 
     try {
