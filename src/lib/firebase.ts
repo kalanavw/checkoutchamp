@@ -1,6 +1,6 @@
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "your-api-key",
@@ -16,10 +16,7 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with persistence
 export const db = initializeFirestore(app, {
-  cacheSizeBytes: CACHE_SIZE_UNLIMITED,
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager()
-  })
+  localCache: persistentLocalCache({cacheSizeBytes: CACHE_SIZE_UNLIMITED})
 });
 
 export default db;
