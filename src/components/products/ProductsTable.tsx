@@ -34,7 +34,8 @@ export const ProductsTable = ({
             <TableHead>Name</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Location</TableHead>
-            <TableHead>Price</TableHead>
+            <TableHead>Cost Price</TableHead>
+            <TableHead>Selling Price</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -42,7 +43,7 @@ export const ProductsTable = ({
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={7} className="text-center py-8">
                 <div className="flex items-center justify-center">
                   <Loader2 className="h-6 w-6 animate-spin mr-2" />
                   Loading products...
@@ -51,7 +52,7 @@ export const ProductsTable = ({
             </TableRow>
           ) : products.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center py-8">
+              <TableCell colSpan={7} className="text-center py-8">
                 No products found
               </TableCell>
             </TableRow>
@@ -89,8 +90,16 @@ export const ProductsTable = ({
                 <TableCell>
                   <Input
                     type="number"
-                    value={product.price}
-                    onChange={(e) => onUpdateProduct(product.id, 'price', parseFloat(e.target.value))}
+                    value={product.costPrice}
+                    onChange={(e) => onUpdateProduct(product.id, 'costPrice', parseFloat(e.target.value))}
+                    className="max-w-[100px]"
+                  />
+                </TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    value={product.sellingPrice}
+                    onChange={(e) => onUpdateProduct(product.id, 'sellingPrice', parseFloat(e.target.value))}
                     className="max-w-[100px]"
                   />
                 </TableCell>

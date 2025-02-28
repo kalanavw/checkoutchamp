@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Filter, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -20,6 +21,8 @@ import {
   where,
   QueryDocumentSnapshot,
   Timestamp,
+  CollectionReference,
+  DocumentData
 } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
@@ -62,10 +65,11 @@ const Products = () => {
 
   const fetchProductsCount = async () => {
     try {
-      let q = collection(db, "products");
+      const productsCollection = collection(db, "products") as CollectionReference<DocumentData>;
+      let q = productsCollection;
       
       if (locationFilter) {
-        q = query(q, where("location", "==", locationFilter));
+        q = query(productsCollection, where("location", "==", locationFilter));
       }
       
       const snapshot = await getDocs(q);
@@ -80,13 +84,14 @@ const Products = () => {
   const fetchProducts = async (direction: 'next' | 'prev' | 'first' = 'first') => {
     setLoading(true);
     try {
-      let q = collection(db, "products");
+      const productsCollection = collection(db, "products") as CollectionReference<DocumentData>;
+      let q;
       
       if (locationFilter) {
-        q = query(q, where("location", "==", locationFilter));
+        q = query(productsCollection, where("location", "==", locationFilter), orderBy("name"));
+      } else {
+        q = query(productsCollection, orderBy("name"));
       }
-      
-      q = query(q, orderBy("name"));
       
       if (direction === 'next' && lastVisible) {
         q = query(q, startAfter(lastVisible), limit(ITEMS_PER_PAGE));
@@ -397,6 +402,7 @@ const Products = () => {
         </CardContent>
       </Card>
       
+      {/* Edit Product Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
