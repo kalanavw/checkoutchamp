@@ -8,13 +8,15 @@ import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import AddProduct from "./pages/AddProduct";
-import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Invoice from "./pages/Invoice";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import Customers from "./pages/Customers";
+import UserManagement from "./pages/UserManagement";
+import GRN from "./pages/GRN";
 
 const queryClient = new QueryClient();
 
@@ -24,20 +26,60 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/add" element={<AddProduct />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/invoice" element={<Invoice />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Layout>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={
+            <Layout>
+              <Dashboard />
+            </Layout>
+          } />
+          <Route path="/products" element={
+            <Layout>
+              <Products />
+            </Layout>
+          } />
+          <Route path="/add-product" element={
+            <Layout>
+              <AddProduct />
+            </Layout>
+          } />
+          <Route path="/orders" element={
+            <Layout>
+              <Orders />
+            </Layout>
+          } />
+          <Route path="/reports" element={
+            <Layout>
+              <Reports />
+            </Layout>
+          } />
+          <Route path="/settings" element={
+            <Layout>
+              <Settings />
+            </Layout>
+          } />
+          <Route path="/invoice" element={
+            <Layout>
+              <Invoice />
+            </Layout>
+          } />
+          <Route path="/customers" element={
+            <Layout>
+              <Customers />
+            </Layout>
+          } />
+          <Route path="/users" element={
+            <Layout>
+              <UserManagement />
+            </Layout>
+          } />
+          <Route path="/grn" element={
+            <Layout>
+              <GRN />
+            </Layout>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
