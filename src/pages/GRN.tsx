@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GRN, GRNItem } from "@/types/grn";
 import { Product } from "@/types/product";
-import { Plus, Minus, X, Save, Truck, PackageSearch, Calendar } from "lucide-react";
+import { Plus, Minus, X, Save, Truck, PackageSearch, Calendar, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const GRNPage = () => {
@@ -65,7 +64,6 @@ const GRNPage = () => {
     setIsSearching(true);
     
     try {
-      // Perform actual search in Firestore
       const productsQuery = query(
         collection(db, "products"),
         where("name", ">=", searchQuery),
@@ -79,7 +77,6 @@ const GRNPage = () => {
         products.push({ id: doc.id, ...doc.data() } as Product);
       });
       
-      // If no results with name, try searching by keywords
       if (products.length === 0) {
         const keywordQuery = query(
           collection(db, "products"),
@@ -175,7 +172,6 @@ const GRNPage = () => {
     setLoading(true);
     
     try {
-      // Create GRN document
       const grnData: Omit<GRN, "id"> = {
         grnNumber: formData.grnNumber,
         supplierName: formData.supplierName,
@@ -190,7 +186,6 @@ const GRNPage = () => {
         createdAt: serverTimestamp()
       });
       
-      // Update product stock and cost price
       for (const item of formData.items) {
         const productRef = doc(db, "products", item.productId);
         await updateDoc(productRef, {
@@ -205,7 +200,7 @@ const GRNPage = () => {
         description: "GRN created and product stock updated successfully.",
       });
       
-      navigate("/products");
+      navigate("/grn-list");
     } catch (error) {
       console.error("Error creating GRN:", error);
       toast({
@@ -227,6 +222,16 @@ const GRNPage = () => {
       <div className="flex items-center gap-3 mb-6">
         <Truck className="h-6 w-6 text-green-600" />
         <h1 className="text-3xl font-semibold text-green-800 dark:text-green-300">Create GRN</h1>
+        <div className="ml-auto">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate("/grn-list")}
+            className="gap-2"
+          >
+            <ClipboardList className="h-4 w-4" />
+            View GRN List
+          </Button>
+        </div>
       </div>
       
       <Card className="shadow-lg">

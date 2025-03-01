@@ -1,180 +1,128 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  LayoutDashboard, 
-  Package, 
-  ClipboardList, 
-  BarChart2, 
-  Settings, 
-  FileText, 
-  User, 
-  LogOut, 
-  Users, 
-  Truck,
-  Moon,
-  Sun
-} from "lucide-react";
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarProvider, 
-  SidebarTrigger,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem
-} from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { useToast } from "@/components/ui/use-toast";
+import { useEffect, useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import { Sidebar } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { StoreInfo } from "@/types/storeInfo";
+import { useMobile } from "@/hooks/use-mobile";
+import { AuthUser } from "@/types/authUser";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout = ({ children }: LayoutProps) => {
+const Layout = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-    { icon: Package, label: "Products", path: "/products" },
-    { icon: Truck, label: "GRN", path: "/grn" },
-    { icon: ClipboardList, label: "Orders", path: "/orders" },
-    { icon: FileText, label: "Invoice", path: "/invoice" },
-    { icon: Users, label: "Customers", path: "/customers" },
-    { icon: BarChart2, label: "Reports", path: "/reports" },
-    { icon: User, label: "User Management", path: "/users" },
-    { icon: Settings, label: "Settings", path: "/settings" },
-  ];
-  
-  const handleSignOut = () => {
-    // Clear user session
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userRole");
-    
-    toast({
-      title: "Signed Out",
-      description: "You have been signed out successfully.",
-    });
-    
-    // Redirect to login
-    navigate("/login");
-  };
-  
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle("dark");
-    
-    toast({
-      title: isDarkMode ? "Light Mode" : "Dark Mode",
-      description: `Switched to ${isDarkMode ? "light" : "dark"} mode.`,
-    });
-  };
+  const isMobile = useMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  // Check if user is logged in
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (!storedUser) {
+      navigate("/login");
+    } else {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Error parsing user:", error);
+        localStorage.removeItem("user");
+        navigate("/login");
+      }
+    }
+  }, [navigate]);
+
+  // Fetch store information
+  useEffect(() => {
+    const fetchStoreInfo = async () => {
+      try {
+        const storeSnapshot = await getDocs(collection(db, "storeInfo"));
+        if (!storeSnapshot.empty) {
+          const storeData = storeSnapshot.docs[0].data() as StoreInfo;
+          storeData.id = storeSnapshot.docs[0].id;
+          setStoreInfo(storeData);
+        }
+      } catch (error) {
+        console.error("Error fetching store info:", error);
+      }
+    };
+
+    fetchStoreInfo();
+  }, []);
+
+  // Update sidebar state when mobile state changes
+  useEffect(() => {
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
+
+  // Show loading until authentication check completes
+  if (!user) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <Sidebar>
-          <SidebarContent className="flex flex-col h-full overflow-hidden">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-md bg-green-600 flex items-center justify-center text-white font-bold">
-                  IS
-                </div>
-                <div className="flex flex-col">
-                  <h1 className="font-semibold text-sm text-green-800 dark:text-green-300">Inventory System</h1>
-                  <p className="text-xs text-muted-foreground">Administrator</p>
-                </div>
+    <div className="flex h-screen overflow-hidden bg-background">
+      {sidebarOpen && (
+        <div className="z-20 fixed md:relative">
+          <Sidebar />
+          {isMobile && (
+            <div
+              className="fixed inset-0 bg-black/50 z-10"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <header className="h-16 border-b flex items-center px-6 sticky top-0 bg-background z-10">
+          {!sidebarOpen && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="mr-4"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
+          )}
+          <div className="flex items-center gap-3">
+            {storeInfo?.logoUrl && (
+              <img 
+                src={storeInfo.logoUrl} 
+                alt={storeInfo.businessName || "Business Logo"} 
+                className="h-8 w-8 object-contain"
+              />
+            )}
+            <h1 className="text-lg font-medium">
+              {storeInfo?.businessName || "POS System"}
+            </h1>
+          </div>
+          <div className="ml-auto flex items-center gap-4">
+            {user.photoURL ? (
+              <img 
+                src={user.photoURL} 
+                alt={user.displayName || "User"} 
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-medium">
+                {user.displayName?.charAt(0) || "U"}
               </div>
-            </div>
-            <SidebarGroup className="flex-shrink-0">
-              <SidebarGroupLabel>Menu</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {menuItems.map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                      <SidebarMenuButton asChild>
-                        <a 
-                          href={item.path} 
-                          className="flex items-center gap-2 text-green-900 dark:text-green-200 hover:bg-green-50 dark:hover:bg-green-900/30"
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </a>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
-        <main className="flex-1 flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b border-border bg-green-50 dark:bg-green-900/20 h-16 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-              <span className="font-medium text-green-800 dark:text-green-300">Inventory Management System</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={toggleDarkMode}
-                className="rounded-full"
-              >
-                {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Avatar className="cursor-pointer">
-                    <AvatarImage src="/placeholder.svg" />
-                    <AvatarFallback className="bg-green-600 text-white">
-                      AD
-                    </AvatarFallback>
-                  </Avatar>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="flex flex-col space-y-1 p-2">
-                    <p className="text-sm font-medium">Admin User</p>
-                    <p className="text-xs text-muted-foreground">admin@example.com</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/settings")}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="text-red-500 hover:text-red-600 focus:text-red-600">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            )}
+            <span className="text-sm font-medium">{user.displayName || user.email}</span>
           </div>
-          <div className="flex-1 overflow-auto">
-            {children}
-          </div>
+        </header>
+
+        <main className="flex-1 overflow-auto">
+          <Outlet />
         </main>
       </div>
-    </SidebarProvider>
+
+      <Toaster />
+    </div>
   );
 };
 
