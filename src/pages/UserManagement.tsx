@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, UserPlus, Mail, Lock, Eye, EyeOff, RefreshCw, UserCog, Avatar } from "lucide-react";
+import { Plus, Search, UserPlus, Mail, Lock, Eye, EyeOff, RefreshCw, UserCog } from "lucide-react";
 import { User, UserRole } from "@/types/user";
 
 const UserManagement = () => {
