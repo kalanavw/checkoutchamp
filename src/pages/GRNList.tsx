@@ -164,16 +164,22 @@ const GRNList = () => {
       
       snapshot.forEach((doc) => {
         const data = doc.data();
-        // Convert Firestore timestamp to JS Date
-        const receivedDate = data.receivedDate?.toDate ? 
-          data.receivedDate.toDate() : 
-          new Date(data.receivedDate);
+        
+        // Check if receivedDate exists and convert it properly
+        let receivedDate: Date;
+        if (data.receivedDate) {
+          receivedDate = data.receivedDate?.toDate ? 
+            data.receivedDate.toDate() : 
+            new Date(data.receivedDate);
+        } else {
+          receivedDate = new Date(); // Default to current date if missing
+        }
           
         fetchedGRNs.push({ 
           id: doc.id,
-          ...data,
+          ...data as Omit<GRN, 'id' | 'receivedDate'>,
           receivedDate
-        } as GRN);
+        });
       });
       
       if (snapshot.docs.length > 0) {

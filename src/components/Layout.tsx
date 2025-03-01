@@ -1,19 +1,18 @@
-
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Sidebar } from "@/components/ui/sidebar";
+import Sidebar from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthUser } from "@/types/authUser";
 
 const Layout = () => {
   const navigate = useNavigate();
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);

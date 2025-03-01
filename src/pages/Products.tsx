@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { ProductsTable } from "@/components/products/ProductsTable";
-import SearchBar from "@/components/products/SearchBar";
+import { SearchBar } from "@/components/products/SearchBar";
 import { Plus, ListFilter, RefreshCw } from "lucide-react";
 
 const Products = () => {
@@ -61,10 +62,11 @@ const Products = () => {
 
       const fetchedProducts: Product[] = [];
       querySnapshot.forEach((doc) => {
+        const data = doc.data();
         fetchedProducts.push({ 
           id: doc.id, 
-          ...doc.data() 
-        } as Product);
+          ...data as Omit<Product, 'id'>
+        });
       });
 
       if (next) {
@@ -126,7 +128,7 @@ const Products = () => {
 
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="flex-1">
-          <SearchBar onSearch={handleSearch} />
+          <SearchBar value={searchQuery} onChange={handleSearch} />
         </div>
         <div className="flex items-center gap-2">
           <ListFilter className="h-4 w-4 text-muted-foreground" />
