@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,9 +57,23 @@ const Login = () => {
         // Get user data from firestore
         const userDoc = await getDoc(doc(db, "users", user.uid));
         let role = "cashier"; // Default role
+        let isActive = true;
         
         if (userDoc.exists()) {
-          role = userDoc.data().role || "cashier";
+          const userData = userDoc.data();
+          role = userData.role || "cashier";
+          isActive = userData.active !== false; // Default to true if not specified
+        }
+        
+        if (!isActive) {
+          await auth.signOut();
+          toast({
+            title: "Account Disabled",
+            description: "Your account has been disabled. Please contact an administrator.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
         }
         
         localStorage.setItem("isLoggedIn", "true");
@@ -107,6 +120,16 @@ const Login = () => {
           photoURL: user.photoURL || "",
           createdAt: serverTimestamp()
         });
+      } else {
+        // Existing user, update their profile info in case it changed on Google's side
+        const userData = userDoc.data();
+        await setDoc(userDocRef, {
+          ...userData,
+          name: user.displayName || userData.name || "User",
+          email: user.email || userData.email || "",
+          photoURL: user.photoURL || userData.photoURL || "",
+          lastLogin: serverTimestamp()
+        }, { merge: true });
       }
       
       // Get user role from firestore

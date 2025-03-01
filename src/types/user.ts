@@ -9,4 +9,5 @@ export interface User {
   role: UserRole;
   active: boolean;
   createdAt: Date;
+  photoURL?: string;
 }

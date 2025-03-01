@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, doc, updateDoc, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, query, orderBy, serverTimestamp, where } from "firebase/firestore";
 import { 
   Dialog, 
   DialogContent, 
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, UserPlus, Mail, Lock, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { Plus, Search, UserPlus, Mail, Lock, Eye, EyeOff, RefreshCw, UserCog, Avatar } from "lucide-react";
 import { User, UserRole } from "@/types/user";
 
 const UserManagement = () => {
@@ -72,6 +72,7 @@ const UserManagement = () => {
           role: userData.role || "cashier",
           active: userData.active ?? true,
           createdAt: userData.createdAt?.toDate() || new Date(),
+          photoURL: userData.photoURL || "",
         });
       });
       
@@ -107,6 +108,20 @@ const UserManagement = () => {
     setLoading(true);
     
     try {
+      // Check if email already exists
+      const emailQuery = query(collection(db, "users"), where("email", "==", formData.email));
+      const emailSnapshot = await getDocs(emailQuery);
+      
+      if (!emailSnapshot.empty) {
+        toast({
+          title: "Error",
+          description: "A user with this email already exists.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
       const newUser = {
         ...formData,
         createdAt: serverTimestamp(),
@@ -117,7 +132,8 @@ const UserManagement = () => {
       const userWithId = { 
         id: docRef.id, 
         ...newUser,
-        createdAt: new Date()
+        createdAt: new Date(),
+        photoURL: "",
       };
       
       setUsers([userWithId, ...users]);
@@ -256,7 +272,7 @@ const UserManagement = () => {
             <Table>
               <TableHeader className="bg-green-50 dark:bg-green-900/10">
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
@@ -289,7 +305,22 @@ const UserManagement = () => {
                 ) : (
                   filteredUsers.map((user) => (
                     <TableRow key={user.id} className="hover:bg-green-50/50 dark:hover:bg-green-900/10">
-                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                            {user.photoURL ? (
+                              <img 
+                                src={user.photoURL} 
+                                alt={user.name} 
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <UserCog className="h-5 w-5 text-gray-500" />
+                            )}
+                          </div>
+                          <div className="font-medium">{user.name}</div>
+                        </div>
+                      </TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>
                         <Select
