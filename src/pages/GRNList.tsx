@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -163,12 +162,12 @@ const GRNList = () => {
       const fetchedGRNs: GRN[] = [];
       
       snapshot.forEach((doc) => {
-        const data = doc.data();
+        const data = doc.data() as Record<string, any>;
         
         // Check if receivedDate exists and convert it properly
         let receivedDate: Date;
         if (data.receivedDate) {
-          receivedDate = data.receivedDate?.toDate ? 
+          receivedDate = data.receivedDate.toDate ? 
             data.receivedDate.toDate() : 
             new Date(data.receivedDate);
         } else {
