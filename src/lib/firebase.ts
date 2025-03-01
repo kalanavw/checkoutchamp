@@ -1,6 +1,8 @@
 
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   projectId: 'a-pos-10203',
@@ -19,3 +21,10 @@ const app = initializeApp(firebaseConfig);
 export const db = initializeFirestore(app, {
   localCache: persistentLocalCache({cacheSizeBytes: CACHE_SIZE_UNLIMITED})
 });
+
+// Initialize Authentication
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+
+// Initialize Storage
+export const storage = getStorage(app);

@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { Plus, X, ArrowLeft } from "lucide-react";
-import { db } from "@/lib/firebase";
+import { Plus, X, ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { db, storage } from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Badge } from "@/components/ui/badge";
 
 interface ProductForm {
@@ -24,6 +25,7 @@ interface ProductForm {
   discount?: number;
   grnNumber?: string;
   barcode?: string;
+  imageUrl?: string;
 }
 
 const AddProduct = () => {
@@ -31,6 +33,9 @@ const AddProduct = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [keywordInput, setKeywordInput] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState<ProductForm>({
     name: "",
     category: "General",
@@ -43,12 +48,57 @@ const AddProduct = () => {
     discount: 0,
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setImagePreview(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | undefined> => {
+    if (!imageFile) return undefined;
+    
+    setUploadingImage(true);
+    try {
+      const storageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+      const uploadResult = await uploadBytes(storageRef, imageFile);
+      const downloadUrl = await getDownloadURL(uploadResult.ref);
+      return downloadUrl;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      await addDoc(collection(db, "products"), formData);
+      // Upload image if selected
+      let imageUrl;
+      if (imageFile) {
+        imageUrl = await uploadImage();
+      }
+
+      // Create product with image URL
+      const productData = {
+        ...formData,
+        imageUrl
+      };
+
+      await addDoc(collection(db, "products"), productData);
       toast({
         title: "Success",
         description: "Product added successfully.",
@@ -105,10 +155,10 @@ const AddProduct = () => {
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={loading} 
+            disabled={loading || uploadingImage} 
             className="bg-green-600 hover:bg-green-700"
           >
-            {loading ? "Adding..." : "Save Product"}
+            {loading || uploadingImage ? "Adding..." : "Save Product"}
           </Button>
         </div>
       </div>
@@ -122,6 +172,59 @@ const AddProduct = () => {
         </CardHeader>
         <CardContent className="p-6 overflow-auto">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Product Image Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="productImage">Product Image</Label>
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                {imagePreview ? (
+                  <div className="border rounded-md p-2 w-40 h-40 flex items-center justify-center bg-gray-50">
+                    <img 
+                      src={imagePreview} 
+                      alt="Product preview" 
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="border rounded-md p-2 w-40 h-40 flex items-center justify-center bg-gray-50">
+                    <ImageIcon className="h-10 w-10 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex flex-col gap-2">
+                  <Input
+                    id="productImage"
+                    type="file"
+                    onChange={handleImageChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => document.getElementById('productImage')?.click()}
+                    className="w-full sm:w-auto"
+                  >
+                    {imagePreview ? "Change Image" : "Upload Image"}
+                  </Button>
+                  {imagePreview && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setImagePreview(null);
+                        setImageFile(null);
+                      }}
+                      className="text-red-500 hover:text-red-600 w-full sm:w-auto"
+                    >
+                      Remove Image
+                    </Button>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload a clear image of the product. Recommended size: 500x500px.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="name">Product Name*</Label>

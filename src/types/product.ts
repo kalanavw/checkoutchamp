@@ -12,4 +12,5 @@ export interface Product {
   discount?: number;
   grnNumber?: string;
   barcode?: string;
+  imageUrl?: string;
 }

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  query, 
+  where, 
+  serverTimestamp, 
+  updateDoc, 
+  doc, 
+  increment 
+} from "firebase/firestore";
 import { 
   Table, 
   TableBody, 
@@ -55,37 +65,34 @@ const GRNPage = () => {
     setIsSearching(true);
     
     try {
-      // In a real app, you would search the database
-      // Here we're simulating a search with a timeout
-      setTimeout(() => {
-        const mockResults: Product[] = [
-          {
-            id: "prod1",
-            name: searchQuery + " - Sample Product 1",
-            costPrice: 10.99,
-            sellingPrice: 19.99,
-            stock: 50,
-            category: "Electronics",
-            subcategory: "Accessories",
-            location: "loc-1",
-            keywords: ["sample", "electronics"],
-          },
-          {
-            id: "prod2",
-            name: searchQuery + " - Sample Product 2",
-            costPrice: 8.50,
-            sellingPrice: 15.99,
-            stock: 30,
-            category: "Electronics",
-            subcategory: "Cables",
-            location: "loc-2",
-            keywords: ["sample", "cables"],
-          }
-        ];
+      // Perform actual search in Firestore
+      const productsQuery = query(
+        collection(db, "products"),
+        where("name", ">=", searchQuery),
+        where("name", "<=", searchQuery + "\uf8ff")
+      );
+      
+      const snapshot = await getDocs(productsQuery);
+      const products: Product[] = [];
+      
+      snapshot.forEach((doc) => {
+        products.push({ id: doc.id, ...doc.data() } as Product);
+      });
+      
+      // If no results with name, try searching by keywords
+      if (products.length === 0) {
+        const keywordQuery = query(
+          collection(db, "products"),
+          where("keywords", "array-contains", searchQuery.toLowerCase())
+        );
         
-        setSearchResults(mockResults);
-        setIsSearching(false);
-      }, 500);
+        const keywordSnapshot = await getDocs(keywordQuery);
+        keywordSnapshot.forEach((doc) => {
+          products.push({ id: doc.id, ...doc.data() } as Product);
+        });
+      }
+      
+      setSearchResults(products);
     } catch (error) {
       console.error("Error searching products:", error);
       toast({
@@ -93,6 +100,7 @@ const GRNPage = () => {
         description: "Failed to search products. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setIsSearching(false);
     }
   };
@@ -167,20 +175,34 @@ const GRNPage = () => {
     setLoading(true);
     
     try {
+      // Create GRN document
       const grnData: Omit<GRN, "id"> = {
         grnNumber: formData.grnNumber,
         supplierName: formData.supplierName,
         receivedDate: new Date(formData.receivedDate),
         items: formData.items,
         notes: formData.notes,
-        createdBy: "Admin", // In a real app, get from authenticated user
+        createdBy: localStorage.getItem("userName") || "Admin",
       };
       
-      await addDoc(collection(db, "grns"), grnData);
+      const grnRef = await addDoc(collection(db, "grns"), {
+        ...grnData,
+        createdAt: serverTimestamp()
+      });
+      
+      // Update product stock and cost price
+      for (const item of formData.items) {
+        const productRef = doc(db, "products", item.productId);
+        await updateDoc(productRef, {
+          stock: increment(item.quantity),
+          costPrice: item.costPrice,
+          grnNumber: formData.grnNumber
+        });
+      }
       
       toast({
         title: "Success",
-        description: "GRN created successfully.",
+        description: "GRN created and product stock updated successfully.",
       });
       
       navigate("/products");
@@ -211,7 +233,15 @@ const GRNPage = () => {
         <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-t-lg">
           <CardTitle className="text-green-800 dark:text-green-300 flex items-center gap-2">
             <span>Goods Received Note</span>
-            <Badge variant="outline" className="ml-2">{formData.grnNumber}</Badge>
+            <div className="ml-auto flex items-center gap-2">
+              <Label htmlFor="grnNumber" className="text-sm font-normal">GRN #:</Label>
+              <Input
+                id="grnNumber"
+                value={formData.grnNumber}
+                onChange={(e) => handleChange("grnNumber", e.target.value)}
+                className="w-48 h-9"
+              />
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">

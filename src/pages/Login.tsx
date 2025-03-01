@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon, LockKeyhole, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { auth, googleProvider, db } from "@/lib/firebase";
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -38,35 +41,99 @@ const Login = () => {
     
     setLoading(true);
     
-    // Simulating authentication
-    setTimeout(() => {
-      setLoading(false);
-      
-      // Hardcoded demo login (replace with real authentication)
+    try {
+      // For demo purposes, still allow admin/admin login
       if (formData.username === "admin" && formData.password === "admin") {
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userRole", "admin");
         navigate("/");
-      } else {
-        toast({
-          title: "Authentication Failed",
-          description: "Invalid username or password. Try using admin/admin for the demo.",
-          variant: "destructive",
-        });
+        return;
       }
-    }, 1000);
+      
+      // Attempt Firebase email authentication
+      await signInWithEmailAndPassword(auth, formData.username, formData.password);
+      
+      const user = auth.currentUser;
+      if (user) {
+        // Get user data from firestore
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        let role = "cashier"; // Default role
+        
+        if (userDoc.exists()) {
+          role = userDoc.data().role || "cashier";
+        }
+        
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userRole", role);
+        localStorage.setItem("userEmail", user.email || "");
+        localStorage.setItem("userName", user.displayName || "");
+        localStorage.setItem("userImage", user.photoURL || "");
+        localStorage.setItem("userId", user.uid);
+        
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast({
+        title: "Authentication Failed",
+        description: "Invalid email or password. Try using admin/admin for the demo.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     
-    // Simulating Google authentication
-    setTimeout(() => {
-      setGoogleLoading(false);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
       
-      // Demo Google login success
+      // Check if user exists in our users collection
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      // Create or update user document
+      if (!userDoc.exists()) {
+        // New user, create document
+        await setDoc(userDocRef, {
+          id: user.uid,
+          name: user.displayName || "User",
+          email: user.email || "",
+          role: "cashier", // Default role for new users
+          active: true,
+          photoURL: user.photoURL || "",
+          createdAt: serverTimestamp()
+        });
+      }
+      
+      // Get user role from firestore
+      const updatedUserDoc = await getDoc(userDocRef);
+      const userData = updatedUserDoc.data();
+      const userRole = userData && userData.role ? userData.role : "cashier";
+      const isActive = userData && userData.active !== undefined ? userData.active : true;
+      
+      if (!isActive) {
+        // User is disabled
+        await auth.signOut();
+        toast({
+          title: "Account Disabled",
+          description: "Your account has been disabled. Please contact an administrator.",
+          variant: "destructive",
+        });
+        setGoogleLoading(false);
+        return;
+      }
+      
+      // Store user info in localStorage
       localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", "user");
+      localStorage.setItem("userRole", userRole);
+      localStorage.setItem("userEmail", user.email || "");
+      localStorage.setItem("userName", user.displayName || "");
+      localStorage.setItem("userImage", user.photoURL || "");
+      localStorage.setItem("userId", user.uid);
       
       toast({
         title: "Google Login Successful",
@@ -74,7 +141,16 @@ const Login = () => {
       });
       
       navigate("/");
-    }, 1500);
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast({
+        title: "Google Login Failed",
+        description: "An error occurred during Google login.",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   return (
@@ -93,13 +169,13 @@ const Login = () => {
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor="username">Email</Label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
                   <Input
                     id="username"
                     name="username"
-                    placeholder="Enter your username"
+                    placeholder="Enter your email"
                     className="pl-10"
                     value={formData.username}
                     onChange={handleChange}
