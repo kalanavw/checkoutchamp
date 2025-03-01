@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Search, UserPlus, Mail, Lock, Eye, EyeOff, RefreshCw, UserCog } from "lucide-react";
 import { User, UserRole } from "@/types/user";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const UserManagement = () => {
   const { toast } = useToast();
@@ -58,7 +59,8 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setIsRefreshing(true);
     try {
-      const usersQuery = query(collection(db, "users"), orderBy("createdAt", "desc"));
+      // Changed to 'user' collection to match the request
+      const usersQuery = query(collection(db, "user"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(usersQuery);
       
       const fetchedUsers: User[] = [];
@@ -66,7 +68,7 @@ const UserManagement = () => {
         const userData = doc.data();
         fetchedUsers.push({
           id: doc.id,
-          name: userData.name || "",
+          name: userData.name || userData.displayName || "",
           email: userData.email || "",
           password: userData.password || "", // This should be handled more securely in a real app
           role: userData.role || "cashier",
@@ -108,8 +110,8 @@ const UserManagement = () => {
     setLoading(true);
     
     try {
-      // Check if email already exists
-      const emailQuery = query(collection(db, "users"), where("email", "==", formData.email));
+      // Changed to 'user' collection
+      const emailQuery = query(collection(db, "user"), where("email", "==", formData.email));
       const emailSnapshot = await getDocs(emailQuery);
       
       if (!emailSnapshot.empty) {
@@ -127,7 +129,8 @@ const UserManagement = () => {
         createdAt: serverTimestamp(),
       };
       
-      const docRef = await addDoc(collection(db, "users"), newUser);
+      // Changed to 'user' collection
+      const docRef = await addDoc(collection(db, "user"), newUser);
       
       const userWithId = { 
         id: docRef.id, 
@@ -180,7 +183,8 @@ const UserManagement = () => {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await updateDoc(doc(db, "users", userId), {
+      // Changed to 'user' collection
+      await updateDoc(doc(db, "user", userId), {
         active: !currentStatus
       });
       
@@ -204,7 +208,8 @@ const UserManagement = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      await updateDoc(doc(db, "users", userId), {
+      // Changed to 'user' collection
+      await updateDoc(doc(db, "user", userId), {
         role: newRole
       });
       
@@ -307,15 +312,16 @@ const UserManagement = () => {
                     <TableRow key={user.id} className="hover:bg-green-50/50 dark:hover:bg-green-900/10">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                          <div className="h-10 w-10 rounded-full overflow-hidden">
                             {user.photoURL ? (
-                              <img 
-                                src={user.photoURL} 
-                                alt={user.name} 
-                                className="h-full w-full object-cover"
-                              />
+                              <Avatar>
+                                <AvatarImage src={user.photoURL} alt={user.name} />
+                                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
                             ) : (
-                              <UserCog className="h-5 w-5 text-gray-500" />
+                              <Avatar>
+                                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                              </Avatar>
                             )}
                           </div>
                           <div className="font-medium">{user.name}</div>
