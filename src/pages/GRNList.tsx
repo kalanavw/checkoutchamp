@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -167,6 +168,7 @@ const GRNList = () => {
         // Check if receivedDate exists and convert it properly
         let receivedDate: Date;
         if (data.receivedDate) {
+          // Explicitly checking and handling the receivedDate property
           receivedDate = data.receivedDate.toDate ? 
             data.receivedDate.toDate() : 
             new Date(data.receivedDate);

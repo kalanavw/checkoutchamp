@@ -31,3 +31,6 @@ export const SearchBar = ({ value, onChange, onSearch }: SearchBarProps) => {
     </div>
   );
 };
+
+// Add default export for backward compatibility
+export default SearchBar;
