@@ -14,8 +14,7 @@ import {
   query, 
   orderBy, 
   serverTimestamp, 
-  where,
-  DocumentData 
+  where
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { 
@@ -43,22 +42,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { 
-  Plus, 
-  Search, 
+  Search,
   UserPlus, 
   Mail, 
   Lock, 
   Eye, 
   EyeOff, 
   RefreshCw, 
-  UserCog,
   Image as ImageIcon,
   X,
   User as UserIcon
 } from "lucide-react";
 import { UserRole } from "@/types/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 interface UserData {
   id: string;
@@ -204,7 +203,8 @@ const UserManagement = () => {
       };
       
       const docRef = await addDoc(collection(db, USER_COLLECTION), newUser);
-      
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      console.log("User created:", userCredential.user.email);
       let photoURL = "";
       if (selectedImage) {
         try {
