@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { db, storage } from "@/lib/firebase";
+import {db, PRODUCT_COLLECTION, storage} from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Package, Save } from "lucide-react";
@@ -79,7 +79,7 @@ const AddProduct = () => {
         .filter((k) => k.length > 0);
       
       // Add product to Firestore
-      await addDoc(collection(db, "products"), {
+      await addDoc(collection(db, PRODUCT_COLLECTION), {
         name: formData.name,
         costPrice: parseFloat(formData.costPrice),
         sellingPrice: parseFloat(formData.sellingPrice),
@@ -126,16 +126,16 @@ const AddProduct = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <BasicInfoSection formData={formData} handleChange={handleChange} />
+            <CategorySection
+                formData={formData}
+                handleChange={handleChange}
+                handleSelectChange={handleSelectChange}
+            />
             <PricingSection formData={formData} handleChange={handleChange} />
-            <ImageSection 
+            <ImageSection
               imagePreview={imagePreview} 
               setImagePreview={setImagePreview} 
               setProductImage={setProductImage}
-            />
-            <CategorySection 
-              formData={formData} 
-              handleChange={handleChange} 
-              handleSelectChange={handleSelectChange}
             />
             <StockSection formData={formData} handleChange={handleChange} />
 

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
-import { db } from "@/lib/firebase";
+import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
 import { collection, addDoc } from "firebase/firestore";
 import { 
   Dialog, 
@@ -65,7 +65,7 @@ const Customers = () => {
         registrationDate: new Date(),
       };
       
-      const docRef = await addDoc(collection(db, "customers"), newCustomer);
+      const docRef = await addDoc(collection(db, CUSTOMER_COLLECTION), newCustomer);
       
       const customerWithId = { 
         id: docRef.id, 

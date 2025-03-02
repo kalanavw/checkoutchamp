@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { db } from "@/lib/firebase";
+import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { ProductsTable } from "@/components/products/ProductsTable";
@@ -27,7 +27,7 @@ const Products = () => {
       setLoading(true);
 
       let q;
-      const productsCollection = collection(db, "products");
+      const productsCollection = collection(db, PRODUCT_COLLECTION);
 
       if (searchQuery) {
         q = query(
@@ -100,7 +100,7 @@ const Products = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      await deleteDoc(doc(db, "products", id));
+      await deleteDoc(doc(db, PRODUCT_COLLECTION, id));
       setProducts(products.filter(product => product.id !== id));
     } catch (error) {
       console.error("Error deleting product:", error);

@@ -35,9 +35,13 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Price</TableHead>
+            <TableHead>Cost Price</TableHead>
+            <TableHead>Selling Price</TableHead>
+            <TableHead>Discount</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Sub Category</TableHead>
+            <TableHead>Keywords</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -60,7 +64,9 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
                   <span>{product.name}</span>
                 </div>
               </TableCell>
+              <TableCell>${product.costPrice.toFixed(2)}</TableCell>
               <TableCell>${product.sellingPrice.toFixed(2)}</TableCell>
+              <TableCell>${product.discount} %</TableCell>
               <TableCell>
                 {product.stock > 0 ? (
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -73,6 +79,8 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
                 )}
               </TableCell>
               <TableCell>{product.category}</TableCell>
+              <TableCell>{product.subcategory}</TableCell>
+              <TableCell>{product.keywords.join(", ")}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button size="sm" variant="ghost" onClick={() => onView(product.id)}>

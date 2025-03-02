@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Settings as SettingsIcon, Upload, Building, Save, FileImage } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { db, storage } from "@/lib/firebase";
+import {db, storage, STOREINFO_COLLECTION} from "@/lib/firebase";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { StoreInfo } from "@/types/storeInfo";
@@ -31,7 +31,7 @@ const Settings = () => {
   useEffect(() => {
     const fetchStoreInfo = async () => {
       try {
-        const storeSnapshot = await getDocs(collection(db, "storeInfo"));
+        const storeSnapshot = await getDocs(collection(db, STOREINFO_COLLECTION));
         if (!storeSnapshot.empty) {
           const storeData = storeSnapshot.docs[0].data() as StoreInfo;
           storeData.id = storeSnapshot.docs[0].id;

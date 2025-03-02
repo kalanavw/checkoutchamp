@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { db, storage } from "@/lib/firebase";
+import {db, PRODUCT_COLLECTION, storage} from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { 
@@ -33,7 +33,7 @@ const ProductDetail = () => {
       if (!id) return;
       
       try {
-        const productDoc = await getDoc(doc(db, "products", id));
+        const productDoc = await getDoc(doc(db, PRODUCT_COLLECTION, id));
         
         if (productDoc.exists()) {
           setProduct({ id: productDoc.id, ...productDoc.data() } as Product);
