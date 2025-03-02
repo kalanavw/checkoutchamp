@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,11 +26,9 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GRN, GRNItem } from "@/types/grn";
 import { Product } from "@/types/product";
 import { Plus, Minus, X, Save, Truck, PackageSearch, Calendar, ClipboardList } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 
 const GRNPage = () => {
   const navigate = useNavigate();

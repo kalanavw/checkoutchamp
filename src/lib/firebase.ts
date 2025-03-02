@@ -5,17 +5,18 @@ import { getAuth, GoogleAuthProvider, browserPopupRedirectResolver } from 'fireb
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  projectId: 'a-pos-10203',
-  appId: '1:1071999236972:web:aeec4384d2b22f9dd31149',
-  storageBucket: 'a-pos-10203.appspot.com',
-  apiKey: 'AIzaSyCSOcP-2WfphlWaSsGk8FWrZxzImFG3wFk',
-  authDomain: 'a-pos-10203.firebaseapp.com',
-  messagingSenderId: '1071999236972',
-  measurementId: 'G-DH2RM4G560',
+  apiKey: "AIzaSyA_ReJ3a7qewp89vsp8-MpN_tfWI8oRUtI",
+  authDomain: "stock-champ-2a9df.firebaseapp.com",
+  projectId: "stock-champ-2a9df",
+  storageBucket: "stock-champ-2a9df.firebasestorage.app",
+  messagingSenderId: "274289865490",
+  appId: "1:274289865490:web:b160e0705ae509179279cb",
+  measurementId: "G-3F0JVEY523"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);
 
 // Initialize Firestore with persistence
 export const db = initializeFirestore(app, {
