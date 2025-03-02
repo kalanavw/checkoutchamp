@@ -6,32 +6,50 @@ import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthUser } from "@/types/authUser";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Layout = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  // Check if user is logged in
+  // Check authentication state
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      navigate("/login");
-    } else {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Error parsing user:", error);
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setLoading(true);
+      
+      if (currentUser) {
+        // User is logged in, create AuthUser object
+        const authUser: AuthUser = {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+          photoURL: currentUser.photoURL,
+          role: localStorage.getItem("userRole") || "user",
+        };
+        
+        setUser(authUser);
+        // Store user in localStorage for other components
+        localStorage.setItem("user", JSON.stringify(authUser));
+      } else {
+        // User is not logged in, redirect to login
         localStorage.removeItem("user");
+        setUser(null);
         navigate("/login");
       }
-    }
+      
+      setLoading(false);
+    });
+
+    // Clean up subscription
+    return () => unsubscribe();
   }, [navigate]);
 
   // Fetch store information
@@ -58,8 +76,18 @@ const Layout = () => {
   }, [isMobile]);
 
   // Show loading until authentication check completes
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If user is not authenticated, Layout component shouldn't render at all
+  // The redirect happens in the useEffect above
   if (!user) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return null;
   }
 
   return (
@@ -109,7 +137,7 @@ const Layout = () => {
               />
             ) : (
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-medium">
-                {user.displayName?.charAt(0) || "U"}
+                {user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
               </div>
             )}
             <span className="text-sm font-medium">{user.displayName || user.email}</span>

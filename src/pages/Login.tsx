@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon, LockKeyhole, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { auth, googleProvider, db } from "@/lib/firebase";
-import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, onAuthStateChanged, browserPopupRedirectResolver } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { AuthUser } from "@/types/authUser";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,6 +22,27 @@ const Login = () => {
     username: "",
     password: ""
   });
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // If user is already authenticated, redirect to dashboard
+        const authUser: AuthUser = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: localStorage.getItem("userRole") || "user",
+        };
+        
+        localStorage.setItem("user", JSON.stringify(authUser));
+        navigate("/");
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,6 +66,15 @@ const Login = () => {
     try {
       // For demo purposes, still allow admin/admin login
       if (formData.username === "admin" && formData.password === "admin") {
+        const mockUser: AuthUser = {
+          uid: "admin-mock-uid",
+          email: "admin@example.com",
+          displayName: "Admin User",
+          photoURL: null,
+          role: "admin"
+        };
+        
+        localStorage.setItem("user", JSON.stringify(mockUser));
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userRole", "admin");
         navigate("/");
@@ -76,6 +108,16 @@ const Login = () => {
           return;
         }
         
+        // Create AuthUser object and store it
+        const authUser: AuthUser = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: role
+        };
+        
+        localStorage.setItem("user", JSON.stringify(authUser));
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userRole", role);
         localStorage.setItem("userEmail", user.email || "");
@@ -101,7 +143,8 @@ const Login = () => {
     setGoogleLoading(true);
     
     try {
-      const result = await signInWithPopup(auth, googleProvider);
+      // Use browserPopupRedirectResolver to help with COOP issues
+      const result = await signInWithPopup(auth, googleProvider, browserPopupRedirectResolver);
       const user = result.user;
       
       // Check if user exists in our users collection
@@ -150,7 +193,17 @@ const Login = () => {
         return;
       }
       
+      // Create AuthUser object and store it
+      const authUser: AuthUser = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        role: userRole
+      };
+      
       // Store user info in localStorage
+      localStorage.setItem("user", JSON.stringify(authUser));
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("userRole", userRole);
       localStorage.setItem("userEmail", user.email || "");
