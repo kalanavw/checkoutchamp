@@ -34,3 +34,6 @@ googleProvider.setCustomParameters({
 
 // Initialize Storage
 export const storage = getStorage(app);
+
+// Define user collection name - centralized for consistency
+export const USER_COLLECTION = "user"; // Use single collection name for all user operations

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -6,10 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { EyeIcon, EyeOffIcon, LockKeyhole, User } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { auth } from "@/lib/firebase";
+import { auth, db, USER_COLLECTION } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { AuthUser } from "@/types/authUser";
 
 interface LoginFormProps {
@@ -70,7 +68,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
       const user = auth.currentUser;
       if (user) {
         // Get user data from firestore
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userDoc = await getDoc(doc(db, USER_COLLECTION, user.uid));
         let role = "cashier"; // Default role
         let isActive = true;
         

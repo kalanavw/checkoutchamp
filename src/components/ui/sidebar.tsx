@@ -29,6 +29,11 @@ const Sidebar = () => {
       await signOut(auth);
       localStorage.removeItem("user");
       localStorage.removeItem("userName");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userImage");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("isLoggedIn");
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);

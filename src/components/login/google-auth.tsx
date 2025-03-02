@@ -1,5 +1,6 @@
+
 import { useNavigate } from "react-router-dom";
-import { auth, googleProvider, db } from "@/lib/firebase";
+import { auth, googleProvider, db, USER_COLLECTION } from "@/lib/firebase";
 import { signInWithPopup, browserPopupRedirectResolver } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { useToast } from "@/components/ui/use-toast";
@@ -16,7 +17,7 @@ export const useGoogleAuth = () => {
       const user = result.user;
       
       // Check if user exists in our users collection
-      const userDocRef = doc(db, "users", user.uid);
+      const userDocRef = doc(db, USER_COLLECTION, user.uid);
       const userDoc = await getDoc(userDocRef);
       
       // Create or update user document

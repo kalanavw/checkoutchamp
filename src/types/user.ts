@@ -5,9 +5,10 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  password: string; // Note: In a real app, this would be hashed and stored securely
+  password?: string; // Optional because users from Google auth won't have a password
   role: UserRole;
   active: boolean;
   createdAt: Date;
   photoURL?: string;
+  lastLogin?: Date;
 }

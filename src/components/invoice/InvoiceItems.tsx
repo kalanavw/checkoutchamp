@@ -32,12 +32,12 @@ export function InvoiceItems({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead width="30%">Description</TableHead>
-            <TableHead width="20%">Quantity</TableHead>
-            <TableHead width="15%">Price</TableHead>
-            <TableHead width="15%">Discount (%)</TableHead>
-            <TableHead width="15%">Total</TableHead>
-            <TableHead width="5%"></TableHead>
+            <TableHead className="w-[30%]">Description</TableHead>
+            <TableHead className="w-[20%]">Quantity</TableHead>
+            <TableHead className="w-[15%]">Price</TableHead>
+            <TableHead className="w-[15%]">Discount (%)</TableHead>
+            <TableHead className="w-[15%]">Total</TableHead>
+            <TableHead className="w-[5%]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

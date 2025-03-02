@@ -1,11 +1,10 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { db, storage } from "@/lib/firebase";
+import { db, storage, USER_COLLECTION } from "@/lib/firebase";
 import { 
   collection, 
   addDoc, 
@@ -15,7 +14,8 @@ import {
   query, 
   orderBy, 
   serverTimestamp, 
-  where 
+  where,
+  DocumentData 
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { 
@@ -54,16 +54,27 @@ import {
   UserCog,
   Image as ImageIcon,
   X,
-  User
+  User as UserIcon
 } from "lucide-react";
-import { User, UserRole } from "@/types/user";
+import { UserRole } from "@/types/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Link, useNavigate } from "react-router-dom";
+
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+  active: boolean;
+  createdAt: Date;
+  photoURL?: string;
+}
 
 const UserManagement = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -80,7 +91,6 @@ const UserManagement = () => {
     active: true,
   });
 
-  // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -88,10 +98,10 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setIsRefreshing(true);
     try {
-      const usersQuery = query(collection(db, "user"), orderBy("createdAt", "desc"));
+      const usersQuery = query(collection(db, USER_COLLECTION), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(usersQuery);
       
-      const fetchedUsers: User[] = [];
+      const fetchedUsers: UserData[] = [];
       snapshot.forEach((doc) => {
         const userData = doc.data();
         fetchedUsers.push({
@@ -128,7 +138,6 @@ const UserManagement = () => {
       const file = e.target.files[0];
       setSelectedImage(file);
       
-      // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -176,7 +185,7 @@ const UserManagement = () => {
     setLoading(true);
     
     try {
-      const emailQuery = query(collection(db, "user"), where("email", "==", formData.email));
+      const emailQuery = query(collection(db, USER_COLLECTION), where("email", "==", formData.email));
       const emailSnapshot = await getDocs(emailQuery);
       
       if (!emailSnapshot.empty) {
@@ -194,13 +203,13 @@ const UserManagement = () => {
         createdAt: serverTimestamp(),
       };
       
-      const docRef = await addDoc(collection(db, "user"), newUser);
+      const docRef = await addDoc(collection(db, USER_COLLECTION), newUser);
       
       let photoURL = "";
       if (selectedImage) {
         try {
           photoURL = await uploadUserImage(docRef.id) || "";
-          await updateDoc(doc(db, "user", docRef.id), { photoURL });
+          await updateDoc(doc(db, USER_COLLECTION, docRef.id), { photoURL });
         } catch (error) {
           console.error("Error with user image:", error);
           toast({
@@ -210,7 +219,7 @@ const UserManagement = () => {
         }
       }
       
-      const userWithId = { 
+      const userWithId: UserData = { 
         id: docRef.id, 
         ...newUser,
         createdAt: new Date(),
@@ -224,7 +233,6 @@ const UserManagement = () => {
         description: "User added successfully.",
       });
       
-      // Reset form
       setFormData({
         name: "",
         email: "",
@@ -261,7 +269,7 @@ const UserManagement = () => {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      await updateDoc(doc(db, "user", userId), {
+      await updateDoc(doc(db, USER_COLLECTION, userId), {
         active: !currentStatus
       });
       
@@ -285,7 +293,7 @@ const UserManagement = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      await updateDoc(doc(db, "user", userId), {
+      await updateDoc(doc(db, USER_COLLECTION, userId), {
         role: newRole
       });
       
@@ -453,7 +461,6 @@ const UserManagement = () => {
         </CardContent>
       </Card>
       
-      {/* Add User Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -486,7 +493,7 @@ const UserManagement = () => {
                   </div>
                 ) : (
                   <div className="flex items-center justify-center w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600">
-                    <User className="h-10 w-10 text-gray-400" />
+                    <UserIcon className="h-10 w-10 text-gray-400" />
                   </div>
                 )}
                 
