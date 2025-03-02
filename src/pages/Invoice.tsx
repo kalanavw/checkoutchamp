@@ -1,7 +1,10 @@
-import { useState, useRef } from "react";
+
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Printer, Download, Save } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { FileText, Printer, Download, Save, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CustomerInfo } from "@/components/invoice/CustomerInfo";
@@ -23,7 +26,8 @@ interface InvoiceItem {
 
 interface InvoiceData {
   customerName: string;
-  customerEmail: string;
+  invoiceNumber: string;
+  invoiceDate: Date;
   items: Omit<InvoiceItem, 'id'>[];
   subtotal: number;
   tax: number;
@@ -36,10 +40,24 @@ const Invoice = () => {
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [customerName, setCustomerName] = useState("");
-  const [customerEmail, setCustomerEmail] = useState("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [invoiceDate, setInvoiceDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isSaving, setIsSaving] = useState(false);
   const [barcodeInput, setBarcodeInput] = useState("");
   const isMobile = useIsMobile();
+
+  // Generate invoice number on component mount
+  useEffect(() => {
+    const generateInvoiceNumber = () => {
+      const prefix = "INV";
+      const date = new Date();
+      const timestamp = date.getTime().toString().slice(-8);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      return `${prefix}-${timestamp}-${random}`;
+    };
+    
+    setInvoiceNumber(generateInvoiceNumber());
+  }, []);
 
   const addItem = () => {
     const newItem: InvoiceItem = {
@@ -90,7 +108,7 @@ const Invoice = () => {
   };
 
   const handleSaveInvoice = async () => {
-    if (!customerName || !customerEmail || items.length === 0) {
+    if (!customerName || items.length === 0 || !invoiceNumber || !invoiceDate) {
       toast({
         title: "Validation Error",
         description: "Please fill in all required fields and add at least one item.",
@@ -104,7 +122,8 @@ const Invoice = () => {
     try {
       const invoiceData: InvoiceData = {
         customerName,
-        customerEmail,
+        invoiceNumber,
+        invoiceDate: new Date(invoiceDate),
         items: items.map(({ id, ...item }) => item),
         subtotal,
         tax,
@@ -119,9 +138,15 @@ const Invoice = () => {
         description: "Invoice saved successfully!",
       });
 
+      // Reset form for a new invoice
       setCustomerName("");
-      setCustomerEmail("");
       setItems([]);
+      // Generate a new invoice number
+      const prefix = "INV";
+      const date = new Date();
+      const timestamp = date.getTime().toString().slice(-8);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      setInvoiceNumber(`${prefix}-${timestamp}-${random}`);
     } catch (error) {
       console.error("Error saving invoice:", error);
       toast({
@@ -182,7 +207,7 @@ const Invoice = () => {
       const imgY = 30;
 
       pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      pdf.save(`invoice-${Date.now()}.pdf`);
+      pdf.save(`invoice-${invoiceNumber}.pdf`);
 
       toast({
         title: "PDF Downloaded",
@@ -209,14 +234,14 @@ const Invoice = () => {
           <Button 
             variant="outline" 
             onClick={handlePrint}
-            className="flex-1 sm:flex-initial h-12 px-6"
+            className="flex-1 sm:flex-initial h-10 px-4"
           >
             <Printer className="mr-2 h-5 w-5" />
             Print
           </Button>
           <Button 
             onClick={handleDownloadPDF}
-            className="flex-1 sm:flex-initial h-12 px-6"
+            className="flex-1 sm:flex-initial h-10 px-4"
           >
             <Download className="mr-2 h-5 w-5" />
             Download PDF
@@ -224,7 +249,7 @@ const Invoice = () => {
           <Button 
             onClick={handleSaveInvoice} 
             disabled={isSaving}
-            className="flex-1 sm:flex-initial h-12 px-6 bg-green-600 hover:bg-green-700"
+            className="flex-1 sm:flex-initial h-10 px-4 bg-green-600 hover:bg-green-700"
           >
             <Save className="mr-2 h-5 w-5" />
             {isSaving ? "Saving..." : "Save Invoice"}
@@ -232,18 +257,45 @@ const Invoice = () => {
         </div>
       </div>
 
-      <div ref={invoiceRef} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader className="p-6">
+      <div ref={invoiceRef} className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <Card className="lg:col-span-3">
+          <CardHeader className="p-4">
             <CardTitle>Invoice Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6 p-6">
-            <CustomerInfo
-              customerName={customerName}
-              customerEmail={customerEmail}
-              onNameChange={setCustomerName}
-              onEmailChange={setCustomerEmail}
-            />
+          <CardContent className="space-y-6 p-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-6">
+                <CustomerInfo
+                  customerName={customerName}
+                  onNameChange={setCustomerName}
+                />
+              </div>
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="invoiceNumber" className="text-base">Invoice Number</Label>
+                  <Input 
+                    id="invoiceNumber"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                    placeholder="Enter invoice number"
+                    className="h-12 text-base"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <Label htmlFor="invoiceDate" className="text-base flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    Invoice Date
+                  </Label>
+                  <Input 
+                    id="invoiceDate"
+                    type="date"
+                    value={invoiceDate}
+                    onChange={(e) => setInvoiceDate(e.target.value)}
+                    className="h-12 text-base"
+                  />
+                </div>
+              </div>
+            </div>
 
             <BarcodeScanner
               value={barcodeInput}
@@ -261,11 +313,18 @@ const Invoice = () => {
           </CardContent>
         </Card>
 
-        <InvoiceSummary
-          subtotal={subtotal}
-          tax={tax}
-          total={total}
-        />
+        <Card className="lg:col-span-1 h-fit">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-lg">Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <InvoiceSummary
+              subtotal={subtotal}
+              tax={tax}
+              total={total}
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

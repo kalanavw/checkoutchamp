@@ -1,12 +1,23 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { db } from "@/lib/firebase";
-import { collection, addDoc, getDocs, doc, updateDoc, query, orderBy, serverTimestamp, where } from "firebase/firestore";
+import { db, storage } from "@/lib/firebase";
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  query, 
+  orderBy, 
+  serverTimestamp, 
+  where 
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { 
   Dialog, 
   DialogContent, 
@@ -31,18 +42,36 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Search, UserPlus, Mail, Lock, Eye, EyeOff, RefreshCw, UserCog } from "lucide-react";
+import { 
+  Plus, 
+  Search, 
+  UserPlus, 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  RefreshCw, 
+  UserCog,
+  Image as ImageIcon,
+  X,
+  User
+} from "lucide-react";
 import { User, UserRole } from "@/types/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Link, useNavigate } from "react-router-dom";
 
 const UserManagement = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -59,7 +88,6 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setIsRefreshing(true);
     try {
-      // Changed to 'user' collection to match the request
       const usersQuery = query(collection(db, "user"), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(usersQuery);
       
@@ -70,7 +98,7 @@ const UserManagement = () => {
           id: doc.id,
           name: userData.name || userData.displayName || "",
           email: userData.email || "",
-          password: userData.password || "", // This should be handled more securely in a real app
+          password: userData.password || "",
           role: userData.role || "cashier",
           active: userData.active ?? true,
           createdAt: userData.createdAt?.toDate() || new Date(),
@@ -95,6 +123,44 @@ const UserManagement = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadUserImage = async (userId: string) => {
+    if (!selectedImage) return null;
+    
+    const fileExtension = selectedImage.name.split('.').pop();
+    const storageRef = ref(storage, `user-images/${userId}.${fileExtension}`);
+    
+    try {
+      await uploadBytes(storageRef, selectedImage);
+      const downloadURL = await getDownloadURL(storageRef);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -110,7 +176,6 @@ const UserManagement = () => {
     setLoading(true);
     
     try {
-      // Changed to 'user' collection
       const emailQuery = query(collection(db, "user"), where("email", "==", formData.email));
       const emailSnapshot = await getDocs(emailQuery);
       
@@ -129,14 +194,27 @@ const UserManagement = () => {
         createdAt: serverTimestamp(),
       };
       
-      // Changed to 'user' collection
       const docRef = await addDoc(collection(db, "user"), newUser);
+      
+      let photoURL = "";
+      if (selectedImage) {
+        try {
+          photoURL = await uploadUserImage(docRef.id) || "";
+          await updateDoc(doc(db, "user", docRef.id), { photoURL });
+        } catch (error) {
+          console.error("Error with user image:", error);
+          toast({
+            title: "Warning",
+            description: "User created but profile image upload failed.",
+          });
+        }
+      }
       
       const userWithId = { 
         id: docRef.id, 
         ...newUser,
         createdAt: new Date(),
-        photoURL: "",
+        photoURL,
       };
       
       setUsers([userWithId, ...users]);
@@ -154,7 +232,7 @@ const UserManagement = () => {
         role: "cashier",
         active: true,
       });
-      
+      clearSelectedImage();
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error adding user:", error);
@@ -183,7 +261,6 @@ const UserManagement = () => {
 
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
-      // Changed to 'user' collection
       await updateDoc(doc(db, "user", userId), {
         active: !currentStatus
       });
@@ -208,7 +285,6 @@ const UserManagement = () => {
 
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
-      // Changed to 'user' collection
       await updateDoc(doc(db, "user", userId), {
         role: newRole
       });
@@ -324,7 +400,9 @@ const UserManagement = () => {
                               </Avatar>
                             )}
                           </div>
-                          <div className="font-medium">{user.name}</div>
+                          <Button variant="link" className="p-0 h-auto font-medium" onClick={() => navigate(`/user/${user.id}`)}>
+                            {user.name}
+                          </Button>
                         </div>
                       </TableCell>
                       <TableCell>{user.email}</TableCell>
@@ -358,8 +436,12 @@ const UserManagement = () => {
                         {user.createdAt.toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="sm">
-                          Edit
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => navigate(`/user/${user.id}`)}
+                        >
+                          View
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -382,6 +464,54 @@ const UserManagement = () => {
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="profile-image">Profile Image</Label>
+              <div className="flex flex-col items-center gap-4">
+                {imagePreview ? (
+                  <div className="relative w-24 h-24">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={clearSelectedImage}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600">
+                    <User className="h-10 w-10 text-gray-400" />
+                  </div>
+                )}
+                
+                <div className="flex items-center gap-2 w-full">
+                  <input
+                    ref={fileInputRef}
+                    id="profile-image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    <ImageIcon className="mr-2 h-4 w-4" />
+                    {selectedImage ? "Change Image" : "Upload Image"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input

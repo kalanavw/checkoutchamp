@@ -28,16 +28,16 @@ export function InvoiceItems({
   onAddItem,
 }: InvoiceItemsProps) {
   return (
-    <div className="overflow-x-auto">
+    <div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="min-w-[200px]">Description</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Discount (%)</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead></TableHead>
+            <TableHead width="30%">Description</TableHead>
+            <TableHead width="20%">Quantity</TableHead>
+            <TableHead width="15%">Price</TableHead>
+            <TableHead width="15%">Discount (%)</TableHead>
+            <TableHead width="15%">Total</TableHead>
+            <TableHead width="5%"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -48,16 +48,16 @@ export function InvoiceItems({
 
             return (
               <TableRow key={item.id}>
-                <TableCell className="min-w-[200px]">
+                <TableCell>
                   <Input
                     value={item.description}
                     onChange={(e) => onUpdateItem(item.id, 'description', e.target.value)}
                     placeholder="Item description"
-                    className="h-12 text-base"
+                    className="h-10 text-base"
                   />
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="icon"
@@ -71,7 +71,7 @@ export function InvoiceItems({
                       min="1"
                       value={item.quantity}
                       onChange={(e) => onUpdateItem(item.id, 'quantity', parseInt(e.target.value))}
-                      className="w-20 h-12 text-base text-center"
+                      className="w-16 h-10 text-base text-center"
                     />
                     <Button
                       variant="outline"
@@ -90,7 +90,7 @@ export function InvoiceItems({
                     step="0.01"
                     value={item.price}
                     onChange={(e) => onUpdateItem(item.id, 'price', parseFloat(e.target.value))}
-                    className="w-28 h-12 text-base"
+                    className="w-24 h-10 text-base"
                   />
                 </TableCell>
                 <TableCell>
@@ -100,7 +100,7 @@ export function InvoiceItems({
                     max="100"
                     value={item.discount || 0}
                     onChange={(e) => onUpdateItem(item.id, 'discount', parseFloat(e.target.value))}
-                    className="w-20 h-12 text-base"
+                    className="w-16 h-10 text-base"
                   />
                 </TableCell>
                 <TableCell className="font-medium text-base">
@@ -111,7 +111,7 @@ export function InvoiceItems({
                     variant="ghost" 
                     size="icon"
                     onClick={() => onRemoveItem(item.id)}
-                    className="h-12 w-12"
+                    className="h-10 w-10"
                   >
                     <Trash2 className="h-5 w-5" />
                   </Button>
@@ -125,7 +125,7 @@ export function InvoiceItems({
       <Button 
         variant="outline" 
         onClick={onAddItem} 
-        className="mt-6 h-12 px-6"
+        className="mt-6 h-10 px-4"
       >
         <Plus className="mr-2 h-5 w-5" />
         Add Item

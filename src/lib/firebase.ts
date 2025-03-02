@@ -8,7 +8,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyA_ReJ3a7qewp89vsp8-MpN_tfWI8oRUtI",
   authDomain: "stock-champ-2a9df.firebaseapp.com",
   projectId: "stock-champ-2a9df",
-  storageBucket: "stock-champ-2a9df.firebasestorage.app",
+  storageBucket: "stock-champ-2a9df.appspot.com",
   messagingSenderId: "274289865490",
   appId: "1:274289865490:web:b160e0705ae509179279cb",
   measurementId: "G-3F0JVEY523"
@@ -16,7 +16,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app);
 
 // Initialize Firestore with persistence
 export const db = initializeFirestore(app, {
@@ -24,13 +23,12 @@ export const db = initializeFirestore(app, {
 });
 
 // Initialize Authentication with browserPopupRedirectResolver
-// This helps fix the Cross-Origin-Opener-Policy issue
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Configure custom parameters for Google provider
 googleProvider.setCustomParameters({
-  // Using popup for better compatibility with COOP policy
+  // Force account selection to prevent COOP issues
   prompt: 'select_account'
 });
 

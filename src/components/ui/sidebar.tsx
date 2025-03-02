@@ -13,6 +13,9 @@ import {
   Receipt,
   Truck,
   ClipboardList,
+  FileText,
+  FileBarChart,
+  Store
 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
@@ -42,7 +45,7 @@ const Sidebar = () => {
         <h2 className="text-xl font-bold">POS System</h2>
       </div>
 
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
         <NavLink to="/" end>
           {({ isActive }) => (
             <Button
@@ -111,6 +114,12 @@ const Sidebar = () => {
           )}
         </NavLink>
 
+        <div className="py-1">
+          <div className="px-3 text-xs uppercase text-muted-foreground tracking-wider">
+            Invoicing
+          </div>
+        </div>
+
         <NavLink to="/invoice">
           {({ isActive }) => (
             <Button
@@ -122,8 +131,25 @@ const Sidebar = () => {
                   : "hover:bg-accent hover:text-accent-foreground"
               )}
             >
-              <Receipt className="mr-2 h-4 w-4" />
-              Invoice
+              <FileText className="mr-2 h-4 w-4" />
+              Create Invoice
+            </Button>
+          )}
+        </NavLink>
+
+        <NavLink to="/invoice-list">
+          {({ isActive }) => (
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <FileBarChart className="mr-2 h-4 w-4" />
+              Invoice Records
             </Button>
           )}
         </NavLink>
@@ -170,9 +196,26 @@ const Sidebar = () => {
 
         <div className="py-1">
           <div className="px-3 text-xs uppercase text-muted-foreground tracking-wider">
-            Administration
+            Management
           </div>
         </div>
+
+        <NavLink to="/customers">
+          {({ isActive }) => (
+            <Button
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                isActive
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent hover:text-accent-foreground"
+              )}
+            >
+              <Store className="mr-2 h-4 w-4" />
+              Customers
+            </Button>
+          )}
+        </NavLink>
 
         <NavLink to="/users">
           {({ isActive }) => (
