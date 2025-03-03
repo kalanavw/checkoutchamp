@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import {db, PRODUCT_COLLECTION, storage} from "@/lib/firebase";
+import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { 
