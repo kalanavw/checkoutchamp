@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Product } from "@/types/product";
-import { MapPin, Barcode } from "lucide-react";
+import {MapPin, Barcode, Package} from "lucide-react";
 
 interface ProductInfoProps {
   product: Product;
