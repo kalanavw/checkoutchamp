@@ -1,50 +1,24 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { 
-  DropdownMenu,
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter 
-} from "@/components/ui/dialog";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "@/components/ui/pagination";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit, startAfter, where, doc, deleteDoc } from "firebase/firestore";
-import { FileText, Search, RefreshCw, Printer, Download, MoreHorizontal, FileBarChart, Trash2, Eye } from "lucide-react";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Eye, Calendar, Search } from "lucide-react";
+import { format } from "date-fns";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 interface InvoiceItem {
-  description: string;
+  id: string;
+  name: string;
   quantity: number;
   price: number;
-  discount?: number;
+  total: number;
 }
 
 interface Invoice {
@@ -60,86 +34,49 @@ interface Invoice {
 }
 
 const InvoiceList = () => {
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastVisible, setLastVisible] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const fetchInvoices = async (searchTerm = "", reset = false) => {
-    setIsRefreshing(true);
+  useEffect(() => {
+    fetchInvoices();
+  }, []);
+
+  const fetchInvoices = async () => {
     setLoading(true);
-    
     try {
-      let invoicesQuery;
-      
-      if (searchTerm) {
-        // Search query
-        invoicesQuery = query(
-          collection(db, "invoices"),
-          where("customerName", ">=", searchTerm),
-          where("customerName", "<=", searchTerm + '\uf8ff'),
-          orderBy("customerName"),
-          orderBy("createdAt", "desc"),
-          limit(itemsPerPage)
-        );
-      } else if (lastVisible && !reset) {
-        // Pagination query
-        invoicesQuery = query(
-          collection(db, "invoices"),
-          orderBy("createdAt", "desc"),
-          startAfter(lastVisible),
-          limit(itemsPerPage)
-        );
-      } else {
-        // Initial query
-        invoicesQuery = query(
-          collection(db, "invoices"),
-          orderBy("createdAt", "desc"),
-          limit(itemsPerPage)
-        );
-      }
-      
-      const snapshot = await getDocs(invoicesQuery);
+      const invoicesQuery = query(
+        collection(db, "invoices"),
+        orderBy("createdAt", "desc")
+      );
+      const querySnapshot = await getDocs(invoicesQuery);
       
       const fetchedInvoices: Invoice[] = [];
-      snapshot.forEach((doc) => {
+      querySnapshot.forEach((doc) => {
         const data = doc.data();
+        
+        // Ensure we handle dates properly
+        const createdAt = data.createdAt?.toDate() || new Date();
+        const invoiceDate = data.invoiceDate?.toDate() || new Date();
+        
         fetchedInvoices.push({
           id: doc.id,
-          customerName: data.customerName,
-          invoiceNumber: data.invoiceNumber,
-          invoiceDate: data.invoiceDate?.toDate() || new Date(),
+          customerName: data.customerName || 'Unknown Customer',
+          invoiceNumber: data.invoiceNumber || `INV-${doc.id.substring(0, 6)}`,
+          invoiceDate,
           items: data.items || [],
           subtotal: data.subtotal || 0,
           tax: data.tax || 0,
           total: data.total || 0,
-          createdAt: data.createdAt?.toDate() || new Date(),
+          createdAt
         });
       });
       
-      if (reset || searchTerm) {
-        setInvoices(fetchedInvoices);
-        setCurrentPage(1);
-      } else {
-        setInvoices(prev => [...prev, ...fetchedInvoices]);
-        setCurrentPage(prev => prev + 1);
-      }
-      
-      // Set the last document for pagination
-      if (snapshot.docs.length > 0) {
-        setLastVisible(snapshot.docs[snapshot.docs.length - 1]);
-      } else {
-        setLastVisible(null);
-      }
-      
+      setInvoices(fetchedInvoices);
     } catch (error) {
       console.error("Error fetching invoices:", error);
       toast({
@@ -149,348 +86,179 @@ const InvoiceList = () => {
       });
     } finally {
       setLoading(false);
-      setIsRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    fetchInvoices("", true);
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchInvoices(searchQuery, true);
-  };
-
-  const handleDeleteInvoice = async () => {
-    if (!selectedInvoice) return;
-    
-    try {
-      await deleteDoc(doc(db, "invoices", selectedInvoice.id));
-      
-      setInvoices(invoices.filter(invoice => invoice.id !== selectedInvoice.id));
-      
-      toast({
-        title: "Invoice Deleted",
-        description: "The invoice has been deleted successfully.",
-      });
-      
-      setIsDeleteDialogOpen(false);
-      setSelectedInvoice(null);
-    } catch (error) {
-      console.error("Error deleting invoice:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete the invoice. Please try again.",
-        variant: "destructive",
-      });
-    }
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
   const viewInvoiceDetails = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
-    setIsDetailDialogOpen(true);
+    setIsDialogOpen(true);
   };
 
-  const confirmDeleteInvoice = (invoice: Invoice) => {
-    setSelectedInvoice(invoice);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
-
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }).format(date);
-  };
+  const filteredInvoices = invoices.filter((invoice) =>
+    invoice.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="p-6 space-y-6 w-full">
+    <div className="p-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-2">
-          <FileBarChart className="h-6 w-6" />
-          <h1 className="text-2xl md:text-3xl font-semibold">Invoices</h1>
-        </div>
-        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+        <h1 className="text-3xl font-semibold text-green-800 dark:text-green-300">Invoices</h1>
+        <div className="flex gap-2">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Input
+              placeholder="Search invoices..."
+              className="pl-10 min-w-[250px]"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
           <Button 
-            variant="outline" 
-            onClick={() => fetchInvoices("", true)}
-            disabled={isRefreshing}
-            className="flex-1 sm:flex-initial"
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
-          <Button 
+            variant="default"
+            className="bg-green-600 hover:bg-green-700"
             onClick={() => navigate("/invoice")}
-            className="flex-1 sm:flex-initial bg-green-600 hover:bg-green-700"
           >
-            <FileText className="mr-2 h-4 w-4" />
-            New Invoice
+            Create Invoice
           </Button>
         </div>
       </div>
 
-      <Card className="shadow-md">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-t-lg pb-2">
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-            <CardTitle className="text-green-800 dark:text-green-300">Invoice List</CardTitle>
-            <form onSubmit={handleSearch} className="relative max-w-xs">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-              <Input
-                placeholder="Search by customer name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-16"
-              />
-              <Button 
-                type="submit" 
-                size="sm" 
-                className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 px-2"
-              >
-                Search
-              </Button>
-            </form>
-          </div>
+      <Card>
+        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 pb-2">
+          <CardTitle>All Invoices</CardTitle>
         </CardHeader>
-        <CardContent className="p-4">
-          <div className="rounded-md border overflow-hidden">
-            <Table>
-              <TableHeader className="bg-green-50 dark:bg-green-900/10">
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading && invoices.length === 0 ? (
-                  Array.from({ length: 5 }).map((_, index) => (
-                    <TableRow key={index}>
-                      <TableCell colSpan={6} className="h-12 animate-pulse bg-gray-100 dark:bg-gray-800"></TableCell>
-                    </TableRow>
-                  ))
-                ) : invoices.length === 0 ? (
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : invoices.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">No invoices found.</p>
+              <Button 
+                variant="link" 
+                className="mt-2 text-green-600"
+                onClick={() => navigate("/invoice")}
+              >
+                Create your first invoice
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <div className="flex flex-col items-center justify-center">
-                        <p>No invoices found</p>
-                        <Button 
-                          variant="link" 
-                          onClick={() => navigate("/invoice")} 
-                          className="mt-2 text-green-600"
-                        >
-                          Create your first invoice
-                        </Button>
-                      </div>
-                    </TableCell>
+                    <TableHead>Invoice #</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ) : (
-                  invoices.map((invoice) => (
+                </TableHeader>
+                <TableBody>
+                  {filteredInvoices.map((invoice) => (
                     <TableRow key={invoice.id} className="hover:bg-green-50/50 dark:hover:bg-green-900/10">
-                      <TableCell>
-                        <Button 
-                          variant="link" 
-                          className="p-0 h-auto font-medium"
-                          onClick={() => viewInvoiceDetails(invoice)}
-                        >
-                          {invoice.invoiceNumber}
-                        </Button>
-                      </TableCell>
+                      <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                       <TableCell>{invoice.customerName}</TableCell>
-                      <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                          <span>{format(invoice.invoiceDate, 'MMM dd, yyyy')}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{invoice.items.length} items</Badge>
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(invoice.total)}
-                      </TableCell>
+                      <TableCell className="font-medium">${invoice.total.toFixed(2)}</TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => viewInvoiceDetails(invoice)}>
-                              <Eye className="mr-2 h-4 w-4" />
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Printer className="mr-2 h-4 w-4" />
-                              Print
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="mr-2 h-4 w-4" />
-                              Download
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-red-600"
-                              onClick={() => confirmDeleteInvoice(invoice)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => viewInvoiceDetails(invoice)}
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-          
-          {/* Pagination */}
-          <Pagination className="mt-4">
-            <PaginationContent>
-              <PaginationItem>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchInvoices("", true)}
-                  disabled={currentPage === 1 || loading}
-                >
-                  <PaginationPrevious className="h-4 w-4" />
-                </Button>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink isActive>{currentPage}</PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchInvoices()}
-                  disabled={!lastVisible || loading}
-                >
-                  <PaginationNext className="h-4 w-4" />
-                </Button>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </CardContent>
-      </Card>
-      
-      {/* Invoice Detail Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className="sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Invoice Details</DialogTitle>
-            <DialogDescription>
-              Invoice #{selectedInvoice?.invoiceNumber} • {selectedInvoice && formatDate(selectedInvoice.createdAt)}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedInvoice && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Customer</h3>
-                  <p className="text-lg font-semibold">{selectedInvoice.customerName}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">Invoice Date</h3>
-                  <p className="text-lg font-semibold">{formatDate(selectedInvoice.invoiceDate)}</p>
-                </div>
-              </div>
-              
-              <div className="border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-gray-50 dark:bg-gray-800">
-                    <TableRow>
-                      <TableHead>Item</TableHead>
-                      <TableHead className="text-right">Qty</TableHead>
-                      <TableHead className="text-right">Price</TableHead>
-                      <TableHead className="text-right">Discount</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedInvoice.items.map((item, index) => {
-                      const itemTotal = item.quantity * item.price;
-                      const discountAmount = itemTotal * ((item.discount || 0) / 100);
-                      const finalTotal = itemTotal - discountAmount;
-                      
-                      return (
-                        <TableRow key={index}>
-                          <TableCell>{item.description}</TableCell>
-                          <TableCell className="text-right">{item.quantity}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                          <TableCell className="text-right">{item.discount || 0}%</TableCell>
-                          <TableCell className="text-right font-medium">{formatCurrency(finalTotal)}</TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <div className="flex justify-end">
-                <div className="w-full max-w-xs space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal:</span>
-                    <span>{formatCurrency(selectedInvoice.subtotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax (10%):</span>
-                    <span>{formatCurrency(selectedInvoice.tax)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                    <span>Total:</span>
-                    <span>{formatCurrency(selectedInvoice.total)}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <DialogFooter className="gap-2">
-                <Button variant="outline">
-                  <Printer className="mr-2 h-4 w-4" />
-                  Print
-                </Button>
-                <Button>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </Button>
-              </DialogFooter>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-      
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete invoice #{selectedInvoice?.invoiceNumber}? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <DialogFooter className="gap-2 mt-4">
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteInvoice}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Invoice
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
+
+      {selectedInvoice && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Invoice Details #{selectedInvoice.invoiceNumber}</DialogTitle>
+            </DialogHeader>
+            
+            <div className="grid grid-cols-2 gap-4 py-4">
+              <div>
+                <h3 className="font-semibold mb-1">Customer</h3>
+                <p>{selectedInvoice.customerName}</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Date</h3>
+                <p>{format(selectedInvoice.invoiceDate, 'MMMM dd, yyyy')}</p>
+              </div>
+            </div>
+            
+            <div className="border rounded-md overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedInvoice.items.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell>${item.price.toFixed(2)}</TableCell>
+                      <TableCell className="text-right">${item.total.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            <div className="space-y-2 mt-4">
+              <div className="flex justify-between">
+                <span className="font-medium">Subtotal:</span>
+                <span>${selectedInvoice.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Tax:</span>
+                <span>${selectedInvoice.tax.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold text-lg">Total:</span>
+                <span className="font-semibold text-lg">${selectedInvoice.total.toFixed(2)}</span>
+              </div>
+            </div>
+            
+            <div className="flex justify-end mt-6 gap-2">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Close
+              </Button>
+              <Button>Print Invoice</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -1,10 +1,11 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { db, storage, USER_COLLECTION } from "@/lib/firebase";
+import { db, USER_COLLECTION } from "@/lib/firebase";
 import { 
   collection, 
   addDoc, 
@@ -16,7 +17,7 @@ import {
   serverTimestamp, 
   where
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useGoogleDrive } from "@/lib/googleDriveService";
 import { 
   Dialog, 
   DialogContent, 
@@ -82,6 +83,7 @@ const UserManagement = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { uploadImage } = useGoogleDrive();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -92,6 +94,18 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
+    
+    // Initialize Google Drive
+    const initDrive = async () => {
+      try {
+        const driveService = useGoogleDrive();
+        await driveService.initialize();
+      } catch (error) {
+        console.error("Failed to initialize Google Drive", error);
+      }
+    };
+    
+    initDrive();
   }, []);
 
   const fetchUsers = async () => {
@@ -153,16 +167,12 @@ const UserManagement = () => {
     }
   };
 
-  const uploadUserImage = async (userId: string) => {
+  const uploadUserImage = async (userId: string): Promise<string | null> => {
     if (!selectedImage) return null;
     
-    const fileExtension = selectedImage.name.split('.').pop();
-    const storageRef = ref(storage, `user-images/${userId}.${fileExtension}`);
-    
     try {
-      await uploadBytes(storageRef, selectedImage);
-      const downloadURL = await getDownloadURL(storageRef);
-      return downloadURL;
+      // Use Google Drive service
+      return await uploadImage(selectedImage, 'user', userId);
     } catch (error) {
       console.error("Error uploading image:", error);
       throw error;
@@ -205,6 +215,7 @@ const UserManagement = () => {
       const docRef = await addDoc(collection(db, USER_COLLECTION), newUser);
       const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       console.log("User created:", userCredential.user.email);
+      
       let photoURL = "";
       if (selectedImage) {
         try {
@@ -472,7 +483,12 @@ const UserManagement = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="profile-image">Profile Image</Label>
+              <Label htmlFor="profile-image" className="flex items-center">
+                Profile Image
+                <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
+                  Google Drive
+                </Badge>
+              </Label>
               <div className="flex flex-col items-center gap-4">
                 {imagePreview ? (
                   <div className="relative w-24 h-24">

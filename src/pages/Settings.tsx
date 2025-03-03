@@ -8,16 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Settings as SettingsIcon, Upload, Building, Save, FileImage } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import {db, storage, STOREINFO_COLLECTION} from "@/lib/firebase";
+import {db, STOREINFO_COLLECTION} from "@/lib/firebase";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { StoreInfo } from "@/types/storeInfo";
+import { useGoogleDrive } from "@/lib/googleDriveService";
+import { Badge } from "@/components/ui/badge";
 
 const Settings = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const { uploadImage } = useGoogleDrive();
   const [storeInfo, setStoreInfo] = useState<StoreInfo>({
     businessName: "",
     registeredName: "",
@@ -26,6 +28,20 @@ const Settings = () => {
     phone: "",
     address: "",
   });
+
+  // Initialize Google Drive
+  useEffect(() => {
+    const initDrive = async () => {
+      try {
+        const driveService = useGoogleDrive();
+        await driveService.initialize();
+      } catch (error) {
+        console.error("Failed to initialize Google Drive", error);
+      }
+    };
+    
+    initDrive();
+  }, []);
 
   // Load existing store info
   useEffect(() => {
@@ -88,11 +104,27 @@ const Settings = () => {
     try {
       let logoUrl = storeInfo.logoUrl;
 
-      // Upload logo if a new one is selected
+      // Upload logo to Google Drive if a new one is selected
       if (logoFile) {
-        const storageRef = ref(storage, `logos/${Date.now()}_${logoFile.name}`);
-        const uploadResult = await uploadBytes(storageRef, logoFile);
-        logoUrl = await getDownloadURL(uploadResult.ref);
+        try {
+          const businessId = storeInfo.id || 'new-business';
+          const newLogoUrl = await uploadImage(logoFile, 'business', businessId);
+          
+          if (newLogoUrl) {
+            logoUrl = newLogoUrl;
+          } else {
+            toast({
+              title: "Warning",
+              description: "Failed to upload logo to Google Drive. Using previous logo if available.",
+            });
+          }
+        } catch (error) {
+          console.error("Error uploading to Google Drive:", error);
+          toast({
+            title: "Warning",
+            description: "Failed to upload logo. Using previous logo if available.",
+          });
+        }
       }
 
       const updatedStoreInfo = {
@@ -167,7 +199,12 @@ const Settings = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="logo">Business Logo</Label>
+              <Label htmlFor="logo" className="flex items-center">
+                Business Logo
+                <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
+                  Google Drive
+                </Badge>
+              </Label>
               <div className="flex flex-col gap-4">
                 {logoPreview && (
                   <div className="border p-2 rounded-md w-40 h-40 flex items-center justify-center">

@@ -26,6 +26,9 @@ export const db = initializeFirestore(app, {
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// Add Drive API scope to Google provider (for Google Drive integration)
+googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+
 // Configure custom parameters for Google provider
 googleProvider.setCustomParameters({
   // Force account selection to prevent COOP issues
@@ -40,3 +43,7 @@ export const USER_COLLECTION = "users";
 export const CUSTOMER_COLLECTION = "customers";
 export const PRODUCT_COLLECTION = "products";
 export const STOREINFO_COLLECTION = "storeInfo";
+
+// Export the client ID for Google Drive API
+export const GOOGLE_CLIENT_ID = "274289865490-v9gnjr98qkbf2nj5qk4rb3tck1f0mkfd.apps.googleusercontent.com";
+

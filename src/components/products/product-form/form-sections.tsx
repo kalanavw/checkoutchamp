@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ImageIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 // Price and Discount Section
 export const PricingSection = ({ 
@@ -207,11 +208,13 @@ export const StockSection = ({
 export const ImageSection = ({ 
   imagePreview, 
   setImagePreview, 
-  setProductImage 
+  setProductImage,
+  uploadType = "firebase" // New prop to determine upload type (firebase or google-drive)
 }: { 
   imagePreview: string | null;
   setImagePreview: React.Dispatch<React.SetStateAction<string | null>>;
   setProductImage: React.Dispatch<React.SetStateAction<File | null>>;
+  uploadType?: "firebase" | "google-drive";
 }) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -231,7 +234,14 @@ export const ImageSection = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="productImage">Product Image</Label>
+      <Label htmlFor="productImage">
+        Product Image 
+        {uploadType === "google-drive" && (
+          <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
+            Google Drive
+          </Badge>
+        )}
+      </Label>
       <div className="flex flex-col space-y-2">
         {imagePreview && (
           <div className="p-2 border rounded-md w-40 h-40 flex items-center justify-center mb-2">

@@ -1,12 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import {db, PRODUCT_COLLECTION, storage} from "@/lib/firebase";
+import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Package, Save } from "lucide-react";
 import { 
   BasicInfoSection, 
@@ -15,6 +14,7 @@ import {
   CategorySection, 
   StockSection 
 } from "@/components/products/product-form/form-sections";
+import { useGoogleDrive } from "@/lib/googleDriveService";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ const AddProduct = () => {
   const [loading, setLoading] = useState(false);
   const [productImage, setProductImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const { uploadImage } = useGoogleDrive();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -35,6 +36,20 @@ const AddProduct = () => {
     barcode: "",
     discount: "",
   });
+
+  // Initialize Google Drive on component mount
+  useEffect(() => {
+    const initDrive = async () => {
+      try {
+        const driveService = useGoogleDrive();
+        await driveService.initialize();
+      } catch (error) {
+        console.error("Failed to initialize Google Drive", error);
+      }
+    };
+    
+    initDrive();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -64,11 +79,24 @@ const AddProduct = () => {
     try {
       let imageUrl = undefined;
       
-      // Upload image if one is selected
+      // Upload image to Google Drive if one is selected
       if (productImage) {
-        const storageRef = ref(storage, `products/${Date.now()}_${productImage.name}`);
-        const uploadResult = await uploadBytes(storageRef, productImage);
-        imageUrl = await getDownloadURL(uploadResult.ref);
+        try {
+          imageUrl = await uploadImage(productImage, 'product');
+          
+          if (!imageUrl) {
+            toast({
+              title: "Warning",
+              description: "Failed to upload image to Google Drive. Proceeding without image.",
+            });
+          }
+        } catch (error) {
+          console.error("Error uploading to Google Drive:", error);
+          toast({
+            title: "Warning",
+            description: "Failed to upload image. Proceeding without image.",
+          });
+        }
       }
       
       // Format keywords
@@ -136,6 +164,7 @@ const AddProduct = () => {
               imagePreview={imagePreview} 
               setImagePreview={setImagePreview} 
               setProductImage={setProductImage}
+              uploadType="google-drive"
             />
             <StockSection formData={formData} handleChange={handleChange} />
 
