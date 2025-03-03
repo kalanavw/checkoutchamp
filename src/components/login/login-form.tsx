@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
@@ -45,8 +46,10 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
     setLoading(true);
     
     try {
-      // For demo purposes, still allow admin/admin login
-      if (formData.username === "admin" && formData.password === "admin") {
+      // For demo purposes, handle admin/admin login
+      if (formData.username.toLowerCase() === "admin" && formData.password === "admin") {
+        console.log("Admin login detected");
+        
         const mockUser: AuthUser = {
           uid: "admin-mock-uid",
           email: "admin@example.com",
@@ -58,6 +61,15 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
         localStorage.setItem("user", JSON.stringify(mockUser));
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userRole", "admin");
+        localStorage.setItem("userEmail", "admin@example.com");
+        localStorage.setItem("userName", "Admin User");
+        localStorage.setItem("userId", "admin-mock-uid");
+        
+        toast({
+          title: "Login Successful",
+          description: "Welcome, Admin!",
+        });
+        
         navigate("/");
         return;
       }
