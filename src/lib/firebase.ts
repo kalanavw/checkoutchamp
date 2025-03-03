@@ -2,7 +2,6 @@
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache } from 'firebase/firestore';
 import { getAuth, GoogleAuthProvider, browserPopupRedirectResolver } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA_ReJ3a7qewp89vsp8-MpN_tfWI8oRUtI",
@@ -35,9 +34,6 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Initialize Storage
-export const storage = getStorage(app);
-
 // Define user collection name - centralized for consistency
 export const USER_COLLECTION = "users";
 export const CUSTOMER_COLLECTION = "customers";
@@ -46,4 +42,3 @@ export const STOREINFO_COLLECTION = "storeInfo";
 
 // Export the client ID for Google Drive API
 export const GOOGLE_CLIENT_ID = "274289865490-v9gnjr98qkbf2nj5qk4rb3tck1f0mkfd.apps.googleusercontent.com";
-

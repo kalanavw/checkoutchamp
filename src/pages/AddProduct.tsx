@@ -77,7 +77,7 @@ const AddProduct = () => {
     setLoading(true);
 
     try {
-      let imageUrl = undefined;
+      let imageUrl = null;
       
       // Upload image to Google Drive if one is selected
       if (productImage) {

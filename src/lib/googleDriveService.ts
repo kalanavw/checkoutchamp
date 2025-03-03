@@ -1,6 +1,5 @@
 
 import { getAuth } from 'firebase/auth';
-import { db, storage } from './firebase';
 
 export interface DriveUploadOptions {
   folderId?: string;
@@ -16,7 +15,7 @@ export class GoogleDriveService {
   private clientId: string;
   private scope: string;
   private tokenClient: any;
-  private isInitialized: boolean = false;
+  private _isInitialized: boolean = false;
   private accessToken: string | null = null;
 
   private constructor() {
@@ -34,8 +33,13 @@ export class GoogleDriveService {
     return GoogleDriveService.instance;
   }
 
+  // Getter for isInitialized property
+  public get isInitialized(): boolean {
+    return this._isInitialized;
+  }
+
   public async initialize(): Promise<boolean> {
-    if (this.isInitialized) return true;
+    if (this._isInitialized) return true;
 
     return new Promise<boolean>((resolve) => {
       const script = document.createElement('script');
@@ -59,12 +63,12 @@ export class GoogleDriveService {
                   if (tokenResponse && tokenResponse.access_token) {
                     this.accessToken = tokenResponse.access_token;
                   }
-                  this.isInitialized = true;
+                  this._isInitialized = true;
                   resolve(true);
                 },
               });
               // Initial check is complete
-              this.isInitialized = true;
+              this._isInitialized = true;
               resolve(true);
             };
             document.body.appendChild(authScript);
@@ -79,7 +83,7 @@ export class GoogleDriveService {
   }
 
   public async authenticate(): Promise<boolean> {
-    if (!this.isInitialized) {
+    if (!this._isInitialized) {
       await this.initialize();
     }
 
@@ -179,40 +183,6 @@ export class GoogleDriveService {
       return null;
     }
   }
-
-  // Hybrid approach - fallback to Firebase Storage if Google Drive fails
-  public async uploadWithFallback(
-    file: File,
-    storagePath: string,
-    options: DriveUploadOptions = {}
-  ): Promise<string | null> {
-    try {
-      // Try Google Drive first
-      const driveUrl = await this.uploadFile(file, options);
-      if (driveUrl) return driveUrl;
-
-      // Fallback to Firebase Storage
-      console.log("Falling back to Firebase Storage");
-      return this.uploadToFirebaseStorage(file, storagePath);
-    } catch (error) {
-      console.error('Error in upload with fallback:', error);
-      // Final fallback to Firebase Storage
-      return this.uploadToFirebaseStorage(file, storagePath);
-    }
-  }
-
-  private async uploadToFirebaseStorage(file: File, storagePath: string): Promise<string | null> {
-    try {
-      // Use existing Firebase Storage upload logic
-      const { ref, uploadBytes, getDownloadURL } = await import('firebase/storage');
-      const storageRef = ref(storage, storagePath);
-      const uploadResult = await uploadBytes(storageRef, file);
-      return await getDownloadURL(uploadResult.ref);
-    } catch (error) {
-      console.error('Error uploading to Firebase Storage:', error);
-      return null;
-    }
-  }
 }
 
 // Create a simplified hook for components to use
@@ -231,7 +201,6 @@ export const useGoogleDrive = () => {
     
     const timestamp = Date.now();
     const fileName = `${type}-${id || timestamp}-${file.name}`;
-    const storagePath = `${type}-images/${fileName}`;
     
     // Get folder ID based on type (you would configure these folder IDs)
     const folderMap: Record<string, string> = {
@@ -240,11 +209,14 @@ export const useGoogleDrive = () => {
       'business': 'your-drive-business-folder-id',
     };
     
-    return driveService.uploadWithFallback(file, storagePath, {
+    return driveService.uploadFile(file, {
       folderId: folderMap[type],
       fileName
     });
   };
   
-  return { uploadImage, initialize: driveService.initialize };
+  return { 
+    uploadImage, 
+    initialize: () => driveService.initialize(),
+  };
 };

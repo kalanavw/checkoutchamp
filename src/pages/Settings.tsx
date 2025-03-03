@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Settings as SettingsIcon, Upload, Building, Save, FileImage } from "lucide-react";
+import { Settings as SettingsIcon, Save, FileImage } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import {db, STOREINFO_COLLECTION} from "@/lib/firebase";
 import { collection, getDocs, doc, setDoc, updateDoc } from "firebase/firestore";
@@ -138,7 +137,7 @@ const Settings = () => {
         await updateDoc(doc(db, "storeInfo", storeInfo.id), updatedStoreInfo);
       } else {
         // Create new document
-        const docRef = await setDoc(doc(collection(db, "storeInfo")), updatedStoreInfo);
+        await setDoc(doc(collection(db, "storeInfo")), updatedStoreInfo);
       }
 
       // Update local state
