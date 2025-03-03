@@ -35,9 +35,9 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Cost Price</TableHead>
-            <TableHead>Selling Price</TableHead>
-            <TableHead>Discount</TableHead>
+            <TableHead>Cost Price(Rs)</TableHead>
+            <TableHead>Selling Price(Rs)</TableHead>
+            <TableHead>Discount(%)</TableHead>
             <TableHead>Stock</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Sub Category</TableHead>
@@ -64,13 +64,13 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
                   <span>{product.name}</span>
                 </div>
               </TableCell>
-              <TableCell>${product.costPrice.toFixed(2)}</TableCell>
-              <TableCell>${product.sellingPrice.toFixed(2)}</TableCell>
-              <TableCell>${product.discount} %</TableCell>
-              <TableCell>
+              <TableCell align={"right"}>{product.costPrice.toFixed(2)}</TableCell>
+              <TableCell align={"right"}>{product.sellingPrice.toFixed(2)}</TableCell>
+              <TableCell align={"center"}>{product.discount}</TableCell>
+              <TableCell align={"center"}>
                 {product.stock > 0 ? (
                   <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    {product.stock} in stock
+                    {product.stock}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
@@ -78,9 +78,19 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
                   </Badge>
                 )}
               </TableCell>
-              <TableCell>{product.category}</TableCell>
-              <TableCell>{product.subcategory}</TableCell>
-              <TableCell>{product.keywords.join(", ")}</TableCell>
+              <TableCell align={"center"}>{product.category}</TableCell>
+              <TableCell align={"center"}>{product.subcategory}</TableCell>
+              <TableCell align={"center"}>
+                {product.keywords.map((keyword, index) => (
+                    <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-accent text-green-700 border-green-200 mx-1"
+                    >
+                      {keyword.toUpperCase()}
+                    </Badge>
+                ))}
+              </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
                   <Button size="sm" variant="ghost" onClick={() => onView(product.id)}>
