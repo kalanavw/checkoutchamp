@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -88,7 +89,9 @@ const Products = () => {
 
       const fetchedProducts: Product[] = [];
       querySnapshot.forEach((doc) => {
-        const productData = doc.data();
+        // Type assertion to address the unknown type issue
+        const productData = doc.data() as Record<string, any>;
+        
         const productWithId: Product = {
           id: doc.id,
           name: productData.name || "",
