@@ -1,4 +1,3 @@
-
 // Import the relevant components and hooks
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -494,19 +493,20 @@ const UserManagement = () => {
       </Card>
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-secondary/30 border-theme-light">
-          <DialogHeader className="bg-gradient-to-r from-secondary to-secondary/50 rounded-t-lg p-4 -mt-4 -mx-4 mb-4">
-            <DialogTitle className="flex items-center gap-2 text-primary">
+        <DialogContent className="sm:max-w-md bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/40 dark:to-green-800/40 border-green-100 dark:border-green-900/50 shadow-xl">
+          <DialogHeader className="space-y-1 pb-2">
+            <DialogTitle className="text-2xl text-center text-green-800 dark:text-green-300 flex items-center justify-center gap-2">
               <UserPlus className="h-5 w-5" />
               Add New User
             </DialogTitle>
+            <p className="text-center text-gray-600 dark:text-gray-400">Enter user details to create an account</p>
           </DialogHeader>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="profile-image" className="flex items-center">
                 Profile Image
-                <Badge variant="outline" className="ml-2 bg-green-50 text-green-700">
+                <Badge variant="outline" className="ml-2 bg-green-50 text-green-700 dark:bg-green-900/60 dark:text-green-300">
                   JPEG Base64
                 </Badge>
               </Label>
@@ -516,7 +516,7 @@ const UserManagement = () => {
                     <img 
                       src={imagePreview} 
                       alt="Preview" 
-                      className="w-24 h-24 rounded-full object-cover border-2 border-primary/30"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-green-300 dark:border-green-600"
                     />
                     <Button
                       type="button"
@@ -529,8 +529,8 @@ const UserManagement = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center w-24 h-24 bg-secondary rounded-full border-2 border-dashed border-primary/30">
-                    <UserIcon className="h-10 w-10 text-primary/40" />
+                  <div className="flex items-center justify-center w-24 h-24 bg-green-100 dark:bg-green-800/40 rounded-full border-2 border-dashed border-green-300 dark:border-green-600">
+                    <UserIcon className="h-10 w-10 text-green-600 dark:text-green-400" />
                   </div>
                 )}
                 
@@ -547,7 +547,7 @@ const UserManagement = () => {
                     type="button"
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                    className="w-full border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-200/50 dark:hover:bg-green-800/50"
                   >
                     <ImageIcon className="mr-2 h-4 w-4" />
                     {selectedImage ? "Change Image" : "Upload Image"}
@@ -564,7 +564,7 @@ const UserManagement = () => {
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="Enter user's full name"
                 required
-                className="border-primary/30 focus:border-primary"
+                className="border-green-200 dark:border-green-800 focus:border-green-400 dark:focus:border-green-600"
               />
             </div>
             
@@ -582,7 +582,7 @@ const UserManagement = () => {
                 onChange={(e) => handleChange("email", e.target.value)}
                 placeholder="Enter email address"
                 required
-                className="border-primary/30 focus:border-primary"
+                className="border-green-200 dark:border-green-800 focus:border-green-400 dark:focus:border-green-600"
               />
             </div>
             
@@ -601,7 +601,7 @@ const UserManagement = () => {
                   onChange={(e) => handleChange("password", e.target.value)}
                   placeholder="Enter password"
                   required
-                  className="pr-10 border-primary/30 focus:border-primary"
+                  className="pr-10 border-green-200 dark:border-green-800 focus:border-green-400 dark:focus:border-green-600"
                 />
                 <button
                   type="button"
@@ -623,7 +623,7 @@ const UserManagement = () => {
                 value={formData.role}
                 onValueChange={(value: UserRole) => handleChange("role", value)}
               >
-                <SelectTrigger id="role" className="border-primary/30">
+                <SelectTrigger id="role" className="border-green-200 dark:border-green-800 focus:border-green-400 dark:focus:border-green-600">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -644,13 +644,13 @@ const UserManagement = () => {
             </div>
             
             <DialogFooter className="mt-4">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button type="button" variant="outline" className="border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 hover:bg-green-200/50 dark:hover:bg-green-800/50" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
               <Button 
                 type="submit" 
                 disabled={loading} 
-                className="bg-primary hover:bg-primary/80"
+                className="bg-green-600 hover:bg-green-700 text-white"
               >
                 {loading ? "Creating..." : "Create User"}
               </Button>
