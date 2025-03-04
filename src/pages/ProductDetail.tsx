@@ -9,7 +9,7 @@ import { Product } from "@/types/product";
 
 // Imported components
 import { ProductDetailHeader } from "@/components/product/ProductDetailHeader";
-import { ProductInfo } from "@/components/product/ProductInfo";
+import ProductInfo from "@/components/product/ProductInfo";
 import { QuickActions } from "@/components/product/QuickActions";
 import { SalesInformation } from "@/components/product/SalesInformation";
 import { ProductNotFound } from "@/components/product/ProductNotFound";
