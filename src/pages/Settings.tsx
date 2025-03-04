@@ -1,5 +1,3 @@
-
-import { useEffect } from "react";
 import { Settings as SettingsIcon } from "lucide-react";
 import StoreInfoCard from "@/components/settings/StoreInfoCard";
 import SystemPreferencesCard from "@/components/settings/SystemPreferencesCard";

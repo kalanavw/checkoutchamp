@@ -6,16 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { db, USER_COLLECTION } from "@/lib/firebase";
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  query, 
-  orderBy, 
-  serverTimestamp, 
-  where
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  updateDoc,
+  query,
+  orderBy,
+  serverTimestamp,
+  where, Timestamp
 } from "firebase/firestore";
 import { 
   Dialog, 
@@ -490,7 +490,11 @@ const UserManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {user?.createdAt.toLocaleDateString()}
+                        {user?.createdAt
+                            ? user.createdAt instanceof Timestamp
+                                ? user.createdAt.toDate().toLocaleDateString() // Firestore Timestamp
+                                : new Date(user.createdAt).toLocaleDateString() // ISO String
+                            : "N/A"}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button 

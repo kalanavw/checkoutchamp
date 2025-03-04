@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { initializeFirestore, CACHE_SIZE_UNLIMITED, persistentLocalCache } from 'firebase/firestore';
-import { getAuth, GoogleAuthProvider, browserPopupRedirectResolver } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: "AIzaSyA_ReJ3a7qewp89vsp8-MpN_tfWI8oRUtI",
@@ -40,5 +40,3 @@ export const CUSTOMER_COLLECTION = "customers";
 export const PRODUCT_COLLECTION = "products";
 export const STOREINFO_COLLECTION = "storeInfo";
 
-// Export the client ID for Google Drive API
-export const GOOGLE_CLIENT_ID = "274289865490-v9gnjr98qkbf2nj5qk4rb3tck1f0mkfd.apps.googleusercontent.com";

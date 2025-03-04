@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, Image as ImageIcon, X } from "lucide-react";
 import { auth, db, USER_COLLECTION } from "@/lib/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {signInWithEmailAndPassword, createUserWithEmailAndPassword,} from "firebase/auth";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
+import { FirebaseError } from "firebase/app";
 
 interface LoginFormProps {
   onGoogleLogin: () => Promise<void>;
@@ -34,15 +35,15 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const userDocRef = doc(db, USER_COLLECTION, userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
-      
+
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        
+
         if (userData.active === false) {
           await auth.signOut();
           toast({
@@ -53,7 +54,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
           setLoading(false);
           return;
         }
-        
+
         // Store user info
         localStorage.setItem("isLoggedIn", "true");
         localStorage.setItem("userRole", userData.role || "cashier");
@@ -61,12 +62,12 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
         localStorage.setItem("userName", userData.name || "");
         localStorage.setItem("userImage", userData.photoURL || "");
         localStorage.setItem("userId", userCredential.user.uid);
-        
+
         // Update last login
         await setDoc(userDocRef, {
           lastLogin: serverTimestamp()
         }, { merge: true });
-        
+
         navigate("/");
       } else {
         toast({
@@ -97,32 +98,13 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
       });
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
-      // Check if user already exists with this email
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          toast({
-            title: "Account Exists",
-            description: "An account with this email already exists. Please log in.",
-            variant: "destructive",
-          });
-          setShowRegister(false);
-          return null;
-        })
-        .catch(async () => {
-          // User doesn't exist, proceed with registration
-          const { createUserWithEmailAndPassword } = await import("firebase/auth");
-          return createUserWithEmailAndPassword(auth, email, password);
-        });
-      
-      if (!userCredential) {
-        setLoading(false);
-        return;
-      }
-      
+      // Attempt to create a new user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
       // Process and upload user image if available
       let photoURL = null;
       if (userImage) {
@@ -136,50 +118,61 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
           });
         }
       }
-      
+
       // Create user document in Firestore
       const userDocRef = doc(db, USER_COLLECTION, userCredential.user.uid);
       await setDoc(userDocRef, {
         name,
         email,
         role: "cashier", // Default role for new users
-        active: true,
+        active: false,
         photoURL,
         createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp()
+        lastLogin: serverTimestamp(),
       });
-      
-      // Store user info
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userRole", "cashier");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userName", name);
-      localStorage.setItem("userImage", photoURL || "");
-      localStorage.setItem("userId", userCredential.user.uid);
-      
+
       toast({
         title: "Success",
         description: "Account created successfully.",
       });
-      
+
       navigate("/");
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast({
-        title: "Registration Failed",
-        description: "Failed to create account. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
+    } catch (error: unknown) {
+      if (error instanceof FirebaseError) {
+        if (error.code === "auth/email-already-in-use") {
+          toast({
+            title: "Account Exists",
+            description: "An account with this email already exists. Please log in.",
+            variant: "destructive",
+          });
+          setShowRegister(false);
+        } else {
+          console.error("Firebase error:", error.code, error.message);
+          toast({
+            title: "Registration Failed",
+            description: "Failed to create account. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        console.error("Unknown error:", error);
+        toast({
+          title: "Unexpected Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }  finally {
       setLoading(false);
     }
   };
+
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setUserImage(file);
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
@@ -234,7 +227,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
               </button>
             </div>
           </div>
-          
+
           <Button
             type="submit"
             className="w-full bg-green-600 hover:bg-green-700 text-white"
@@ -242,14 +235,14 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
           >
             {loading ? "Signing in..." : "Sign In"}
           </Button>
-          
+
           <div className="relative flex items-center justify-center py-2">
             <div className="border-t border-gray-300 dark:border-gray-700 absolute w-full"></div>
             <span className="bg-white dark:bg-green-900/40 px-2 text-sm text-gray-500 dark:text-gray-400 relative">
               or
             </span>
           </div>
-          
+
           <Button
             type="button"
             variant="outline"
@@ -281,12 +274,12 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
               </>
             )}
           </Button>
-          
+
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{" "}
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 className="p-0 h-auto text-green-600 dark:text-green-400"
                 onClick={() => setShowRegister(true)}
               >
@@ -329,7 +322,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
                   </AvatarFallback>
                 </Avatar>
               )}
-              
+
               <div className="flex items-center gap-2 w-full">
                 <input
                   ref={fileInputRef}
@@ -351,7 +344,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="name">Full Name</Label>
             <Input
@@ -364,7 +357,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
               className="border-green-100 dark:border-green-800"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="reg-email">Email</Label>
             <Input
@@ -377,7 +370,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
               className="border-green-100 dark:border-green-800"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="reg-password">Password</Label>
             <div className="relative">
@@ -399,7 +392,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
               </button>
             </div>
           </div>
-          
+
           <Button
             type="submit"
             className="w-full bg-green-600 hover:bg-green-700 text-white"
@@ -407,12 +400,12 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
           >
             {loading ? "Creating Account..." : "Create Account"}
           </Button>
-          
+
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{" "}
-              <Button 
-                variant="link" 
+              <Button
+                variant="link"
                 className="p-0 h-auto text-green-600 dark:text-green-400"
                 onClick={() => setShowRegister(false)}
               >

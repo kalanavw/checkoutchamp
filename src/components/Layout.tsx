@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
+import {db, auth, STOREINFO_COLLECTION} from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthUser } from "@/types/authUser";
@@ -56,7 +56,7 @@ const Layout = () => {
   useEffect(() => {
     const fetchStoreInfo = async () => {
       try {
-        const storeSnapshot = await getDocs(collection(db, "storeInfo"));
+        const storeSnapshot = await getDocs(collection(db, STOREINFO_COLLECTION));
         if (!storeSnapshot.empty) {
           const storeData = storeSnapshot.docs[0].data() as StoreInfo;
           storeData.id = storeSnapshot.docs[0].id;
@@ -120,7 +120,7 @@ const Layout = () => {
             {storeInfo?.logoUrl && (
               <img 
                 src={storeInfo.logoUrl} 
-                alt={storeInfo.businessName || "Business Logo"} 
+                alt={storeInfo.businessName || "Business Logo"}
                 className="h-8 w-8 object-contain"
               />
             )}

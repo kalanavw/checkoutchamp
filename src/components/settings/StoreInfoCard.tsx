@@ -1,11 +1,8 @@
-
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Building, Save, FileImage } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { StoreInfo } from "@/types/storeInfo";
 
 interface StoreInfoCardProps {
@@ -61,9 +58,6 @@ const StoreInfoCard = ({
         <div className="space-y-2">
           <Label htmlFor="logo" className="flex items-center">
             Business Logo
-            <Badge variant="outline" className="ml-2 bg-green-50 text-green-700">
-              JPEG Base64
-            </Badge>
           </Label>
           <div className="flex flex-col gap-4">
             {logoPreview && (
