@@ -472,7 +472,7 @@ const UserManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {user.createdAt.toLocaleDateString()}
+                        {user?.createdAt.toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button 
