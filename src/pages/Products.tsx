@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -90,16 +89,29 @@ const Products = () => {
       const fetchedProducts: Product[] = [];
       querySnapshot.forEach((doc) => {
         const productData = doc.data();
-        fetchedProducts.push({ 
-          id: doc.id, 
-          ...(productData as Omit<Product, 'id'>)
-        });
+        const productWithId: Product = {
+          id: doc.id,
+          name: productData.name || "",
+          costPrice: productData.costPrice || 0,
+          sellingPrice: productData.sellingPrice || 0,
+          stock: productData.stock || 0,
+          category: productData.category || "",
+          subcategory: productData.subcategory || "",
+          location: productData.location || "loc-1",
+          keywords: productData.keywords || [],
+          discount: productData.discount,
+          grnNumber: productData.grnNumber,
+          barcode: productData.barcode,
+          imageUrl: productData.imageUrl,
+          description: productData.description,
+          sku: productData.sku,
+          specifications: productData.specifications
+        };
+        
+        fetchedProducts.push(productWithId);
         
         // Cache individual product
-        saveToCache(`${PRODUCTS_CACHE_KEY}_${doc.id}`, { 
-          id: doc.id, 
-          ...productData 
-        });
+        saveToCache(`${PRODUCTS_CACHE_KEY}_${doc.id}`, productWithId);
       });
 
       if (next) {
