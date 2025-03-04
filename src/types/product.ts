@@ -13,4 +13,7 @@ export interface Product {
   grnNumber?: string;
   barcode?: string;
   imageUrl?: string;
+  description?: string;
+  sku?: string;
+  specifications?: Record<string, string>;
 }
