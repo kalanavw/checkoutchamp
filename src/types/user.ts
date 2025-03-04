@@ -9,6 +9,6 @@ export interface User {
   role: UserRole;
   active: boolean;
   createdAt: Date;
-  photoURL?: string;
+  photoURL?: string; // Store base64 image or URL from Google
   lastLogin?: Date;
 }

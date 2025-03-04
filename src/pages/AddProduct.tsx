@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ const AddProduct = () => {
       
       if (productImage) {
         try {
+          // Optimize image and convert to base64
           imageUrl = await optimizeImageToBase64(productImage);
         } catch (error) {
           console.error("Error converting image to base64:", error);
