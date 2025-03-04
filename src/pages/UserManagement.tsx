@@ -1,4 +1,5 @@
 
+// Import the relevant components and hooks
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +18,6 @@ import {
   serverTimestamp, 
   where
 } from "firebase/firestore";
-import { useGoogleDrive } from "@/lib/googleDriveService";
 import { 
   Dialog, 
   DialogContent, 
@@ -59,6 +59,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import { optimizeImageToBase64 } from "@/utils/imageUtils";
+import { isCacheValid, saveToCache, getFromCache } from "@/utils/cacheUtils";
+
+// Cache key
+const USERS_CACHE_KEY = "users_cache";
 
 interface UserData {
   id: string;
@@ -83,7 +88,6 @@ const UserManagement = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { uploadImage } = useGoogleDrive();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -94,23 +98,23 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-    
-    // Initialize Google Drive
-    const initDrive = async () => {
-      try {
-        const driveService = useGoogleDrive();
-        await driveService.initialize();
-      } catch (error) {
-        console.error("Failed to initialize Google Drive", error);
-      }
-    };
-    
-    initDrive();
   }, []);
 
   const fetchUsers = async () => {
     setIsRefreshing(true);
     try {
+      // Try to get from cache first
+      if (isCacheValid(USERS_CACHE_KEY)) {
+        const cachedUsers = getFromCache<UserData[]>(USERS_CACHE_KEY);
+        if (cachedUsers) {
+          setUsers(cachedUsers);
+          setIsRefreshing(false);
+          console.log("Using cached users");
+          return;
+        }
+      }
+      
+      // Fetch from Firestore if cache is invalid or doesn't exist
       const usersQuery = query(collection(db, USER_COLLECTION), orderBy("createdAt", "desc"));
       const snapshot = await getDocs(usersQuery);
       
@@ -130,6 +134,9 @@ const UserManagement = () => {
       });
       
       setUsers(fetchedUsers);
+      
+      // Save to cache
+      saveToCache(USERS_CACHE_KEY, fetchedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
@@ -167,14 +174,14 @@ const UserManagement = () => {
     }
   };
 
-  const uploadUserImage = async (userId: string): Promise<string | null> => {
+  const uploadUserImage = async (): Promise<string | null> => {
     if (!selectedImage) return null;
     
     try {
-      // Use Google Drive service
-      return await uploadImage(selectedImage, 'user', userId);
+      // Convert to base64
+      return await optimizeImageToBase64(selectedImage);
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error processing image:", error);
       throw error;
     }
   };
@@ -210,6 +217,7 @@ const UserManagement = () => {
       const newUser = {
         ...formData,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       };
       
       const docRef = await addDoc(collection(db, USER_COLLECTION), newUser);
@@ -219,7 +227,7 @@ const UserManagement = () => {
       let photoURL = "";
       if (selectedImage) {
         try {
-          photoURL = await uploadUserImage(docRef.id) || "";
+          photoURL = await uploadUserImage() || "";
           await updateDoc(doc(db, USER_COLLECTION, docRef.id), { photoURL });
         } catch (error) {
           console.error("Error with user image:", error);
@@ -237,7 +245,10 @@ const UserManagement = () => {
         photoURL,
       };
       
-      setUsers([userWithId, ...users]);
+      // Update users array and cache
+      const updatedUsers = [userWithId, ...users];
+      setUsers(updatedUsers);
+      saveToCache(USERS_CACHE_KEY, updatedUsers);
       
       toast({
         title: "Success",
@@ -268,7 +279,7 @@ const UserManagement = () => {
   const getRoleBadge = (role: UserRole) => {
     switch (role) {
       case "admin":
-        return <Badge className="bg-purple-600">Admin</Badge>;
+        return <Badge className="bg-primary">Admin</Badge>;
       case "cashier":
         return <Badge className="bg-blue-600">Cashier</Badge>;
       case "helper":
@@ -281,12 +292,16 @@ const UserManagement = () => {
   const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
     try {
       await updateDoc(doc(db, USER_COLLECTION, userId), {
-        active: !currentStatus
+        active: !currentStatus,
+        updatedAt: serverTimestamp()
       });
       
-      setUsers(users.map(user => 
+      // Update local state and cache
+      const updatedUsers = users.map(user => 
         user.id === userId ? { ...user, active: !currentStatus } : user
-      ));
+      );
+      setUsers(updatedUsers);
+      saveToCache(USERS_CACHE_KEY, updatedUsers);
       
       toast({
         title: "User Status Updated",
@@ -305,12 +320,16 @@ const UserManagement = () => {
   const updateUserRole = async (userId: string, newRole: UserRole) => {
     try {
       await updateDoc(doc(db, USER_COLLECTION, userId), {
-        role: newRole
+        role: newRole,
+        updatedAt: serverTimestamp()
       });
       
-      setUsers(users.map(user => 
+      // Update local state and cache
+      const updatedUsers = users.map(user => 
         user.id === userId ? { ...user, role: newRole } : user
-      ));
+      );
+      setUsers(updatedUsers);
+      saveToCache(USERS_CACHE_KEY, updatedUsers);
       
       toast({
         title: "User Role Updated",
@@ -335,42 +354,43 @@ const UserManagement = () => {
   return (
     <div className="p-6 space-y-6 w-full animate-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-semibold text-green-800 dark:text-green-300">User Management</h1>
+        <h1 className="text-3xl font-semibold text-primary">User Management</h1>
         <div className="flex gap-2">
           <Button 
             onClick={fetchUsers} 
             variant="outline"
             disabled={isRefreshing}
+            className="border-primary/30 hover:bg-primary/10"
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => setIsDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
+          <Button onClick={() => setIsDialogOpen(true)} className="bg-primary hover:bg-primary/80">
             <UserPlus className="mr-2 h-4 w-4" />
             Add User
           </Button>
         </div>
       </div>
 
-      <Card className="shadow-md">
-        <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-t-lg pb-2">
+      <Card className="shadow-md bg-secondary/30 border-theme-light">
+        <CardHeader className="bg-gradient-to-r from-secondary to-secondary/50 rounded-t-lg pb-2">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-            <CardTitle className="text-green-800 dark:text-green-300">System Users</CardTitle>
+            <CardTitle className="text-primary">System Users</CardTitle>
             <div className="relative max-w-xs">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
               <Input
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-primary/30 focus:border-primary"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="rounded-md border overflow-hidden">
+          <div className="rounded-md border overflow-hidden border-primary/30">
             <Table>
-              <TableHeader className="bg-green-50 dark:bg-green-900/10">
+              <TableHeader className="bg-secondary">
                 <TableRow>
                   <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
@@ -389,7 +409,7 @@ const UserManagement = () => {
                         <Button 
                           variant="link" 
                           onClick={() => setIsDialogOpen(true)} 
-                          className="mt-2 text-green-600"
+                          className="mt-2 text-primary"
                         >
                           Add your first user
                         </Button>
@@ -404,7 +424,7 @@ const UserManagement = () => {
                   </TableRow>
                 ) : (
                   filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-green-50/50 dark:hover:bg-green-900/10">
+                    <TableRow key={user.id} className="hover:bg-secondary/50">
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full overflow-hidden">
@@ -419,7 +439,7 @@ const UserManagement = () => {
                               </Avatar>
                             )}
                           </div>
-                          <Button variant="link" className="p-0 h-auto font-medium" onClick={() => navigate(`/user/${user.id}`)}>
+                          <Button variant="link" className="p-0 h-auto font-medium text-primary" onClick={() => navigate(`/user/${user.id}`)}>
                             {user.name}
                           </Button>
                         </div>
@@ -430,7 +450,7 @@ const UserManagement = () => {
                           value={user.role}
                           onValueChange={(value: UserRole) => updateUserRole(user.id, value)}
                         >
-                          <SelectTrigger className="h-8 w-32">
+                          <SelectTrigger className="h-8 w-32 border-primary/30">
                             <SelectValue placeholder={getRoleBadge(user.role)} />
                           </SelectTrigger>
                           <SelectContent>
@@ -446,7 +466,7 @@ const UserManagement = () => {
                             checked={user.active} 
                             onCheckedChange={() => toggleUserStatus(user.id, user.active)}
                           />
-                          <span className={`text-sm ${user.active ? 'text-green-600' : 'text-red-500'}`}>
+                          <span className={`text-sm ${user.active ? 'text-primary' : 'text-red-500'}`}>
                             {user.active ? 'Active' : 'Inactive'}
                           </span>
                         </div>
@@ -459,6 +479,7 @@ const UserManagement = () => {
                           variant="ghost" 
                           size="sm"
                           onClick={() => navigate(`/user/${user.id}`)}
+                          className="hover:bg-primary/10 text-primary"
                         >
                           View
                         </Button>
@@ -473,9 +494,9 @@ const UserManagement = () => {
       </Card>
       
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="sm:max-w-md bg-secondary/30 border-theme-light">
+          <DialogHeader className="bg-gradient-to-r from-secondary to-secondary/50 rounded-t-lg p-4 -mt-4 -mx-4 mb-4">
+            <DialogTitle className="flex items-center gap-2 text-primary">
               <UserPlus className="h-5 w-5" />
               Add New User
             </DialogTitle>
@@ -485,8 +506,8 @@ const UserManagement = () => {
             <div className="space-y-2">
               <Label htmlFor="profile-image" className="flex items-center">
                 Profile Image
-                <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
-                  Google Drive
+                <Badge variant="outline" className="ml-2 bg-green-50 text-green-700">
+                  JPEG Base64
                 </Badge>
               </Label>
               <div className="flex flex-col items-center gap-4">
@@ -495,7 +516,7 @@ const UserManagement = () => {
                     <img 
                       src={imagePreview} 
                       alt="Preview" 
-                      className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                      className="w-24 h-24 rounded-full object-cover border-2 border-primary/30"
                     />
                     <Button
                       type="button"
@@ -508,8 +529,8 @@ const UserManagement = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600">
-                    <UserIcon className="h-10 w-10 text-gray-400" />
+                  <div className="flex items-center justify-center w-24 h-24 bg-secondary rounded-full border-2 border-dashed border-primary/30">
+                    <UserIcon className="h-10 w-10 text-primary/40" />
                   </div>
                 )}
                 
@@ -526,7 +547,7 @@ const UserManagement = () => {
                     type="button"
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full"
+                    className="w-full border-primary/30 text-primary hover:bg-primary/10"
                   >
                     <ImageIcon className="mr-2 h-4 w-4" />
                     {selectedImage ? "Change Image" : "Upload Image"}
@@ -543,6 +564,7 @@ const UserManagement = () => {
                 onChange={(e) => handleChange("name", e.target.value)}
                 placeholder="Enter user's full name"
                 required
+                className="border-primary/30 focus:border-primary"
               />
             </div>
             
@@ -560,6 +582,7 @@ const UserManagement = () => {
                 onChange={(e) => handleChange("email", e.target.value)}
                 placeholder="Enter email address"
                 required
+                className="border-primary/30 focus:border-primary"
               />
             </div>
             
@@ -578,7 +601,7 @@ const UserManagement = () => {
                   onChange={(e) => handleChange("password", e.target.value)}
                   placeholder="Enter password"
                   required
-                  className="pr-10"
+                  className="pr-10 border-primary/30 focus:border-primary"
                 />
                 <button
                   type="button"
@@ -600,7 +623,7 @@ const UserManagement = () => {
                 value={formData.role}
                 onValueChange={(value: UserRole) => handleChange("role", value)}
               >
-                <SelectTrigger id="role">
+                <SelectTrigger id="role" className="border-primary/30">
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
@@ -627,7 +650,7 @@ const UserManagement = () => {
               <Button 
                 type="submit" 
                 disabled={loading} 
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-primary hover:bg-primary/80"
               >
                 {loading ? "Creating..." : "Create User"}
               </Button>

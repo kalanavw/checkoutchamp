@@ -28,19 +28,19 @@ const StoreInfoCard = ({
   onSave
 }: StoreInfoCardProps) => {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="bg-secondary/30 border-theme-light">
+      <CardHeader className="bg-gradient-to-r from-secondary to-secondary/50 rounded-t-lg">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5 text-green-700" />
+              <Building className="h-5 w-5 text-primary" />
               Store Information
             </CardTitle>
             <CardDescription>Manage your store details and contact information</CardDescription>
           </div>
           <Button 
             onClick={onSave} 
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-primary hover:bg-primary/80"
             disabled={loading}
           >
             {loading ? (
@@ -61,13 +61,13 @@ const StoreInfoCard = ({
         <div className="space-y-2">
           <Label htmlFor="logo" className="flex items-center">
             Business Logo
-            <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
-              Google Drive
+            <Badge variant="outline" className="ml-2 bg-green-50 text-green-700">
+              JPEG Base64
             </Badge>
           </Label>
           <div className="flex flex-col gap-4">
             {logoPreview && (
-              <div className="border p-2 rounded-md w-40 h-40 flex items-center justify-center">
+              <div className="border p-2 rounded-md w-40 h-40 flex items-center justify-center border-primary/30">
                 <img 
                   src={logoPreview} 
                   alt="Business Logo" 
@@ -87,7 +87,7 @@ const StoreInfoCard = ({
                 type="button" 
                 variant="outline"
                 onClick={() => document.getElementById('logo')?.click()}
-                className="gap-2"
+                className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
               >
                 <FileImage className="h-4 w-4" />
                 {logoPreview ? "Change Logo" : "Upload Logo"}
@@ -97,7 +97,7 @@ const StoreInfoCard = ({
                   type="button" 
                   variant="outline" 
                   onClick={onRemoveLogo}
-                  className="text-red-500 hover:text-red-600"
+                  className="text-red-500 hover:text-red-600 border-red-300"
                 >
                   Remove
                 </Button>
@@ -115,6 +115,7 @@ const StoreInfoCard = ({
               onChange={(e) => onInputChange("businessName", e.target.value)}
               placeholder="Enter business name"
               required
+              className="border-primary/30 focus:border-primary"
             />
           </div>
           <div className="space-y-2">
@@ -124,6 +125,7 @@ const StoreInfoCard = ({
               value={storeInfo.registeredName}
               onChange={(e) => onInputChange("registeredName", e.target.value)}
               placeholder="Enter registered name"
+              className="border-primary/30 focus:border-primary"
             />
           </div>
         </div>
@@ -135,6 +137,7 @@ const StoreInfoCard = ({
             value={storeInfo.registrationId}
             onChange={(e) => onInputChange("registrationId", e.target.value)}
             placeholder="Enter business registration ID"
+            className="border-primary/30 focus:border-primary"
           />
         </div>
 
@@ -146,6 +149,7 @@ const StoreInfoCard = ({
             value={storeInfo.email}
             onChange={(e) => onInputChange("email", e.target.value)}
             placeholder="Enter email"
+            className="border-primary/30 focus:border-primary"
           />
         </div>
         
@@ -157,6 +161,7 @@ const StoreInfoCard = ({
             value={storeInfo.phone}
             onChange={(e) => onInputChange("phone", e.target.value)}
             placeholder="Enter phone number"
+            className="border-primary/30 focus:border-primary"
           />
         </div>
         
@@ -167,6 +172,7 @@ const StoreInfoCard = ({
             value={storeInfo.address}
             onChange={(e) => onInputChange("address", e.target.value)}
             placeholder="Enter store address"
+            className="border-primary/30 focus:border-primary"
           />
         </div>
       </CardContent>

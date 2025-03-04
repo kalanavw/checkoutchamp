@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
+import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Package, Save } from "lucide-react";
 import { 
@@ -14,7 +14,11 @@ import {
   CategorySection, 
   StockSection 
 } from "@/components/products/product-form/form-sections";
-import { useGoogleDrive } from "@/lib/googleDriveService";
+import { optimizeImageToBase64 } from "@/utils/imageUtils";
+import { saveToCache } from "@/utils/cacheUtils";
+
+// Cache key prefix for products
+const PRODUCTS_CACHE_KEY = "products_cache";
 
 const AddProduct = () => {
   const navigate = useNavigate();
@@ -22,7 +26,6 @@ const AddProduct = () => {
   const [loading, setLoading] = useState(false);
   const [productImage, setProductImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const { uploadImage } = useGoogleDrive();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -36,20 +39,6 @@ const AddProduct = () => {
     barcode: "",
     discount: "",
   });
-
-  // Initialize Google Drive on component mount
-  useEffect(() => {
-    const initDrive = async () => {
-      try {
-        const driveService = useGoogleDrive();
-        await driveService.initialize();
-      } catch (error) {
-        console.error("Failed to initialize Google Drive", error);
-      }
-    };
-    
-    initDrive();
-  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -79,22 +68,16 @@ const AddProduct = () => {
     try {
       let imageUrl = null;
       
-      // Upload image to Google Drive if one is selected
+      // Convert image to base64 if one is selected
       if (productImage) {
         try {
-          imageUrl = await uploadImage(productImage, 'product');
-          
-          if (!imageUrl) {
-            toast({
-              title: "Warning",
-              description: "Failed to upload image to Google Drive. Proceeding without image.",
-            });
-          }
+          // Optimize and convert to base64
+          imageUrl = await optimizeImageToBase64(productImage);
         } catch (error) {
-          console.error("Error uploading to Google Drive:", error);
+          console.error("Error converting image to base64:", error);
           toast({
             title: "Warning",
-            description: "Failed to upload image. Proceeding without image.",
+            description: "Failed to process image. Proceeding without image.",
           });
         }
       }
@@ -106,8 +89,7 @@ const AddProduct = () => {
         .map((k) => k.trim())
         .filter((k) => k.length > 0);
       
-      // Add product to Firestore
-      await addDoc(collection(db, PRODUCT_COLLECTION), {
+      const productData = {
         name: formData.name,
         costPrice: parseFloat(formData.costPrice),
         sellingPrice: parseFloat(formData.sellingPrice),
@@ -120,7 +102,25 @@ const AddProduct = () => {
         barcode: formData.barcode || null,
         imageUrl: imageUrl || null,
         createdAt: serverTimestamp(),
-      });
+        updatedAt: serverTimestamp(),
+      };
+      
+      // Add product to Firestore
+      const docRef = await addDoc(collection(db, PRODUCT_COLLECTION), productData);
+      
+      // Add to cache with ID
+      const productWithId = {
+        ...productData,
+        id: docRef.id,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      // Update the products list cache to indicate it needs refreshing
+      saveToCache(`${PRODUCTS_CACHE_KEY}_lastUpdate`, { timestamp: Date.now() }, Date.now());
+      
+      // Cache the individual product
+      saveToCache(`${PRODUCTS_CACHE_KEY}_${docRef.id}`, productWithId, Date.now());
 
       toast({
         title: "Success",
@@ -147,8 +147,8 @@ const AddProduct = () => {
         <h1 className="text-3xl font-bold">Add New Product</h1>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="bg-secondary/30 border-theme-light">
+        <CardHeader className="bg-gradient-to-r from-secondary to-secondary/50 rounded-t-lg">
           <CardTitle>Product Information</CardTitle>
         </CardHeader>
         <CardContent>
@@ -164,7 +164,7 @@ const AddProduct = () => {
               imagePreview={imagePreview} 
               setImagePreview={setImagePreview} 
               setProductImage={setProductImage}
-              uploadType="google-drive"
+              uploadType="base64"
             />
             <StockSection formData={formData} handleChange={handleChange} />
 
@@ -176,7 +176,7 @@ const AddProduct = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/80">
                 {loading ? (
                   <>
                     <span className="mr-2">Saving...</span>

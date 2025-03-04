@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -35,6 +34,7 @@ export const PricingSection = ({
         value={formData.costPrice}
         onChange={handleChange}
         required
+        className="border-primary/30 focus:border-primary"
       />
     </div>
 
@@ -52,6 +52,7 @@ export const PricingSection = ({
         value={formData.sellingPrice}
         onChange={handleChange}
         required
+        className="border-primary/30 focus:border-primary"
       />
     </div>
 
@@ -67,6 +68,7 @@ export const PricingSection = ({
         placeholder="Enter discount percentage"
         value={formData.discount}
         onChange={handleChange}
+        className="border-primary/30 focus:border-primary"
       />
     </div>
   </div>
@@ -209,12 +211,12 @@ export const ImageSection = ({
   imagePreview, 
   setImagePreview, 
   setProductImage,
-  uploadType = "firebase" // New prop to determine upload type (firebase or google-drive)
+  uploadType = "base64" // Changed default to "base64"
 }: { 
   imagePreview: string | null;
   setImagePreview: React.Dispatch<React.SetStateAction<string | null>>;
   setProductImage: React.Dispatch<React.SetStateAction<File | null>>;
-  uploadType?: "firebase" | "google-drive";
+  uploadType?: "firebase" | "google-drive" | "base64";
 }) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -236,15 +238,13 @@ export const ImageSection = ({
     <div className="space-y-2">
       <Label htmlFor="productImage">
         Product Image 
-        {uploadType === "google-drive" && (
-          <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
-            Google Drive
-          </Badge>
-        )}
+        <Badge variant="outline" className="ml-2 bg-green-50 text-green-700">
+          JPEG Base64
+        </Badge>
       </Label>
       <div className="flex flex-col space-y-2">
         {imagePreview && (
-          <div className="p-2 border rounded-md w-40 h-40 flex items-center justify-center mb-2">
+          <div className="p-2 border rounded-md w-40 h-40 flex items-center justify-center mb-2 border-primary/30">
             <img 
               src={imagePreview} 
               alt="Product preview" 
@@ -264,7 +264,7 @@ export const ImageSection = ({
             type="button" 
             variant="outline"
             onClick={() => document.getElementById('productImage')?.click()}
-            className="gap-2"
+            className="gap-2 border-primary/30 text-primary hover:bg-primary/10"
           >
             <ImageIcon className="h-4 w-4" />
             {imagePreview ? "Change Image" : "Upload Image"}
@@ -277,7 +277,7 @@ export const ImageSection = ({
                 setImagePreview(null);
                 setProductImage(null);
               }}
-              className="text-red-500 hover:text-red-600"
+              className="text-red-500 hover:text-red-600 border-red-300"
             >
               Remove
             </Button>

@@ -3,11 +3,17 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc, getDoc } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { ProductsTable } from "@/components/products/ProductsTable";
 import { SearchBar } from "@/components/products/SearchBar";
 import { Plus, ListFilter, RefreshCw } from "lucide-react";
+import { isCacheValid, saveToCache, getFromCache, clearCache } from "@/utils/cacheUtils";
+
+// Cache keys
+const PRODUCTS_CACHE_KEY = "products_cache";
+const PRODUCTS_LIST_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_list`;
+const PRODUCTS_LAST_UPDATE_KEY = `${PRODUCTS_CACHE_KEY}_lastUpdate`;
 
 const Products = () => {
   const navigate = useNavigate();
@@ -17,15 +23,34 @@ const Products = () => {
   const [filter, setFilter] = useState("all");
   const [lastVisible, setLastVisible] = useState<any>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [forceRefresh, setForceRefresh] = useState(false);
 
   useEffect(() => {
     fetchProducts();
-  }, [filter, refreshKey]);
+  }, [filter, refreshKey, forceRefresh]);
 
   const fetchProducts = async (next = false) => {
     try {
       setLoading(true);
 
+      // Skip cache for search queries, forced refresh, or pagination
+      const skipCache = !!searchQuery || forceRefresh || next;
+      
+      // Generate a cache key based on the filter
+      const cacheKey = `${PRODUCTS_LIST_CACHE_KEY}_${filter}`;
+      
+      // Check if we have valid cache and should use it
+      if (!skipCache && isCacheValid(cacheKey)) {
+        const cachedProducts = getFromCache<Product[]>(cacheKey);
+        if (cachedProducts && cachedProducts.length > 0) {
+          setProducts(cachedProducts);
+          setLoading(false);
+          console.log("Using cached products list");
+          return;
+        }
+      }
+
+      // Prepare Firestore query
       let q;
       const productsCollection = collection(db, PRODUCT_COLLECTION);
 
@@ -67,15 +92,46 @@ const Products = () => {
           id: doc.id, 
           ...data as Omit<Product, 'id'>
         });
+        
+        // Cache individual product
+        saveToCache(`${PRODUCTS_CACHE_KEY}_${doc.id}`, { 
+          id: doc.id, 
+          ...data 
+        });
       });
 
       if (next) {
-        setProducts((prev) => [...prev, ...fetchedProducts]);
+        setProducts((prev) => {
+          const newProducts = [...prev, ...fetchedProducts];
+          // Don't cache paginated results as a list
+          return newProducts;
+        });
       } else {
         setProducts(fetchedProducts);
+        // Cache the results if not a search query
+        if (!searchQuery) {
+          saveToCache(cacheKey, fetchedProducts);
+        }
       }
+      
+      // Update the last refresh timestamp
+      if (!next) {
+        saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
+      }
+      
+      setForceRefresh(false);
     } catch (error) {
       console.error("Error fetching products:", error);
+      
+      // If fetching fails but we have cache, use it
+      if (!searchQuery) {
+        const cacheKey = `${PRODUCTS_LIST_CACHE_KEY}_${filter}`;
+        const cachedProducts = getFromCache<Product[]>(cacheKey);
+        if (cachedProducts) {
+          setProducts(cachedProducts);
+          console.log("Using cached products after fetch error");
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -95,13 +151,24 @@ const Products = () => {
   };
 
   const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
+    setForceRefresh(true);
   };
 
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, PRODUCT_COLLECTION, id));
       setProducts(products.filter(product => product.id !== id));
+      
+      // Clear the cache for this product
+      clearCache(`${PRODUCTS_CACHE_KEY}_${id}`);
+      
+      // Mark the list as needing refresh
+      saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
+      
+      toast({
+        title: "Success",
+        description: "Product deleted successfully.",
+      });
     } catch (error) {
       console.error("Error deleting product:", error);
     }
@@ -114,14 +181,14 @@ const Products = () => {
   return (
     <div className="container px-4 py-6 mx-auto">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
-        <h1 className="text-3xl font-bold">Products</h1>
+        <h1 className="text-3xl font-bold text-primary">Products</h1>
         <div className="flex gap-2">
-          <Button onClick={() => navigate("/add-product")}>
+          <Button onClick={() => navigate("/add-product")} className="bg-primary hover:bg-primary/80">
             <Plus className="mr-2 h-4 w-4" />
             Add Product
           </Button>
-          <Button variant="outline" onClick={handleRefresh}>
-            <RefreshCw className="h-4 w-4" />
+          <Button variant="outline" onClick={handleRefresh} className="border-primary/30 hover:bg-primary/10">
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>
@@ -133,7 +200,7 @@ const Products = () => {
         <div className="flex items-center gap-2">
           <ListFilter className="h-4 w-4 text-muted-foreground" />
           <select
-            className="border rounded p-2 bg-background"
+            className="border rounded p-2 bg-background border-primary/30"
             value={filter}
             onChange={(e) => handleFilterChange(e.target.value)}
           >
@@ -159,6 +226,7 @@ const Products = () => {
             variant="outline"
             onClick={() => fetchProducts(true)}
             disabled={products.length < 25 || loading}
+            className="border-primary/30 hover:bg-primary/10"
           >
             Load More
           </Button>

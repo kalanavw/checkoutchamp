@@ -14,6 +14,10 @@ import { QuickActions } from "@/components/product/QuickActions";
 import { SalesInformation } from "@/components/product/SalesInformation";
 import { ProductNotFound } from "@/components/product/ProductNotFound";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { isCacheValid, saveToCache, getFromCache } from "@/utils/cacheUtils";
+
+// Cache key
+const PRODUCTS_CACHE_KEY = "products_cache";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,10 +30,32 @@ const ProductDetail = () => {
       if (!id) return;
       
       try {
+        setLoading(true);
+        
+        // Try to get from cache first
+        const cacheKey = `${PRODUCTS_CACHE_KEY}_${id}`;
+        const cachedProduct = getFromCache<Product>(cacheKey);
+        
+        if (cachedProduct && isCacheValid(cacheKey)) {
+          setProduct(cachedProduct);
+          setLoading(false);
+          console.log("Using cached product");
+          return;
+        }
+        
+        // Fetch from Firestore if not in cache or cache is invalid
         const productDoc = await getDoc(doc(db, PRODUCT_COLLECTION, id));
         
         if (productDoc.exists()) {
-          setProduct({ id: productDoc.id, ...productDoc.data() } as Product);
+          const productData = { 
+            id: productDoc.id, 
+            ...productDoc.data() 
+          } as Product;
+          
+          setProduct(productData);
+          
+          // Save to cache
+          saveToCache(cacheKey, productData);
         } else {
           toast({
             title: "Error",
@@ -65,8 +91,8 @@ const ProductDetail = () => {
       <ProductDetailHeader productId={product.id} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2">
-          <CardHeader>
+        <Card className="md:col-span-2 bg-secondary/30 border-theme-light">
+          <CardHeader className="bg-gradient-to-r from-secondary to-secondary/50 rounded-t-lg">
             <CardTitle className="text-2xl">{product.name}</CardTitle>
           </CardHeader>
           <CardContent>
