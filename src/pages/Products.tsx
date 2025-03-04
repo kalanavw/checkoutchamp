@@ -9,6 +9,7 @@ import { ProductsTable } from "@/components/products/ProductsTable";
 import { SearchBar } from "@/components/products/SearchBar";
 import { Plus, ListFilter, RefreshCw } from "lucide-react";
 import { isCacheValid, saveToCache, getFromCache, clearCache } from "@/utils/cacheUtils";
+import { useToast } from "@/components/ui/use-toast";
 
 // Cache keys
 const PRODUCTS_CACHE_KEY = "products_cache";
@@ -17,6 +18,7 @@ const PRODUCTS_LAST_UPDATE_KEY = `${PRODUCTS_CACHE_KEY}_lastUpdate`;
 
 const Products = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,16 +89,16 @@ const Products = () => {
 
       const fetchedProducts: Product[] = [];
       querySnapshot.forEach((doc) => {
-        const data = doc.data();
+        const productData = doc.data();
         fetchedProducts.push({ 
           id: doc.id, 
-          ...data as Omit<Product, 'id'>
+          ...(productData as Omit<Product, 'id'>)
         });
         
         // Cache individual product
         saveToCache(`${PRODUCTS_CACHE_KEY}_${doc.id}`, { 
           id: doc.id, 
-          ...data 
+          ...productData 
         });
       });
 

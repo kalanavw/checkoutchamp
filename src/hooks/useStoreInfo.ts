@@ -169,8 +169,9 @@ export const useStoreInfo = () => {
         await updateDoc(doc(db, STOREINFO_COLLECTION, storeInfo.id), updatedStoreInfo);
       } else {
         // Create new document
-        const docRef = await setDoc(doc(collection(db, STOREINFO_COLLECTION)), updatedStoreInfo);
-        updatedStoreInfo.id = docRef?.id;
+        const newDocRef = doc(collection(db, STOREINFO_COLLECTION));
+        await setDoc(newDocRef, updatedStoreInfo);
+        updatedStoreInfo.id = newDocRef.id;
       }
 
       // Update local state
