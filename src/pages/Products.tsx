@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,13 @@ import { SearchBar } from "@/components/products/SearchBar";
 import { Plus, ListFilter, RefreshCw } from "lucide-react";
 import { isCacheValid, saveToCache, getFromCache, clearCache } from "@/utils/cacheUtils";
 import { useToast } from "@/components/ui/use-toast";
+import { 
+  COLLECTION_KEYS,
+  saveCollectionUpdateTime,
+  saveCollectionFetchTime,
+  shouldFetchCollection,
+  markCollectionUpdated
+} from "@/utils/collectionUtils";
 
 // Cache keys
 const PRODUCTS_CACHE_KEY = "products_cache";
@@ -40,8 +48,11 @@ const Products = () => {
       // Generate a cache key based on the filter
       const cacheKey = `${PRODUCTS_LIST_CACHE_KEY}_${filter}`;
       
+      // Check if we need to refresh data based on collection timestamps
+      const shouldRefresh = shouldFetchCollection(COLLECTION_KEYS.PRODUCTS);
+      
       // Check if we have valid cache and should use it
-      if (!skipCache && isCacheValid(cacheKey)) {
+      if (!skipCache && !shouldRefresh && isCacheValid(cacheKey)) {
         const cachedProducts = getFromCache<Product[]>(cacheKey);
         if (cachedProducts && cachedProducts.length > 0) {
           setProducts(cachedProducts);
@@ -134,8 +145,9 @@ const Products = () => {
         }
       }
       
-      // Update the last refresh timestamp
+      // Update the collection fetch timestamps
       if (!next) {
+        saveCollectionFetchTime(COLLECTION_KEYS.PRODUCTS);
         saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
       }
       
@@ -192,7 +204,8 @@ const Products = () => {
       // Clear the cache for this product
       clearCache(`${PRODUCTS_CACHE_KEY}_${id}`);
       
-      // Mark the list as needing refresh
+      // Mark the collection as updated
+      saveCollectionUpdateTime(COLLECTION_KEYS.PRODUCTS);
       saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
       
       toast({

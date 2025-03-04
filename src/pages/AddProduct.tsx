@@ -16,6 +16,7 @@ import {
 } from "@/components/products/product-form/form-sections";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { saveToCache } from "@/utils/cacheUtils";
+import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUtils";
 
 // Cache key prefix for products
 const PRODUCTS_CACHE_KEY = "products_cache";
@@ -118,8 +119,10 @@ const AddProduct = () => {
         modifiedBy: userName
       };
       
-      saveToCache(`${PRODUCTS_CACHE_KEY}_lastUpdate`, { timestamp: Date.now() }, Date.now());
+      // Update the collection's last update timestamp
+      saveCollectionUpdateTime(COLLECTION_KEYS.PRODUCTS);
       
+      // Cache the individual product
       saveToCache(`${PRODUCTS_CACHE_KEY}_${docRef.id}`, productWithId, Date.now());
 
       toast({

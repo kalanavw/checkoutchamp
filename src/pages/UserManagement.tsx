@@ -60,6 +60,12 @@ import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { isCacheValid, saveToCache, getFromCache } from "@/utils/cacheUtils";
+import { 
+  COLLECTION_KEYS, 
+  saveCollectionUpdateTime, 
+  saveCollectionFetchTime,
+  shouldFetchCollection
+} from "@/utils/collectionUtils";
 
 // Cache key
 const USERS_CACHE_KEY = "users_cache";
@@ -102,8 +108,11 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     setIsRefreshing(true);
     try {
-      // Try to get from cache first
-      if (isCacheValid(USERS_CACHE_KEY)) {
+      // Check if we need to refresh based on collection timestamps
+      const shouldRefresh = shouldFetchCollection(COLLECTION_KEYS.USERS);
+      
+      // Try to get from cache first if we don't need to refresh
+      if (!shouldRefresh && isCacheValid(USERS_CACHE_KEY)) {
         const cachedUsers = getFromCache<UserData[]>(USERS_CACHE_KEY);
         if (cachedUsers) {
           setUsers(cachedUsers);
@@ -134,8 +143,9 @@ const UserManagement = () => {
       
       setUsers(fetchedUsers);
       
-      // Save to cache
+      // Save to cache and update fetch timestamp
       saveToCache(USERS_CACHE_KEY, fetchedUsers);
+      saveCollectionFetchTime(COLLECTION_KEYS.USERS);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast({
@@ -244,6 +254,9 @@ const UserManagement = () => {
         photoURL,
       };
       
+      // Update the collection update timestamp
+      saveCollectionUpdateTime(COLLECTION_KEYS.USERS);
+      
       // Update users array and cache
       const updatedUsers = [userWithId, ...users];
       setUsers(updatedUsers);
@@ -295,6 +308,9 @@ const UserManagement = () => {
         updatedAt: serverTimestamp()
       });
       
+      // Update the collection update timestamp
+      saveCollectionUpdateTime(COLLECTION_KEYS.USERS);
+      
       // Update local state and cache
       const updatedUsers = users.map(user => 
         user.id === userId ? { ...user, active: !currentStatus } : user
@@ -322,6 +338,9 @@ const UserManagement = () => {
         role: newRole,
         updatedAt: serverTimestamp()
       });
+      
+      // Update the collection update timestamp
+      saveCollectionUpdateTime(COLLECTION_KEYS.USERS);
       
       // Update local state and cache
       const updatedUsers = users.map(user => 

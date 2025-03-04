@@ -15,6 +15,11 @@ import { SalesInformation } from "@/components/product/SalesInformation";
 import { ProductNotFound } from "@/components/product/ProductNotFound";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { isCacheValid, saveToCache, getFromCache } from "@/utils/cacheUtils";
+import { 
+  COLLECTION_KEYS, 
+  shouldFetchCollection,
+  saveCollectionFetchTime
+} from "@/utils/collectionUtils";
 
 // Cache key
 const PRODUCTS_CACHE_KEY = "products_cache";
@@ -36,7 +41,10 @@ const ProductDetail = () => {
         const cacheKey = `${PRODUCTS_CACHE_KEY}_${id}`;
         const cachedProduct = getFromCache<Product>(cacheKey);
         
-        if (cachedProduct && isCacheValid(cacheKey)) {
+        // Check if we need to refresh data based on collection timestamps
+        const shouldRefresh = shouldFetchCollection(COLLECTION_KEYS.PRODUCTS);
+        
+        if (cachedProduct && !shouldRefresh && isCacheValid(cacheKey)) {
           setProduct(cachedProduct);
           setLoading(false);
           console.log("Using cached product");
@@ -73,8 +81,9 @@ const ProductDetail = () => {
           
           setProduct(productWithId);
           
-          // Save to cache
+          // Save to cache and update fetch timestamp for this product
           saveToCache(cacheKey, productWithId);
+          saveCollectionFetchTime(COLLECTION_KEYS.PRODUCTS);
         } else {
           toast({
             title: "Error",

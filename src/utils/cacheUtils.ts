@@ -2,6 +2,7 @@
 /**
  * Utilities for local caching and optimizing Firestore fetching
  */
+import { getCollectionTimestamps, shouldFetchCollection } from './collectionUtils';
 
 interface CacheMetadata {
   lastFetched: number;  // Timestamp when data was last fetched
@@ -30,6 +31,12 @@ export const isCacheValid = (
     
     const { lastFetched, lastModified } = JSON.parse(cacheEntry) as CacheMetadata;
     const now = Date.now();
+    
+    // If the cache key is associated with a collection, check collection timestamps
+    const collectionKey = cacheKey.split('_')[0]; // Extract collection prefix if exists
+    if (collectionKey && shouldFetchCollection(collectionKey, maxAge)) {
+      return false;
+    }
     
     // If server lastModified is provided, check if our cache is outdated
     if (serverLastModified && lastModified < serverLastModified) {
@@ -63,6 +70,20 @@ export const saveToCache = <T>(
     };
     
     localStorage.setItem(cacheKey, JSON.stringify(cacheEntry));
+    
+    // If the cache key is associated with a collection, update its fetch time
+    const collectionKey = cacheKey.split('_')[0]; // Extract collection prefix if exists
+    if (collectionKey) {
+      const collectionTimestamps = getCollectionTimestamps(collectionKey);
+      if (collectionTimestamps) {
+        // Only update lastFetchTime, preserve lastUpdateTime
+        const timestamps = {
+          ...collectionTimestamps,
+          lastFetchTime: Date.now()
+        };
+        localStorage.setItem(`${collectionKey}_timestamps`, JSON.stringify(timestamps));
+      }
+    }
   } catch (error) {
     console.error("Error saving to cache:", error);
   }
