@@ -47,10 +47,24 @@ const ProductDetail = () => {
         const productDoc = await getDoc(doc(db, PRODUCT_COLLECTION, id));
         
         if (productDoc.exists()) {
-          const productData = productDoc.data();
+          const productData = productDoc.data() as Record<string, any>;
           const productWithId: Product = { 
             id: productDoc.id,
-            ...productDoc.data() as Record<string, any>,
+            name: productData.name || "",
+            costPrice: productData.costPrice || 0,
+            sellingPrice: productData.sellingPrice || 0,
+            stock: productData.stock || 0,
+            category: productData.category || "",
+            subcategory: productData.subcategory || "",
+            location: productData.location as "loc-1" | "loc-2" || "loc-1",
+            keywords: productData.keywords || [],
+            discount: productData.discount,
+            grnNumber: productData.grnNumber,
+            barcode: productData.barcode,
+            imageUrl: productData.imageUrl,
+            description: productData.description,
+            sku: productData.sku,
+            specifications: productData.specifications,
             createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
             createdBy: productData.createdBy || "Unknown",
             modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,8 @@ import {
   serverTimestamp, 
   updateDoc, 
   doc, 
-  increment 
+  increment,
+  Timestamp 
 } from "firebase/firestore";
 import { 
   Table, 
@@ -179,14 +181,15 @@ const GRNPage = () => {
         items: formData.items,
         notes: formData.notes,
         createdBy: userName,
-        createdAt: serverTimestamp(),
-        modifiedDate: serverTimestamp(),
+        createdAt: new Date(),
+        modifiedDate: new Date(),
         modifiedBy: userName
       };
       
       const grnRef = await addDoc(collection(db, "grns"), {
         ...grnData,
-        createdAt: serverTimestamp()
+        createdAt: serverTimestamp(),
+        modifiedDate: serverTimestamp()
       });
       
       for (const item of formData.items) {
