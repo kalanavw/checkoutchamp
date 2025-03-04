@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { 
   Dialog, 
   DialogContent, 
@@ -60,9 +60,16 @@ const Customers = () => {
     setLoading(true);
     
     try {
+      // Get the current user name from localStorage or use "Unknown"
+      const userName = localStorage.getItem("userName") || "Unknown";
+      
       const newCustomer = {
         ...formData,
         registrationDate: new Date(),
+        createdAt: serverTimestamp(),
+        createdBy: userName,
+        modifiedDate: serverTimestamp(),
+        modifiedBy: userName
       };
       
       const docRef = await addDoc(collection(db, CUSTOMER_COLLECTION), newCustomer);
@@ -70,7 +77,9 @@ const Customers = () => {
       const customerWithId = { 
         id: docRef.id, 
         ...newCustomer,
-        registrationDate: new Date()
+        registrationDate: new Date(),
+        createdAt: new Date(),
+        modifiedDate: new Date()
       };
       
       setCustomers([...customers, customerWithId]);

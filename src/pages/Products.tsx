@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { ProductsTable } from "@/components/products/ProductsTable";
 import { SearchBar } from "@/components/products/SearchBar";
@@ -108,7 +107,11 @@ const Products = () => {
           imageUrl: productData.imageUrl,
           description: productData.description,
           sku: productData.sku,
-          specifications: productData.specifications
+          specifications: productData.specifications,
+          createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
+          createdBy: productData.createdBy || "Unknown",
+          modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,
+          modifiedBy: productData.modifiedBy || "Unknown"
         };
         
         fetchedProducts.push(productWithId);
@@ -173,6 +176,16 @@ const Products = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      // Get the current user name from localStorage or use "Unknown"
+      const userName = localStorage.getItem("userName") || "Unknown";
+      
+      // Update the product document with modified fields before deleting
+      await updateDoc(doc(db, PRODUCT_COLLECTION, id), {
+        modifiedDate: serverTimestamp(),
+        modifiedBy: userName
+      });
+      
+      // Now delete the document
       await deleteDoc(doc(db, PRODUCT_COLLECTION, id));
       setProducts(products.filter(product => product.id !== id));
       

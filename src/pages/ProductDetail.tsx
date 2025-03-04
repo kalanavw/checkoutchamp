@@ -47,15 +47,20 @@ const ProductDetail = () => {
         const productDoc = await getDoc(doc(db, PRODUCT_COLLECTION, id));
         
         if (productDoc.exists()) {
-          const productData = { 
-            id: productDoc.id, 
-            ...productDoc.data() 
-          } as Product;
+          const productData = productDoc.data();
+          const productWithId: Product = { 
+            id: productDoc.id,
+            ...productDoc.data() as Record<string, any>,
+            createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
+            createdBy: productData.createdBy || "Unknown",
+            modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,
+            modifiedBy: productData.modifiedBy || "Unknown"
+          };
           
-          setProduct(productData);
+          setProduct(productWithId);
           
           // Save to cache
-          saveToCache(cacheKey, productData);
+          saveToCache(cacheKey, productWithId);
         } else {
           toast({
             title: "Error",

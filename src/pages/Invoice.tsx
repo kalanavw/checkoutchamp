@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ import { InvoiceSummary } from "@/components/invoice/InvoiceSummary";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { db } from "@/lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 interface InvoiceItem {
   id: number;
@@ -33,6 +32,9 @@ interface InvoiceData {
   tax: number;
   total: number;
   createdAt: Date;
+  createdBy: string;
+  modifiedDate: Date;
+  modifiedBy: string;
 }
 
 const Invoice = () => {
@@ -46,7 +48,6 @@ const Invoice = () => {
   const [barcodeInput, setBarcodeInput] = useState("");
   const isMobile = useIsMobile();
 
-  // Generate invoice number on component mount
   useEffect(() => {
     const generateInvoiceNumber = () => {
       const prefix = "INV";
@@ -120,6 +121,8 @@ const Invoice = () => {
     setIsSaving(true);
 
     try {
+      const userName = localStorage.getItem("userName") || "Unknown";
+      
       const invoiceData: InvoiceData = {
         customerName,
         invoiceNumber,
@@ -129,19 +132,24 @@ const Invoice = () => {
         tax,
         total,
         createdAt: new Date(),
+        createdBy: userName,
+        modifiedDate: new Date(),
+        modifiedBy: userName
       };
 
-      const docRef = await addDoc(collection(db, "invoices"), invoiceData);
+      const docRef = await addDoc(collection(db, "invoices"), {
+        ...invoiceData,
+        createdAt: serverTimestamp(),
+        modifiedDate: serverTimestamp()
+      });
 
       toast({
         title: "Success",
         description: "Invoice saved successfully!",
       });
 
-      // Reset form for a new invoice
       setCustomerName("");
       setItems([]);
-      // Generate a new invoice number
       const prefix = "INV";
       const date = new Date();
       const timestamp = date.getTime().toString().slice(-8);

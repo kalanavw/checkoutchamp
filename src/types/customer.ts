@@ -6,4 +6,7 @@ export interface Customer {
   address?: string;
   email?: string;
   registrationDate: Date;
+  createdBy?: string;
+  modifiedDate?: Date;
+  modifiedBy?: string;
 }

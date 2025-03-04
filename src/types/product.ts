@@ -16,4 +16,8 @@ export interface Product {
   description?: string;
   sku?: string;
   specifications?: Record<string, string>;
+  createdAt?: Date;
+  createdBy?: string;
+  modifiedDate?: Date;
+  modifiedBy?: string;
 }

@@ -8,4 +8,8 @@ export interface StoreInfo {
   phone: string;
   address: string;
   logoUrl?: string;
+  createdAt?: Date;
+  createdBy?: string;
+  modifiedDate?: Date;
+  modifiedBy?: string;
 }

@@ -170,13 +170,18 @@ const GRNPage = () => {
     setLoading(true);
     
     try {
+      const userName = localStorage.getItem("userName") || "Unknown";
+      
       const grnData: Omit<GRN, "id"> = {
         grnNumber: formData.grnNumber,
         supplierName: formData.supplierName,
         receivedDate: new Date(formData.receivedDate),
         items: formData.items,
         notes: formData.notes,
-        createdBy: localStorage.getItem("userName") || "Admin",
+        createdBy: userName,
+        createdAt: serverTimestamp(),
+        modifiedDate: serverTimestamp(),
+        modifiedBy: userName
       };
       
       const grnRef = await addDoc(collection(db, "grns"), {
@@ -189,7 +194,9 @@ const GRNPage = () => {
         await updateDoc(productRef, {
           stock: increment(item.quantity),
           costPrice: item.costPrice,
-          grnNumber: formData.grnNumber
+          grnNumber: formData.grnNumber,
+          modifiedDate: serverTimestamp(),
+          modifiedBy: userName
         });
       }
       

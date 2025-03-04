@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -68,10 +67,8 @@ const AddProduct = () => {
     try {
       let imageUrl = null;
       
-      // Convert image to base64 if one is selected
       if (productImage) {
         try {
-          // Optimize and convert to base64
           imageUrl = await optimizeImageToBase64(productImage);
         } catch (error) {
           console.error("Error converting image to base64:", error);
@@ -82,12 +79,13 @@ const AddProduct = () => {
         }
       }
       
-      // Format keywords
       const keywordsArray = formData.keywords
         .toLowerCase()
         .split(",")
         .map((k) => k.trim())
         .filter((k) => k.length > 0);
+      
+      const userName = localStorage.getItem("userName") || "Unknown";
       
       const productData = {
         name: formData.name,
@@ -102,24 +100,24 @@ const AddProduct = () => {
         barcode: formData.barcode || null,
         imageUrl: imageUrl || null,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdBy: userName,
+        modifiedDate: serverTimestamp(),
+        modifiedBy: userName,
       };
       
-      // Add product to Firestore
       const docRef = await addDoc(collection(db, PRODUCT_COLLECTION), productData);
       
-      // Add to cache with ID
       const productWithId = {
         ...productData,
         id: docRef.id,
         createdAt: new Date(),
-        updatedAt: new Date()
+        modifiedDate: new Date(),
+        createdBy: userName,
+        modifiedBy: userName
       };
       
-      // Update the products list cache to indicate it needs refreshing
       saveToCache(`${PRODUCTS_CACHE_KEY}_lastUpdate`, { timestamp: Date.now() }, Date.now());
       
-      // Cache the individual product
       saveToCache(`${PRODUCTS_CACHE_KEY}_${docRef.id}`, productWithId, Date.now());
 
       toast({
