@@ -23,11 +23,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db, USER_COLLECTION } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
 import { UserRole } from "@/types/user";
 import { saveCollectionUpdateTime } from "@/utils/collectionUtils";
 import { COLLECTION_KEYS } from "@/utils/collectionUtils";
 import { saveToCache } from "@/utils/cacheUtils";
+import {Notifications} from "@/utils/notifications.ts";
 
 interface UserData {
   id: string;
@@ -47,7 +47,6 @@ interface UserManagementTableProps {
 }
 
 const UserManagementTable = ({ users, searchQuery, onUpdateUsers }: UserManagementTableProps) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -92,11 +91,7 @@ const UserManagementTable = ({ users, searchQuery, onUpdateUsers }: UserManageme
 
   const updateUserName = async (userId: string) => {
     if (!editedName.trim()) {
-      toast({
-        title: "Error",
-        description: "Name cannot be empty",
-        variant: "destructive",
-      });
+      Notifications.error("Name cannot be empty");
       return;
     }
 
@@ -118,20 +113,12 @@ const UserManagementTable = ({ users, searchQuery, onUpdateUsers }: UserManageme
       
       // Update cache
       saveToCache("users_cache", updatedUsers);
-      
-      toast({
-        title: "Success",
-        description: "User name updated successfully",
-      });
-      
+
+      Notifications.success("User name updated successfully");
       setEditingName(null);
     } catch (error) {
       console.error("Error updating user name:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update user name",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to update user name");
     }
   };
 
@@ -154,18 +141,11 @@ const UserManagementTable = ({ users, searchQuery, onUpdateUsers }: UserManageme
       
       // Update cache
       saveToCache("users_cache", updatedUsers);
-      
-      toast({
-        title: "User Status Updated",
-        description: `User has been ${currentStatus ? "deactivated" : "activated"}.`,
-      });
+
+      Notifications.success(`User has been ${currentStatus ? "deactivated" : "activated"}.`);
     } catch (error) {
       console.error("Error updating user status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update user status.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to update user status");
     }
   };
 
@@ -188,18 +168,12 @@ const UserManagementTable = ({ users, searchQuery, onUpdateUsers }: UserManageme
       
       // Update cache
       saveToCache("users_cache", updatedUsers);
-      
-      toast({
-        title: "User Role Updated",
-        description: `User role has been changed to ${newRole}.`,
-      });
+
+      Notifications.success(`User role has been changed to ${newRole}.`);
     } catch (error) {
       console.error("Error updating user role:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update user role.",
-        variant: "destructive",
-      });
+
+      Notifications.error("Failed to update user role");
     }
   };
 

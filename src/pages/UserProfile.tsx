@@ -7,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import { db, USER_COLLECTION, auth } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { 
@@ -27,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Notifications } from "@/utils/notifications";
 
 interface UserData {
   id: string;
@@ -40,7 +40,6 @@ interface UserData {
 }
 
 const UserProfile = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { id } = useParams();
   const [user, setUser] = useState<UserData | null>(null);
@@ -65,11 +64,7 @@ const UserProfile = () => {
         const userId = id || localUser.uid || currentUser?.uid;
         
         if (!userId) {
-          toast({
-            title: "Error",
-            description: "User ID not found",
-            variant: "destructive",
-          });
+          Notifications.error("User ID not found")
           navigate("/");
           return;
         }
@@ -108,27 +103,19 @@ const UserProfile = () => {
           setEditedUser(formattedUser);
           setImagePreview(formattedUser.photoURL || null);
         } else {
-          toast({
-            title: "Error",
-            description: "User not found",
-            variant: "destructive",
-          });
+          Notifications.success("User not found");
           navigate("/");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load user data",
-          variant: "destructive",
-        });
+        Notifications.error("Failed to load user data")
       } finally {
         setLoading(false);
       }
     };
     
     fetchUserData();
-  }, [id, navigate, toast]);
+  }, [id, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -139,11 +126,7 @@ const UserProfile = () => {
       navigate("/login");
     } catch (error) {
       console.error("Error signing out:", error);
-      toast({
-        title: "Error",
-        description: "Failed to log out",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to log out");
     }
   };
 
@@ -185,10 +168,7 @@ const UserProfile = () => {
           photoURL = await optimizeImageToBase64(selectedImage);
         } catch (error) {
           console.error("Error processing image:", error);
-          toast({
-            title: "Warning",
-            description: "Failed to process profile image",
-          });
+          Notifications.warning("Failed to process profile image");
         }
       }
       
@@ -224,20 +204,11 @@ const UserProfile = () => {
           newValue: JSON.stringify(updatedUser)
         }));
       }
-      
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      });
-      
+      Notifications.success("Profile updated successfully");
       setEditMode(false);
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update profile",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to update profile");
     } finally {
       setSaving(false);
     }
@@ -571,10 +542,7 @@ const UserProfile = () => {
                               onClick={() => {
                                 if (editedUser.active) {
                                   handleInputChange("active", false);
-                                  toast({
-                                    title: "Account Deactivated",
-                                    description: "User account has been deactivated",
-                                  });
+                                  Notifications.success("User account has been deactivated")
                                 }
                               }}
                             >

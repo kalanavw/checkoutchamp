@@ -67,18 +67,6 @@ export class Notifications {
    * @param onConfirm - Callback function when confirmed
    */
   static confirm(title: string, message: string, onConfirm: () => void): void {
-    Report.confirm(
-      title,
-      message,
-      'Confirm',
-      onConfirm,
-      () => {}, // onCancel - empty function
-      {
-        buttonColor: '#fff',
-        buttonBackground: '#2563eb',
-        cancelButtonColor: '#fff',
-        cancelButtonBackground: '#6b7280',
-      }
-    );
+
   }
 }

@@ -25,7 +25,6 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { 
   Truck, 
@@ -40,12 +39,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {Notifications} from "@/utils/notifications.ts";
 
 const ITEMS_PER_PAGE = 10;
 
 const GRNList = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [grns, setGrns] = useState<GRN[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -205,11 +204,7 @@ const GRNList = () => {
       
     } catch (error) {
       console.error("Error fetching GRNs:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch GRN records. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to fetch GRN records. Please try again.");
     } finally {
       setLoading(false);
     }

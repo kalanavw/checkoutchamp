@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { db, USER_COLLECTION } from "@/lib/firebase";
 import {
   collection,
@@ -39,7 +38,6 @@ import {
 } from "lucide-react";
 import { UserRole } from "@/types/user";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
@@ -59,6 +57,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Notifications } from "@/utils/notifications";
 
 // Cache key
 const USERS_CACHE_KEY = "users_cache";
@@ -75,7 +74,6 @@ interface UserData {
 }
 
 const UserManagement = () => {
-  const { toast } = useToast();
   const [users, setUsers] = useState<UserData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -140,11 +138,7 @@ const UserManagement = () => {
       saveCollectionFetchTime(COLLECTION_KEYS.USERS);
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load users. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to load users. Please try again.");
     } finally {
       setIsRefreshing(false);
     }
@@ -191,11 +185,7 @@ const UserManagement = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.email || !formData.password) {
-      toast({
-        title: "Error",
-        description: "All fields are required.",
-        variant: "destructive",
-      });
+      Notifications.error("All fields are required.")
       return;
     }
     
@@ -206,11 +196,7 @@ const UserManagement = () => {
       const emailSnapshot = await getDocs(emailQuery);
       
       if (!emailSnapshot.empty) {
-        toast({
-          title: "Error",
-          description: "A user with this email already exists.",
-          variant: "destructive",
-        });
+        Notifications.error("A user with this email already exists.")
         setLoading(false);
         return;
       }
@@ -232,10 +218,7 @@ const UserManagement = () => {
           await updateDoc(doc(db, USER_COLLECTION, docRef.id), { photoURL });
         } catch (error) {
           console.error("Error with user image:", error);
-          toast({
-            title: "Warning",
-            description: "User created but profile image upload failed.",
-          });
+          Notifications.warning("User created but profile image upload failed.");
         }
       }
       
@@ -253,11 +236,8 @@ const UserManagement = () => {
       const updatedUsers = [userWithId, ...users];
       setUsers(updatedUsers);
       saveToCache(USERS_CACHE_KEY, updatedUsers);
-      
-      toast({
-        title: "Success",
-        description: "User added successfully.",
-      });
+
+      Notifications.success("User added successfully.");
       
       setFormData({
         name: "",
@@ -270,11 +250,7 @@ const UserManagement = () => {
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error adding user:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add user. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to add user. Please try again.")
     } finally {
       setLoading(false);
     }

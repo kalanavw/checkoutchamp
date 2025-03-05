@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
 import { db } from "@/lib/firebase";
 import { 
   collection, 
@@ -31,10 +30,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { GRN, GRNItem } from "@/types/grn";
 import { Product } from "@/types/product";
 import { Plus, Minus, X, Save, Truck, PackageSearch, Calendar, ClipboardList } from "lucide-react";
+import {Notifications} from "@/utils/notifications.ts";
 
 const GRNPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
@@ -92,11 +91,7 @@ const GRNPage = () => {
       setSearchResults(products);
     } catch (error) {
       console.error("Error searching products:", error);
-      toast({
-        title: "Error",
-        description: "Failed to search products. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to search products. Please try again.");
     } finally {
       setIsSearching(false);
     }
@@ -152,20 +147,12 @@ const GRNPage = () => {
     e.preventDefault();
     
     if (!formData.supplierName) {
-      toast({
-        title: "Error",
-        description: "Supplier name is required.",
-        variant: "destructive",
-      });
+      Notifications.error("Supplier name is required.")
       return;
     }
     
     if (formData.items.length === 0) {
-      toast({
-        title: "Error",
-        description: "Add at least one item to the GRN.",
-        variant: "destructive",
-      });
+      Notifications.error("Add at least one item to the GRN.")
       return;
     }
     
@@ -202,20 +189,13 @@ const GRNPage = () => {
           modifiedBy: userName
         });
       }
-      
-      toast({
-        title: "Success",
-        description: "GRN created and product stock updated successfully.",
-      });
+
+      Notifications.success("GRN created and product stock updated successfully.");
       
       navigate("/grn-list");
     } catch (error) {
       console.error("Error creating GRN:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create GRN. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to create GRN. Please try again.");
     } finally {
       setLoading(false);
     }

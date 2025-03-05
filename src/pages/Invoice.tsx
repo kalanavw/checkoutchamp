@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Printer, Download, Save, Calendar } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CustomerInfo } from "@/components/invoice/CustomerInfo";
 import { BarcodeScanner } from "@/components/invoice/BarcodeScanner";
@@ -14,6 +13,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import {Notifications} from "@/utils/notifications.ts";
 
 interface InvoiceItem {
   id: number;
@@ -38,7 +38,6 @@ interface InvoiceData {
 }
 
 const Invoice = () => {
-  const { toast } = useToast();
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [customerName, setCustomerName] = useState("");
@@ -83,10 +82,7 @@ const Invoice = () => {
       };
       setItems([...items, newItem]);
       setBarcodeInput("");
-      toast({
-        title: "Item Added",
-        description: "Product has been added to the invoice.",
-      });
+      Notifications.success("Product has been added to the invoice.");
     }
   };
 
@@ -110,11 +106,7 @@ const Invoice = () => {
 
   const handleSaveInvoice = async () => {
     if (!customerName || items.length === 0 || !invoiceNumber || !invoiceDate) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields and add at least one item.",
-        variant: "destructive",
-      });
+      Notifications.error("Please fill in all required fields and add at least one item.")
       return;
     }
 
@@ -143,10 +135,7 @@ const Invoice = () => {
         modifiedDate: serverTimestamp()
       });
 
-      toast({
-        title: "Success",
-        description: "Invoice saved successfully!",
-      });
+      Notifications.success("Invoice saved successfully!");
 
       setCustomerName("");
       setItems([]);
@@ -157,11 +146,7 @@ const Invoice = () => {
       setInvoiceNumber(`${prefix}-${timestamp}-${random}`);
     } catch (error) {
       console.error("Error saving invoice:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save invoice. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to save invoice. Please try again.")
     } finally {
       setIsSaving(false);
     }
@@ -178,21 +163,14 @@ const Invoice = () => {
 
   const handlePrint = () => {
     window.print();
-    toast({
-      title: "Printing invoice",
-      description: "The invoice has been sent to your printer.",
-    });
+    Notifications.info("The invoice has been sent to your printer.")
   };
 
   const handleDownloadPDF = async () => {
     if (!invoiceRef.current) return;
 
     try {
-      toast({
-        title: "Generating PDF",
-        description: "Please wait while we generate your invoice...",
-      });
-
+      Notifications.info("Please wait while we generate your invoice...");
       const canvas = await html2canvas(invoiceRef.current, {
         scale: 2,
         logging: false,
@@ -217,17 +195,10 @@ const Invoice = () => {
       pdf.addImage(imgData, "PNG", imgX, imgY, imgWidth * ratio, imgHeight * ratio);
       pdf.save(`invoice-${invoiceNumber}.pdf`);
 
-      toast({
-        title: "PDF Downloaded",
-        description: "Your invoice has been downloaded successfully.",
-      });
+      Notifications.success("Your invoice has been downloaded successfully.")
     } catch (error) {
       console.error("Error generating PDF:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate PDF. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to generate PDF. Please try again.")
     }
   };
 

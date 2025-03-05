@@ -3,7 +3,6 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
 import { Eye, EyeOff, Image as ImageIcon, X } from "lucide-react";
 import { auth, db, USER_COLLECTION } from "@/lib/firebase";
 import {signInWithEmailAndPassword, createUserWithEmailAndPassword,} from "firebase/auth";
@@ -13,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { FirebaseError } from "firebase/app";
+import {Notifications} from "@/utils/notifications.ts";
 
 interface LoginFormProps {
   onGoogleLogin: () => Promise<void>;
@@ -21,7 +21,6 @@ interface LoginFormProps {
 
 const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -46,11 +45,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
 
         if (userData.active === false) {
           await auth.signOut();
-          toast({
-            title: "Account Disabled",
-            description: "Your account has been disabled. Please contact an administrator.",
-            variant: "destructive",
-          });
+          Notifications.error("Your account has been disabled. Please contact an administrator.");
           setLoading(false);
           return;
         }
@@ -70,19 +65,11 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
 
         navigate("/");
       } else {
-        toast({
-          title: "Error",
-          description: "User record not found.",
-          variant: "destructive",
-        });
+        Notifications.error("User record not found.")
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast({
-        title: "Login Failed",
-        description: "Invalid email or password.",
-        variant: "destructive",
-      });
+     Notifications.error("Invalid email or password.");
     } finally {
       setLoading(false);
     }
@@ -91,11 +78,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
-      toast({
-        title: "Error",
-        description: "Please fill all required fields.",
-        variant: "destructive",
-      });
+      Notifications.error("Please fill all required fields.")
       return;
     }
 
@@ -112,10 +95,7 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
           photoURL = await optimizeImageToBase64(userImage);
         } catch (error) {
           console.error("Error processing image:", error);
-          toast({
-            title: "Warning",
-            description: "Failed to process profile image.",
-          });
+          Notifications.warning("Error processing image")
         }
       }
 
@@ -130,37 +110,20 @@ const LoginForm = ({ onGoogleLogin, googleLoading }: LoginFormProps) => {
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
       });
-
-      toast({
-        title: "Success",
-        description: "Account created successfully.",
-      });
-
+      Notifications.success("Account created successfully.")
       navigate("/");
     } catch (error: unknown) {
       if (error instanceof FirebaseError) {
         if (error.code === "auth/email-already-in-use") {
-          toast({
-            title: "Account Exists",
-            description: "An account with this email already exists. Please log in.",
-            variant: "destructive",
-          });
+          Notifications.warning("An account with this email already exists. Please log in.");
           setShowRegister(false);
         } else {
           console.error("Firebase error:", error.code, error.message);
-          toast({
-            title: "Registration Failed",
-            description: "Failed to create account. Please try again.",
-            variant: "destructive",
-          });
+          Notifications.error("Failed to create account. Please try again.");
         }
       } else {
         console.error("Unknown error:", error);
-        toast({
-          title: "Unexpected Error",
-          description: "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
+        Notifications.error("Something went wrong. Please try again.");
       }
     }  finally {
       setLoading(false);

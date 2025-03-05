@@ -2,8 +2,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/toaster";
-import { toast } from "@/hooks/use-toast";
 import { collection, getDocs } from "firebase/firestore";
 import {db, auth, STOREINFO_COLLECTION} from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
@@ -11,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthUser } from "@/types/authUser";
 import { onAuthStateChanged } from "firebase/auth";
 import { AppHeader } from "@/components/ui/AppHeader";
+import {Notifications} from "@/utils/notifications.ts";
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -69,11 +68,7 @@ const Layout = () => {
         }
       } catch (error) {
         console.error("Error fetching store info:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load store information",
-          variant: "destructive",
-        });
+        Notifications.error("Failed to load store information");
       }
     };
 
@@ -140,8 +135,6 @@ const Layout = () => {
           <Outlet />
         </main>
       </div>
-
-      <Toaster />
     </div>
   );
 };
