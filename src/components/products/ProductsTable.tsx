@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Product } from "@/types/product";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
 
 interface ProductsTableProps {
   products: Product[];
@@ -61,7 +62,9 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
                       <span className="text-xs text-muted-foreground">No img</span>
                     </div>
                   )}
-                  <span>{product.name}</span>
+                  <Link to={`/products/${product.id}`} className="hover:text-green-600 transition-colors">
+                    <span>{product.name}</span>
+                  </Link>
                 </div>
               </TableCell>
               <TableCell align={"right"}>{product.costPrice.toFixed(2)}</TableCell>
@@ -93,10 +96,20 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => onView(product.id)}>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => onView(product.id)}
+                    className="hover:text-green-600 transition-colors"
+                  >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button size="sm" variant="ghost">
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    className="hover:text-green-600 transition-colors"
+                    onClick={() => onView(product.id)}
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
                   <Button 

@@ -1,17 +1,16 @@
+
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toaster";
 import { toast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
 import { collection, getDocs } from "firebase/firestore";
 import {db, auth, STOREINFO_COLLECTION} from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthUser } from "@/types/authUser";
 import { onAuthStateChanged } from "firebase/auth";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AppHeader } from "@/components/ui/AppHeader";
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -130,49 +129,12 @@ const Layout = () => {
       )}
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-16 border-b border-green-100 dark:border-green-800/50 flex items-center px-6 sticky top-0 bg-white/90 dark:bg-green-900/90 backdrop-blur-sm z-10">
-          {!sidebarOpen && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="mr-4 text-green-700 hover:bg-green-100/50 dark:text-green-300 dark:hover:bg-green-800/50"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          )}
-          <div className="flex items-center gap-3">
-            {storeInfo?.logoUrl && (
-              <img 
-                src={storeInfo.logoUrl} 
-                alt={storeInfo.businessName || "Business Logo"}
-                className="h-8 w-8 object-contain rounded-full border border-green-100 dark:border-green-700"
-              />
-            )}
-            <h1 className="text-lg font-medium text-green-800 dark:text-green-300">
-              {storeInfo?.businessName || "POS System"}
-            </h1>
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-            <Button
-              variant="ghost"
-              className="p-0 flex items-center gap-2 text-green-700 hover:bg-green-100/50 dark:text-green-300 dark:hover:bg-green-800/50"
-              onClick={() => navigate("/user/profile")}
-            >
-              {user.photoURL ? (
-                <Avatar className="h-8 w-8 border border-green-200 dark:border-green-700">
-                  <AvatarImage src={user.photoURL} alt={user.displayName || "User"} />
-                  <AvatarFallback className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200">{user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}</AvatarFallback>
-                </Avatar>
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center text-green-800 dark:text-green-200 text-sm font-medium border border-green-200 dark:border-green-700">
-                  {user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
-                </div>
-              )}
-              <span className="text-sm font-medium">{user.displayName || user.email}</span>
-            </Button>
-          </div>
-        </header>
+        <AppHeader 
+          sidebarOpen={sidebarOpen} 
+          setSidebarOpen={setSidebarOpen} 
+          storeInfo={storeInfo} 
+          user={user} 
+        />
 
         <main className="flex-1 overflow-auto bg-gradient-to-br from-green-50/50 to-white dark:from-gray-900 dark:to-green-950/30">
           <Outlet />
