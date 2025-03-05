@@ -1,12 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/use-toast";
-import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
+import { Notifications } from "@/utils/notifications";
+import { CUSTOMER_COLLECTION, db } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { 
   Dialog, 
@@ -28,7 +27,6 @@ import { Plus, Search, User, Mail, Phone, MapPin } from "lucide-react";
 import { Customer } from "@/types/customer";
 
 const Customers = () => {
-  const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,11 +47,7 @@ const Customers = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.phone) {
-      toast({
-        title: "Error",
-        description: "Name and phone are required fields.",
-        variant: "destructive",
-      });
+      Notifications.error("Name and phone are required fields.");
       return;
     }
     
@@ -84,10 +78,7 @@ const Customers = () => {
       
       setCustomers([...customers, customerWithId]);
       
-      toast({
-        title: "Success",
-        description: "Customer registered successfully.",
-      });
+      Notifications.success("Customer registered successfully.");
       
       // Reset form
       setFormData({
@@ -100,11 +91,7 @@ const Customers = () => {
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error adding customer:", error);
-      toast({
-        title: "Error",
-        description: "Failed to register customer. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to register customer. Please try again.");
     } finally {
       setLoading(false);
     }

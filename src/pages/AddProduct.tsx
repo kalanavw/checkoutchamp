@@ -1,9 +1,8 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { Notifications } from "@/utils/notifications";
 import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Package, Save } from "lucide-react";
@@ -23,7 +22,6 @@ const PRODUCTS_CACHE_KEY = "products_cache";
 
 const AddProduct = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [productImage, setProductImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -56,11 +54,7 @@ const AddProduct = () => {
     e.preventDefault();
     
     if (!formData.name || !formData.costPrice || !formData.sellingPrice) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields (name, cost price, selling price).",
-        variant: "destructive",
-      });
+      Notifications.error("Please fill in all required fields (name, cost price, selling price).");
       return;
     }
 
@@ -75,10 +69,7 @@ const AddProduct = () => {
           imageUrl = await optimizeImageToBase64(productImage);
         } catch (error) {
           console.error("Error converting image to base64:", error);
-          toast({
-            title: "Warning",
-            description: "Failed to process image. Proceeding without image.",
-          });
+          Notifications.warning("Failed to process image. Proceeding without image.");
         }
       }
       
@@ -125,19 +116,12 @@ const AddProduct = () => {
       // Cache the individual product
       saveToCache(`${PRODUCTS_CACHE_KEY}_${docRef.id}`, productWithId, Date.now());
 
-      toast({
-        title: "Success",
-        description: "Product added successfully.",
-      });
+      Notifications.success("Product added successfully.");
 
       navigate("/products");
     } catch (error) {
       console.error("Error adding product:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add product. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to add product. Please try again.");
     } finally {
       setLoading(false);
     }

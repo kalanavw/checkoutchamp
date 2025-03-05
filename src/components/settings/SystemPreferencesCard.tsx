@@ -1,15 +1,13 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/hooks/use-toast";
+import { Notifications } from "@/utils/notifications";
 import { useTheme } from "@/hooks/useTheme";
-import { Building, Save, MoonStar, Sun } from "lucide-react";
+import { Building, MoonStar, Sun } from "lucide-react";
 
 const SystemPreferencesCard = () => {
-  const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [preferences, setPreferences] = useState({
     emailNotifications: false,
@@ -47,15 +45,10 @@ const SystemPreferencesCard = () => {
     // Handle special cases
     if (preference === "darkMode") {
       setTheme(newPreferences.darkMode ? "dark" : "light");
-      toast({
-        title: newPreferences.darkMode ? "Dark Mode Enabled" : "Light Mode Enabled",
-        description: `The application theme has been updated.`,
-      });
+      Notifications.info(newPreferences.darkMode ? "Dark Mode Enabled" : "Light Mode Enabled");
     } else {
-      toast({
-        title: "Preference Updated",
-        description: `${preference.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())} has been ${newPreferences[preference] ? 'enabled' : 'disabled'}.`,
-      });
+      const prefName = preference.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase());
+      Notifications.info(`${prefName} has been ${newPreferences[preference] ? 'enabled' : 'disabled'}.`);
     }
   };
 

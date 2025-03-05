@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { Notifications } from "@/utils/notifications";
 import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { Product } from "@/types/product";
@@ -26,7 +25,6 @@ const PRODUCTS_CACHE_KEY = "products_cache";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const { toast } = useToast();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -85,26 +83,18 @@ const ProductDetail = () => {
           saveToCache(cacheKey, productWithId);
           saveCollectionFetchTime(COLLECTION_KEYS.PRODUCTS);
         } else {
-          toast({
-            title: "Error",
-            description: "Product not found",
-            variant: "destructive",
-          });
+          Notifications.error("Product not found");
         }
       } catch (error) {
         console.error("Error fetching product:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load product details",
-          variant: "destructive",
-        });
+        Notifications.error("Failed to load product details");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProduct();
-  }, [id, toast]);
+  }, [id]);
 
   if (loading) {
     return <LoadingSpinner />;

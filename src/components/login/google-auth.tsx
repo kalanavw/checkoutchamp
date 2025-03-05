@@ -1,14 +1,12 @@
-
 import { useNavigate } from "react-router-dom";
 import { auth, googleProvider, db, USER_COLLECTION } from "@/lib/firebase";
 import { signInWithPopup, browserPopupRedirectResolver } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { useToast } from "@/components/ui/use-toast";
+import { Notifications } from "@/utils/notifications";
 import { AuthUser } from "@/types/authUser";
 
 export const useGoogleAuth = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const handleGoogleLogin = async () => {
     try {
@@ -53,11 +51,7 @@ export const useGoogleAuth = () => {
       if (!isActive) {
         // User is disabled
         await auth.signOut();
-        toast({
-          title: "Account Disabled",
-          description: "Your account has been disabled. Please contact an administrator.",
-          variant: "destructive",
-        });
+        Notifications.error("Your account has been disabled. Please contact an administrator.");
         return false;
       }
       
@@ -79,20 +73,13 @@ export const useGoogleAuth = () => {
       localStorage.setItem("userImage", user.photoURL || "");
       localStorage.setItem("userId", user.uid);
       
-      toast({
-        title: "Google Login Successful",
-        description: "You've been logged in with Google.",
-      });
+      Notifications.success("You've been logged in with Google.");
       
       navigate("/");
       return true;
     } catch (error) {
       console.error("Google login error:", error);
-      toast({
-        title: "Google Login Failed",
-        description: "An error occurred during Google login.",
-        variant: "destructive",
-      });
+      Notifications.error("An error occurred during Google login.");
       return false;
     }
   };

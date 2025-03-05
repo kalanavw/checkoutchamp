@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
 import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { isCacheValid, saveToCache, getFromCache, clearCache } from "@/utils/cacheUtils";
-import { useToast } from "@/components/ui/use-toast";
+import { Notifications } from "@/utils/notifications";
 import { 
   COLLECTION_KEYS,
   saveCollectionUpdateTime,
@@ -17,7 +16,6 @@ const PRODUCTS_LIST_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_list`;
 const PRODUCTS_LAST_UPDATE_KEY = `${PRODUCTS_CACHE_KEY}_lastUpdate`;
 
 export const useProducts = () => {
-  const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -171,17 +169,10 @@ export const useProducts = () => {
       saveCollectionUpdateTime(COLLECTION_KEYS.PRODUCTS);
       saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
       
-      toast({
-        title: "Success",
-        description: "Product deleted successfully.",
-      });
+      Notifications.success("Product deleted successfully.");
     } catch (error) {
       console.error("Error deleting product:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete product.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to delete product.");
     }
   };
 

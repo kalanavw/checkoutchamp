@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { collection, getDocs, doc, setDoc, updateDoc, query, orderBy, limit } from "firebase/firestore";
 import { db, STOREINFO_COLLECTION } from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
-import { useToast } from "@/hooks/use-toast";
+import { Notifications } from "@/utils/notifications";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { isCacheValid, saveToCache, getFromCache, getLastModifiedTime } from "@/utils/cacheUtils";
 
@@ -11,7 +10,6 @@ import { isCacheValid, saveToCache, getFromCache, getLastModifiedTime } from "@/
 const STORE_INFO_CACHE_KEY = "store_info_cache";
 
 export const useStoreInfo = () => {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -100,11 +98,7 @@ export const useStoreInfo = () => {
         }
       } catch (error) {
         console.error("Error fetching store info:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load store information.",
-          variant: "destructive",
-        });
+        Notifications.error("Failed to load store information.");
         
         // If fetching fails but we have cache, use it regardless of age
         const cachedData = getFromCache<StoreInfo & { id?: string }>(STORE_INFO_CACHE_KEY);
@@ -119,7 +113,7 @@ export const useStoreInfo = () => {
     };
 
     fetchStoreInfo();
-  }, [toast]);
+  }, []);
 
   const handleInputChange = (field: keyof StoreInfo, value: string) => {
     setStoreInfo(prev => ({ ...prev, [field]: value }));
@@ -149,11 +143,7 @@ export const useStoreInfo = () => {
 
   const handleSaveStoreInfo = async () => {
     if (!storeInfo.businessName) {
-      toast({
-        title: "Error",
-        description: "Business name is required.",
-        variant: "destructive",
-      });
+      Notifications.error("Business name is required.");
       return;
     }
 
@@ -169,10 +159,7 @@ export const useStoreInfo = () => {
           logoUrl = await optimizeImageToBase64(logoFile);
         } catch (error) {
           console.error("Error converting logo to base64:", error);
-          toast({
-            title: "Warning",
-            description: "Failed to process logo. Using previous logo if available.",
-          });
+          Notifications.warning("Failed to process logo. Using previous logo if available.");
         }
       }
 
@@ -209,17 +196,10 @@ export const useStoreInfo = () => {
         newValue: JSON.stringify(updatedStoreInfo)
       }));
 
-      toast({
-        title: "Success",
-        description: "Store information saved successfully.",
-      });
+      Notifications.success("Store information saved successfully.");
     } catch (error) {
       console.error("Error saving store information:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save store information.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to save store information.");
     } finally {
       setLoading(false);
     }

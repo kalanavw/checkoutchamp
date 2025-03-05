@@ -3,17 +3,15 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '@/components/login/login-form';
 import { useGoogleAuth } from '@/components/login/google-auth';
-import { Toaster } from '@/components/ui/toaster';
-import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/hooks/useTheme';
+import { Notifications } from '@/utils/notifications';
 import { Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { theme, setTheme } = useTheme();
   const { handleGoogleLogin: GoogleAuth } = useGoogleAuth();
 
   useEffect(() => {
@@ -30,11 +28,7 @@ const Login = () => {
       navigate("/");
     } catch (error: any) {
       console.error("Google login error:", error);
-      toast({
-        title: "Login Failed",
-        description: error.message || "Google login failed",
-        variant: "destructive",
-      });
+      Notifications.error(error.message || "Google login failed");
     } finally {
       setGoogleLoading(false);
     }
@@ -78,8 +72,6 @@ const Login = () => {
       <footer className="py-4 text-center text-gray-600 dark:text-gray-400 text-sm">
         <p>© {new Date().getFullYear()} StockChamp. All rights reserved.</p>
       </footer>
-      
-      <Toaster />
     </div>
   );
 };

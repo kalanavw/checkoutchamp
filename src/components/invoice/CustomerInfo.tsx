@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useToast } from "@/components/ui/use-toast";
+import { Notifications } from "@/utils/notifications";
 import { addDoc, collection } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Phone, User, Plus } from "lucide-react";
@@ -18,7 +17,6 @@ export function CustomerInfo({
   customerName,
   onNameChange,
 }: CustomerInfoProps) {
-  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
@@ -35,11 +33,7 @@ export function CustomerInfo({
     e.preventDefault();
     
     if (!newCustomer.name || !newCustomer.phone) {
-      toast({
-        title: "Error",
-        description: "Name and phone are required fields.",
-        variant: "destructive",
-      });
+      Notifications.error("Name and phone are required fields.");
       return;
     }
     
@@ -53,10 +47,7 @@ export function CustomerInfo({
       
       await addDoc(collection(db, "customers"), customerData);
       
-      toast({
-        title: "Success",
-        description: "Customer added successfully.",
-      });
+      Notifications.success("Customer added successfully.");
       
       onNameChange(newCustomer.name);
       setNewCustomer({
@@ -68,11 +59,7 @@ export function CustomerInfo({
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error adding customer:", error);
-      toast({
-        title: "Error",
-        description: "Failed to add customer. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to add customer. Please try again.");
     } finally {
       setIsLoading(false);
     }
