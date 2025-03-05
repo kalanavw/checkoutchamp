@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
+import { clearAllAppCache } from "@/utils/cacheUtils";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -27,6 +28,11 @@ const Sidebar = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      
+      // Clear all cache data
+      clearAllAppCache();
+      
+      // These are still needed for complete cleanup
       localStorage.removeItem("user");
       localStorage.removeItem("userName");
       localStorage.removeItem("userRole");
@@ -34,6 +40,7 @@ const Sidebar = () => {
       localStorage.removeItem("userImage");
       localStorage.removeItem("userId");
       localStorage.removeItem("isLoggedIn");
+      
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);

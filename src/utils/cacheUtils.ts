@@ -132,3 +132,40 @@ export const getLastModifiedTime = (cacheKey: string): number => {
 export const clearCache = (cacheKey: string): void => {
   localStorage.removeItem(cacheKey);
 };
+
+/**
+ * Clear all cache entries related to the application
+ * Preserves only critical items like theme preference
+ */
+export const clearAllAppCache = (): void => {
+  // Items to preserve (e.g., theme preferences)
+  const preserveKeys = ['theme'];
+  
+  // Get all keys in localStorage
+  const keys = Object.keys(localStorage);
+  
+  // Remove all items except those in preserveKeys
+  for (const key of keys) {
+    // Skip preserved keys
+    if (preserveKeys.includes(key)) continue;
+    
+    // Only clear app-related data (not third-party)
+    if (
+      key.includes('_cache') || 
+      key.includes('_collection') || 
+      key.includes('_timestamps') ||
+      key === 'storeInfo' ||
+      key === 'user' ||
+      key === 'isLoggedIn' ||
+      key === 'userRole' ||
+      key === 'userEmail' ||
+      key === 'userName' ||
+      key === 'userImage' ||
+      key === 'userId' 
+    ) {
+      localStorage.removeItem(key);
+    }
+  }
+  
+  console.log('All application cache cleared');
+};
