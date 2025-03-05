@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/ui/sidebar";
@@ -22,13 +21,11 @@ const Layout = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
 
-  // Check authentication state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setLoading(true);
       
       if (currentUser) {
-        // User is logged in, create AuthUser object
         const authUser: AuthUser = {
           uid: currentUser.uid,
           email: currentUser.email,
@@ -38,10 +35,8 @@ const Layout = () => {
         };
         
         setUser(authUser);
-        // Store user in localStorage for other components
         localStorage.setItem("user", JSON.stringify(authUser));
         
-        // Try to load store info from local storage
         const cachedStoreInfo = localStorage.getItem("storeInfo");
         if (cachedStoreInfo) {
           try {
@@ -51,7 +46,6 @@ const Layout = () => {
           }
         }
       } else {
-        // User is not logged in, redirect to login
         localStorage.removeItem("user");
         setUser(null);
         navigate("/login");
@@ -60,11 +54,9 @@ const Layout = () => {
       setLoading(false);
     });
 
-    // Clean up subscription
     return () => unsubscribe();
   }, [navigate]);
 
-  // Fetch store information
   useEffect(() => {
     const fetchStoreInfo = async () => {
       try {
@@ -74,7 +66,6 @@ const Layout = () => {
           storeData.id = storeSnapshot.docs[0].id;
           setStoreInfo(storeData);
           
-          // Save to localStorage for future use
           localStorage.setItem("storeInfo", JSON.stringify(storeData));
         }
       } catch (error) {
@@ -92,7 +83,6 @@ const Layout = () => {
     }
   }, [user]);
 
-  // Listen for storeInfo changes in localStorage (for updates from Settings page)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "storeInfo" && e.newValue) {
@@ -109,12 +99,10 @@ const Layout = () => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Update sidebar state when mobile state changes
   useEffect(() => {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  // Show loading until authentication check completes
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -123,8 +111,6 @@ const Layout = () => {
     );
   }
 
-  // If user is not authenticated, Layout component shouldn't render at all
-  // The redirect happens in the useEffect above
   if (!user) {
     return null;
   }
@@ -144,12 +130,12 @@ const Layout = () => {
       )}
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-16 border-b flex items-center px-6 sticky top-0 bg-background z-10">
+        <header className="h-16 border-b border-green-100 dark:border-green-800/50 flex items-center px-6 sticky top-0 bg-white/90 dark:bg-green-900/90 backdrop-blur-sm z-10">
           {!sidebarOpen && (
             <Button
               variant="ghost"
               size="icon"
-              className="mr-4"
+              className="mr-4 text-green-700 hover:bg-green-100/50 dark:text-green-300 dark:hover:bg-green-800/50"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="h-5 w-5" />
@@ -160,26 +146,26 @@ const Layout = () => {
               <img 
                 src={storeInfo.logoUrl} 
                 alt={storeInfo.businessName || "Business Logo"}
-                className="h-8 w-8 object-contain"
+                className="h-8 w-8 object-contain rounded-full border border-green-100 dark:border-green-700"
               />
             )}
-            <h1 className="text-lg font-medium">
+            <h1 className="text-lg font-medium text-green-800 dark:text-green-300">
               {storeInfo?.businessName || "POS System"}
             </h1>
           </div>
           <div className="ml-auto flex items-center gap-4">
             <Button
               variant="ghost"
-              className="p-0 flex items-center gap-2"
+              className="p-0 flex items-center gap-2 text-green-700 hover:bg-green-100/50 dark:text-green-300 dark:hover:bg-green-800/50"
               onClick={() => navigate("/user/profile")}
             >
               {user.photoURL ? (
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8 border border-green-200 dark:border-green-700">
                   <AvatarImage src={user.photoURL} alt={user.displayName || "User"} />
-                  <AvatarFallback>{user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}</AvatarFallback>
+                  <AvatarFallback className="bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200">{user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
               ) : (
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-medium">
+                <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-800 flex items-center justify-center text-green-800 dark:text-green-200 text-sm font-medium border border-green-200 dark:border-green-700">
                   {user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
                 </div>
               )}
@@ -188,7 +174,7 @@ const Layout = () => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-gradient-to-br from-green-50/50 to-white dark:from-gray-900 dark:to-green-950/30">
           <Outlet />
         </main>
       </div>

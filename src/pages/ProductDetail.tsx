@@ -119,9 +119,9 @@ const ProductDetail = () => {
       <ProductDetailHeader productId={product.id} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="md:col-span-2 bg-secondary/30 border-theme-light">
-          <CardHeader className="bg-gradient-to-r from-secondary to-secondary/50 rounded-t-lg">
-            <CardTitle className="text-2xl">{product.name}</CardTitle>
+        <Card className="md:col-span-2 bg-green-50/50 dark:bg-green-900/30 border-green-100 dark:border-green-800/50">
+          <CardHeader className="bg-gradient-to-r from-green-100 to-green-50/50 dark:from-green-800/50 dark:to-green-900/30 rounded-t-lg">
+            <CardTitle className="text-2xl text-green-800 dark:text-green-300">{product.name}</CardTitle>
           </CardHeader>
           <CardContent>
             <ProductInfo product={product} />

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,6 @@ import {
   markCollectionUpdated
 } from "@/utils/collectionUtils";
 
-// Cache keys
 const PRODUCTS_CACHE_KEY = "products_cache";
 const PRODUCTS_LIST_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_list`;
 const PRODUCTS_LAST_UPDATE_KEY = `${PRODUCTS_CACHE_KEY}_lastUpdate`;
@@ -42,16 +40,12 @@ const Products = () => {
     try {
       setLoading(true);
 
-      // Skip cache for search queries, forced refresh, or pagination
       const skipCache = !!searchQuery || forceRefresh || next;
       
-      // Generate a cache key based on the filter
       const cacheKey = `${PRODUCTS_LIST_CACHE_KEY}_${filter}`;
       
-      // Check if we need to refresh data based on collection timestamps
       const shouldRefresh = shouldFetchCollection(COLLECTION_KEYS.PRODUCTS);
       
-      // Check if we have valid cache and should use it
       if (!skipCache && !shouldRefresh && isCacheValid(cacheKey)) {
         const cachedProducts = getFromCache<Product[]>(cacheKey);
         if (cachedProducts && cachedProducts.length > 0) {
@@ -62,7 +56,6 @@ const Products = () => {
         }
       }
 
-      // Prepare Firestore query
       let q;
       const productsCollection = collection(db, PRODUCT_COLLECTION);
 
@@ -99,7 +92,6 @@ const Products = () => {
 
       const fetchedProducts: Product[] = [];
       querySnapshot.forEach((doc) => {
-        // Type assertion to address the unknown type issue
         const productData = doc.data() as Record<string, any>;
         
         const productWithId: Product = {
@@ -127,25 +119,21 @@ const Products = () => {
         
         fetchedProducts.push(productWithId);
         
-        // Cache individual product
         saveToCache(`${PRODUCTS_CACHE_KEY}_${doc.id}`, productWithId);
       });
 
       if (next) {
         setProducts((prev) => {
           const newProducts = [...prev, ...fetchedProducts];
-          // Don't cache paginated results as a list
           return newProducts;
         });
       } else {
         setProducts(fetchedProducts);
-        // Cache the results if not a search query
         if (!searchQuery) {
           saveToCache(cacheKey, fetchedProducts);
         }
       }
       
-      // Update the collection fetch timestamps
       if (!next) {
         saveCollectionFetchTime(COLLECTION_KEYS.PRODUCTS);
         saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
@@ -155,7 +143,6 @@ const Products = () => {
     } catch (error) {
       console.error("Error fetching products:", error);
       
-      // If fetching fails but we have cache, use it
       if (!searchQuery) {
         const cacheKey = `${PRODUCTS_LIST_CACHE_KEY}_${filter}`;
         const cachedProducts = getFromCache<Product[]>(cacheKey);
@@ -188,23 +175,18 @@ const Products = () => {
 
   const handleDelete = async (id: string) => {
     try {
-      // Get the current user name from localStorage or use "Unknown"
       const userName = localStorage.getItem("userName") || "Unknown";
       
-      // Update the product document with modified fields before deleting
       await updateDoc(doc(db, PRODUCT_COLLECTION, id), {
         modifiedDate: serverTimestamp(),
         modifiedBy: userName
       });
       
-      // Now delete the document
       await deleteDoc(doc(db, PRODUCT_COLLECTION, id));
       setProducts(products.filter(product => product.id !== id));
       
-      // Clear the cache for this product
       clearCache(`${PRODUCTS_CACHE_KEY}_${id}`);
       
-      // Mark the collection as updated
       saveCollectionUpdateTime(COLLECTION_KEYS.PRODUCTS);
       saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
       
@@ -218,7 +200,7 @@ const Products = () => {
   };
 
   const handleViewProduct = (id: string) => {
-    navigate(`/product/${id}`);
+    navigate(`/products/${id}`);
   };
 
   return (
