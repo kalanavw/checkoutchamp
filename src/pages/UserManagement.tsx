@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { db, USER_COLLECTION } from "@/lib/firebase";
+import {db, USER_COLLECTION} from "@/lib/firebase";
 import {
   collection,
   addDoc,
@@ -183,7 +183,8 @@ const UserManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    debugger;
+
     if (!formData.name || !formData.email || !formData.password) {
       Notifications.error("All fields are required.")
       return;
@@ -200,16 +201,17 @@ const UserManagement = () => {
         setLoading(false);
         return;
       }
-      
+
+      const authCreateUser = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       const newUser = {
         ...formData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+        id: authCreateUser.user.uid
       };
-      
+      debugger
       const docRef = await addDoc(collection(db, USER_COLLECTION), newUser);
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      console.log("User created:", userCredential.user.email);
+      console.log("User created:", formData.email);
       
       let photoURL = "";
       if (selectedImage) {
@@ -222,13 +224,11 @@ const UserManagement = () => {
         }
       }
       
-      const userWithId: UserData = { 
-        id: docRef.id, 
+      const userWithId: UserData = {
         ...newUser,
         createdAt: new Date(),
         photoURL,
       };
-      
       // Update the collection update timestamp
       saveCollectionUpdateTime(COLLECTION_KEYS.USERS);
       
@@ -250,7 +250,29 @@ const UserManagement = () => {
       setIsDialogOpen(false);
     } catch (error) {
       console.error("Error adding user:", error);
-      Notifications.error("Failed to add user. Please try again.")
+      let errorMessage;
+      switch (error.code) {
+        case "auth/email-already-in-use":
+          errorMessage = "This email is already in use. Please use a different one.";
+          break;
+        case "auth/invalid-email":
+          errorMessage = "Invalid email format. Please enter a valid email address.";
+          break;
+        case "auth/weak-password":
+          errorMessage = "Password is too weak. Use at least 6 characters.";
+          break;
+        case "auth/network-request-failed":
+          errorMessage = "Network error. Please check your internet connection.";
+          break;
+        case "auth/operation-not-allowed":
+          errorMessage = "This operation is not allowed. Contact support.";
+          break;
+        default:
+          errorMessage = error.message; // Fallback to Firebase's default message
+      }
+
+      Notifications.error(errorMessage);
+
     } finally {
       setLoading(false);
     }

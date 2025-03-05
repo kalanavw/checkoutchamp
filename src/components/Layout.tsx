@@ -22,7 +22,7 @@ const Layout = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setLoading(true);
-      
+
       if (currentUser) {
         const authUser: AuthUser = {
           uid: currentUser.uid,

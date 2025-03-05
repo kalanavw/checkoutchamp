@@ -219,8 +219,7 @@ const UserManagementTable = ({ users, searchQuery, onUpdateUsers }: UserManageme
                     <div className="h-10 w-10 rounded-full overflow-hidden">
                       {user.photoURL ? (
                         <Avatar>
-                          <AvatarImage src={user.photoURL} alt={user.name} />
-                          <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
+                          <AvatarImage src={user.photoURL + "?sz=200"} alt={user.name} />
                         </Avatar>
                       ) : (
                         <Avatar>
