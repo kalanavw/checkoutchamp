@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoginForm from '@/components/login/login-form';
-import GoogleAuth from '@/components/login/google-auth';
+import { useGoogleAuth } from '@/components/login/google-auth';
 import { Toaster } from '@/components/ui/toaster';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/hooks/useTheme';
@@ -14,6 +14,7 @@ const Login = () => {
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { handleGoogleLogin: GoogleAuth } = useGoogleAuth();
 
   useEffect(() => {
     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
