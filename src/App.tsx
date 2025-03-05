@@ -13,6 +13,7 @@ import Invoice from "@/pages/Invoice";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import UserManagement from "@/pages/UserManagement";
+import UserProfile from "@/pages/UserProfile";
 import Checkout from "@/pages/Checkout";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
@@ -36,6 +37,8 @@ function App() {
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
         <Route path="users" element={<UserManagement />} />
+        <Route path="user/:id" element={<UserProfile />} />
+        <Route path="user/profile" element={<UserProfile />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>

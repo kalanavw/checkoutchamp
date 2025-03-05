@@ -1,10 +1,11 @@
+
 // Import the relevant components and hooks
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { db, USER_COLLECTION } from "@/lib/firebase";
 import {
   collection,
@@ -15,7 +16,7 @@ import {
   query,
   orderBy,
   serverTimestamp,
-  where, Timestamp
+  where,
 } from "firebase/firestore";
 import { 
   Dialog, 
@@ -24,23 +25,6 @@ import {
   DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import { 
   Search,
   UserPlus, 
@@ -54,8 +38,8 @@ import {
   User as UserIcon
 } from "lucide-react";
 import { UserRole } from "@/types/user";
+import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useNavigate } from "react-router-dom";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
@@ -66,6 +50,15 @@ import {
   saveCollectionFetchTime,
   shouldFetchCollection
 } from "@/utils/collectionUtils";
+import UserManagementTable from "@/components/users/UserManagementTable";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 // Cache key
 const USERS_CACHE_KEY = "users_cache";
@@ -83,7 +76,6 @@ interface UserData {
 
 const UserManagement = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -288,86 +280,9 @@ const UserManagement = () => {
     }
   };
 
-  const getRoleBadge = (role: UserRole) => {
-    switch (role) {
-      case "admin":
-        return <Badge className="bg-primary">Admin</Badge>;
-      case "cashier":
-        return <Badge className="bg-blue-600">Cashier</Badge>;
-      case "helper":
-        return <Badge className="bg-green-600">Helper</Badge>;
-      default:
-        return <Badge>Unknown</Badge>;
-    }
+  const handleUpdateUsers = (updatedUsers: UserData[]) => {
+    setUsers(updatedUsers);
   };
-
-  const toggleUserStatus = async (userId: string, currentStatus: boolean) => {
-    try {
-      await updateDoc(doc(db, USER_COLLECTION, userId), {
-        active: !currentStatus,
-        updatedAt: serverTimestamp()
-      });
-      
-      // Update the collection update timestamp
-      saveCollectionUpdateTime(COLLECTION_KEYS.USERS);
-      
-      // Update local state and cache
-      const updatedUsers = users.map(user => 
-        user.id === userId ? { ...user, active: !currentStatus } : user
-      );
-      setUsers(updatedUsers);
-      saveToCache(USERS_CACHE_KEY, updatedUsers);
-      
-      toast({
-        title: "User Status Updated",
-        description: `User has been ${currentStatus ? "deactivated" : "activated"}.`,
-      });
-    } catch (error) {
-      console.error("Error updating user status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update user status.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateUserRole = async (userId: string, newRole: UserRole) => {
-    try {
-      await updateDoc(doc(db, USER_COLLECTION, userId), {
-        role: newRole,
-        updatedAt: serverTimestamp()
-      });
-      
-      // Update the collection update timestamp
-      saveCollectionUpdateTime(COLLECTION_KEYS.USERS);
-      
-      // Update local state and cache
-      const updatedUsers = users.map(user => 
-        user.id === userId ? { ...user, role: newRole } : user
-      );
-      setUsers(updatedUsers);
-      saveToCache(USERS_CACHE_KEY, updatedUsers);
-      
-      toast({
-        title: "User Role Updated",
-        description: `User role has been changed to ${newRole}.`,
-      });
-    } catch (error) {
-      console.error("Error updating user role:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update user role.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div className="p-6 space-y-6 w-full animate-in">
@@ -406,112 +321,11 @@ const UserManagement = () => {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <div className="rounded-md border overflow-hidden border-primary/30">
-            <Table>
-              <TableHeader className="bg-secondary">
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <div className="flex flex-col items-center justify-center">
-                        <p>No users found</p>
-                        <Button 
-                          variant="link" 
-                          onClick={() => setIsDialogOpen(true)} 
-                          className="mt-2 text-primary"
-                        >
-                          Add your first user
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : filteredUsers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      No users match your search
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-secondary/50">
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full overflow-hidden">
-                            {user.photoURL ? (
-                              <Avatar>
-                                <AvatarImage src={user.photoURL} alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                              </Avatar>
-                            ) : (
-                              <Avatar>
-                                <AvatarFallback>{user.name.charAt(0).toUpperCase()}</AvatarFallback>
-                              </Avatar>
-                            )}
-                          </div>
-                          <Button variant="link" className="p-0 h-auto font-medium text-primary" onClick={() => navigate(`/user/${user.id}`)}>
-                            {user.name}
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={user.role}
-                          onValueChange={(value: UserRole) => updateUserRole(user.id, value)}
-                        >
-                          <SelectTrigger className="h-8 w-32 border-primary/30">
-                            <SelectValue placeholder={getRoleBadge(user.role)} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="cashier">Cashier</SelectItem>
-                            <SelectItem value="helper">Helper</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Switch 
-                            checked={user.active} 
-                            onCheckedChange={() => toggleUserStatus(user.id, user.active)}
-                          />
-                          <span className={`text-sm ${user.active ? 'text-primary' : 'text-red-500'}`}>
-                            {user.active ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {user?.createdAt
-                            ? user.createdAt instanceof Timestamp
-                                ? user.createdAt.toDate().toLocaleDateString() // Firestore Timestamp
-                                : new Date(user.createdAt).toLocaleDateString() // ISO String
-                            : "N/A"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => navigate(`/user/${user.id}`)}
-                          className="hover:bg-primary/10 text-primary"
-                        >
-                          View
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <UserManagementTable 
+            users={users} 
+            searchQuery={searchQuery} 
+            onUpdateUsers={handleUpdateUsers} 
+          />
         </CardContent>
       </Card>
       

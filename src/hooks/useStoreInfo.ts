@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { collection, getDocs, doc, setDoc, updateDoc, query, orderBy, limit } from "firebase/firestore";
 import { db, STOREINFO_COLLECTION } from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { isCacheValid, saveToCache, getFromCache, getLastModifiedTime } from "@/utils/cacheUtils";
 
@@ -28,7 +28,23 @@ export const useStoreInfo = () => {
   useEffect(() => {
     const fetchStoreInfo = async () => {
       try {
-        // Check cache first
+        // Check localStorage first
+        const localStoreInfo = localStorage.getItem("storeInfo");
+        if (localStoreInfo) {
+          try {
+            const parsedInfo = JSON.parse(localStoreInfo);
+            setStoreInfo(parsedInfo);
+            if (parsedInfo.logoUrl) {
+              setLogoPreview(parsedInfo.logoUrl);
+            }
+            console.log("Using localStorage store info");
+            return;
+          } catch (error) {
+            console.error("Error parsing local store info:", error);
+          }
+        }
+        
+        // Check cache if localStorage failed
         const cachedData = getFromCache<StoreInfo & { id?: string }>(STORE_INFO_CACHE_KEY);
         const lastModified = getLastModifiedTime(STORE_INFO_CACHE_KEY);
         
@@ -78,6 +94,9 @@ export const useStoreInfo = () => {
           
           // Save to cache with server's last modified time
           saveToCache(STORE_INFO_CACHE_KEY, storeWithId, updatedAtTimestamp);
+          
+          // Save to localStorage for app-wide access
+          localStorage.setItem("storeInfo", JSON.stringify(storeWithId));
         }
       } catch (error) {
         console.error("Error fetching store info:", error);
@@ -179,6 +198,16 @@ export const useStoreInfo = () => {
       
       // Update cache
       saveToCache(STORE_INFO_CACHE_KEY, updatedStoreInfo, Date.now());
+      
+      // Update localStorage (this will trigger an update in the Layout component)
+      localStorage.setItem("storeInfo", JSON.stringify(updatedStoreInfo));
+      
+      // Additionally dispatch a storage event to ensure Layout component updates
+      // (in case the settings page is the only tab open)
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'storeInfo',
+        newValue: JSON.stringify(updatedStoreInfo)
+      }));
 
       toast({
         title: "Success",
