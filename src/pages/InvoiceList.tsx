@@ -5,13 +5,13 @@ import { collection, getDocs, query, orderBy, where } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast"; // Updated import path
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Eye, Calendar, Search } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
+import {Notifications} from "@/utils/notifications.ts";
 
 interface InvoiceItem {
   id: string;
@@ -34,7 +34,6 @@ interface Invoice {
 }
 
 const InvoiceList = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,11 +78,7 @@ const InvoiceList = () => {
       setInvoices(fetchedInvoices);
     } catch (error) {
       console.error("Error fetching invoices:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load invoices. Please try again.",
-        variant: "destructive",
-      });
+      Notifications.error("Failed to load invoices. Please try again.")
     } finally {
       setLoading(false);
     }
