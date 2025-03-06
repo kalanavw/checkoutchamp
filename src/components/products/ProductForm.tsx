@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import {
   ImageSection, 
   CategorySection, 
   StockSection 
-} from "@/components/products/product-form/form-sections";
+} from "@/components/products/product-form";
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { saveToCache } from "@/utils/cacheUtils";
 import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUtils";
@@ -46,7 +45,6 @@ export const ProductForm = () => {
     discount: "",
   });
 
-  // Fetch locations
   useEffect(() => {
     fetchLocations();
   }, []);
@@ -69,7 +67,6 @@ export const ProductForm = () => {
       
       setLocations(locationsList);
       
-      // Set default location if available
       if (locationsList.length > 0 && !formData.location) {
         setFormData(prev => ({ ...prev, location: locationsList[0].id }));
       }
@@ -96,7 +93,6 @@ export const ProductForm = () => {
       return false;
     }
     
-    // Check if product code is unique
     try {
       const productsRef = collection(db, PRODUCT_COLLECTION);
       const q = query(productsRef, where("productCode", "==", formData.productCode));
@@ -129,7 +125,6 @@ export const ProductForm = () => {
       
       if (productImage) {
         try {
-          // Optimize image and convert to base64
           imageUrl = await optimizeImageToBase64(productImage);
         } catch (error) {
           console.error("Error converting image to base64:", error);
@@ -175,26 +170,22 @@ export const ProductForm = () => {
         modifiedBy: userName
       };
       
-      // Update the collection's last update timestamp
       saveCollectionUpdateTime(COLLECTION_KEYS.PRODUCTS);
       
-      // Cache the individual product
       saveToCache(`${PRODUCTS_CACHE_KEY}_${docRef.id}`, productWithId, Date.now());
 
       Notifications.success("Product added successfully.");
 
-      // Handle navigation based on button clicked
       if (saving === "saveAndNew") {
-        // Reset form for a new product
         setFormData({
           productCode: "",
           name: "",
           costPrice: "",
           sellingPrice: "",
           stock: "0",
-          category: formData.category, // Keep the same category
-          subcategory: formData.subcategory, // Keep the same subcategory
-          location: formData.location, // Keep the same location
+          category: formData.category,
+          subcategory: formData.subcategory,
+          location: formData.location,
           keywords: "",
           barcode: "",
           discount: "",
@@ -202,7 +193,6 @@ export const ProductForm = () => {
         setProductImage(null);
         setImagePreview(null);
       } else {
-        // Navigate back to products list
         navigate("/products");
       }
     } catch (error) {
