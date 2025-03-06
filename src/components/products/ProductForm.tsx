@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
-import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
+import {db, LOCATIONS_COLLECTION, PRODUCT_COLLECTION} from "@/lib/firebase";
 import { Save, Plus } from "lucide-react";
 import { 
   BasicInfoSection, 
@@ -14,22 +14,19 @@ import {
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { saveToCache } from "@/utils/cacheUtils";
 import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUtils";
-import { Location } from "@/types/product";
 import { Notifications } from "@/utils/notifications";
 import { LocationDialog } from "./LocationDialog";
 import { Dialog } from "@/components/ui/dialog";
 
 // Cache key prefix for products
 const PRODUCTS_CACHE_KEY = "products_cache";
-const LOCATIONS_COLLECTION = "locations";
+
 
 export const ProductForm = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [productImage, setProductImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [saving, setSaving] = useState<"save" | "saveAndNew" | null>(null);
   
   const [formData, setFormData] = useState({
@@ -46,36 +43,6 @@ export const ProductForm = () => {
     discount: "",
   });
 
-  useEffect(() => {
-    fetchLocations();
-  }, []);
-
-  const fetchLocations = async () => {
-    try {
-      const locationsCollection = collection(db, LOCATIONS_COLLECTION);
-      const locationsSnapshot = await getDocs(locationsCollection);
-      
-      const locationsList: Location[] = [];
-      locationsSnapshot.forEach((doc) => {
-        const data = doc.data();
-        locationsList.push({
-          id: doc.id,
-          name: data.name || "",
-          code: data.code || "",
-          description: data.description || "",
-        });
-      });
-      
-      setLocations(locationsList);
-      
-      if (locationsList.length > 0 && !formData.location) {
-        setFormData(prev => ({ ...prev, location: locationsList[0].id }));
-      }
-    } catch (error) {
-      console.error("Error fetching locations:", error);
-      Notifications.error("Failed to load locations");
-    }
-  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -193,6 +160,7 @@ export const ProductForm = () => {
         });
         setProductImage(null);
         setImagePreview(null);
+        navigate("/add-product")
       } else {
         navigate("/products");
       }
@@ -205,10 +173,6 @@ export const ProductForm = () => {
     }
   };
 
-  const handleLocationAdded = (newLocation: Location) => {
-    setLocations(prev => [...prev, newLocation]);
-    setFormData(prev => ({ ...prev, location: newLocation.id }));
-  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -217,10 +181,7 @@ export const ProductForm = () => {
           formData={formData}
           handleChange={handleChange}
           handleSelectChange={handleSelectChange}
-          locations={locations}
-          onAddLocation={() => setLocationDialogOpen(true)}
       />
-      <PricingSection formData={formData} handleChange={handleChange} />
       <ImageSection
         imagePreview={imagePreview} 
         setImagePreview={setImagePreview} 
@@ -278,14 +239,6 @@ export const ProductForm = () => {
           )}
         </Button>
       </div>
-      
-      <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
-        <LocationDialog 
-          open={locationDialogOpen} 
-          onOpenChange={setLocationDialogOpen}
-          onLocationAdded={handleLocationAdded}
-        />
-      </Dialog>
     </form>
   );
 };

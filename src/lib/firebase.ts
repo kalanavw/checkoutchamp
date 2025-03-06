@@ -39,4 +39,4 @@ export const USER_COLLECTION = "users";
 export const CUSTOMER_COLLECTION = "customers";
 export const PRODUCT_COLLECTION = "products";
 export const STOREINFO_COLLECTION = "storeInfo";
-
+export const LOCATIONS_COLLECTION = "locations";

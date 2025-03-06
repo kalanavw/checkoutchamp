@@ -5,6 +5,7 @@ import { Product } from "@/types/product";
 import { Edit, Trash2, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
+import {fontStyle} from "html2canvas/dist/types/css/property-descriptors/font-style";
 
 interface ProductsTableProps {
   products: Product[];
@@ -33,13 +34,10 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
   return (
     <div className="border rounded-md overflow-hidden">
       <Table>
-        <TableHeader>
+        <TableHeader style={{ fontWeight: "bold", color: "black" }}>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Cost Price(Rs)</TableHead>
-            <TableHead>Selling Price(Rs)</TableHead>
-            <TableHead>Discount(%)</TableHead>
-            <TableHead>Stock</TableHead>
+            <TableHead>Code</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Sub Category</TableHead>
             <TableHead>Keywords</TableHead>
@@ -67,23 +65,10 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
                   </Link>
                 </div>
               </TableCell>
-              <TableCell align={"right"}>{product.costPrice.toFixed(2)}</TableCell>
-              <TableCell align={"right"}>{product.sellingPrice.toFixed(2)}</TableCell>
-              <TableCell align={"center"}>{product.discount}</TableCell>
-              <TableCell align={"center"}>
-                {product.stock > 0 ? (
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                    {product.stock}
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                    Out of stock
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell align={"center"}>{product.category}</TableCell>
-              <TableCell align={"center"}>{product.subcategory}</TableCell>
-              <TableCell align={"center"}>
+              <TableCell align={"left"}>{product.productCode}</TableCell>
+              <TableCell align={"left"}>{product.category}</TableCell>
+              <TableCell align={"left"}>{product.subcategory}</TableCell>
+              <TableCell align={"left"}>
                 {product.keywords.map((keyword, index) => (
                     <Badge
                         key={index}
