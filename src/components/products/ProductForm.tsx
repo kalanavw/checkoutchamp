@@ -17,6 +17,7 @@ import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUti
 import { Location } from "@/types/product";
 import { Notifications } from "@/utils/notifications";
 import { LocationDialog } from "./LocationDialog";
+import { Dialog } from "@/components/ui/dialog";
 
 // Cache key prefix for products
 const PRODUCTS_CACHE_KEY = "products_cache";
@@ -278,11 +279,13 @@ export const ProductForm = () => {
         </Button>
       </div>
       
-      <LocationDialog 
-        open={locationDialogOpen} 
-        onOpenChange={setLocationDialogOpen}
-        onLocationAdded={handleLocationAdded}
-      />
+      <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
+        <LocationDialog 
+          open={locationDialogOpen} 
+          onOpenChange={setLocationDialogOpen}
+          onLocationAdded={handleLocationAdded}
+        />
+      </Dialog>
     </form>
   );
 };

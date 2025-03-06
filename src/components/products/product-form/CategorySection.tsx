@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CategorySectionProps {
@@ -52,18 +51,16 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
     <div className="space-y-2">
       <div className="flex justify-between items-center">
         <Label htmlFor="location">Location</Label>
-        <DialogTrigger asChild>
-          <Button 
-            type="button" 
-            variant="ghost" 
-            size="sm" 
-            onClick={onAddLocation}
-            className="h-6 px-2 text-xs text-green-600"
-          >
-            <Plus className="h-3 w-3 mr-1" />
-            Add New
-          </Button>
-        </DialogTrigger>
+        <Button 
+          type="button" 
+          variant="ghost" 
+          size="sm" 
+          onClick={onAddLocation}
+          className="h-6 px-2 text-xs text-green-600"
+        >
+          <Plus className="h-3 w-3 mr-1" />
+          Add New
+        </Button>
       </div>
       <Select
         value={formData.location}

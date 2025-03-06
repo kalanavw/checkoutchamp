@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -75,53 +75,51 @@ export const LocationDialog = ({ open, onOpenChange, onLocationAdded }: Location
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add New Location</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="location-name">
-              Location Name <span className="text-red-500">*</span>
-            </Label>
-            <Input 
-              id="location-name" 
-              value={newLocation.name}
-              onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Enter location name"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="location-code">
-              Location Code <span className="text-red-500">*</span>
-            </Label>
-            <Input 
-              id="location-code" 
-              value={newLocation.code}
-              onChange={(e) => setNewLocation(prev => ({ ...prev, code: e.target.value }))}
-              placeholder="Enter location code"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="location-description">Description</Label>
-            <Textarea 
-              id="location-description" 
-              value={newLocation.description}
-              onChange={(e) => setNewLocation(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Enter location description (optional)"
-            />
-          </div>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add New Location</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="location-name">
+            Location Name <span className="text-red-500">*</span>
+          </Label>
+          <Input 
+            id="location-name" 
+            value={newLocation.name}
+            onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="Enter location name"
+          />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleAddLocation}>
-            Add Location
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        <div className="space-y-2">
+          <Label htmlFor="location-code">
+            Location Code <span className="text-red-500">*</span>
+          </Label>
+          <Input 
+            id="location-code" 
+            value={newLocation.code}
+            onChange={(e) => setNewLocation(prev => ({ ...prev, code: e.target.value }))}
+            placeholder="Enter location code"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="location-description">Description</Label>
+          <Textarea 
+            id="location-description" 
+            value={newLocation.description}
+            onChange={(e) => setNewLocation(prev => ({ ...prev, description: e.target.value }))}
+            placeholder="Enter location description (optional)"
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
+          Cancel
+        </Button>
+        <Button onClick={handleAddLocation}>
+          Add Location
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 };
