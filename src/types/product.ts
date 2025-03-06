@@ -28,4 +28,5 @@ export interface Location {
   name: string;
   code: string;
   description?: string;
+  createdAt?: Date;
 }

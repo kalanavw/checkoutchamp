@@ -184,7 +184,7 @@ export const useProducts = () => {
         const allProducts: Product[] = [];
         
         allProductsSnapshot.forEach((doc) => {
-          const productData = doc.data();
+          const productData = doc.data() as Record<string, any>;
           const product: Product = {
             id: doc.id,
             name: productData.name || "",
@@ -271,7 +271,7 @@ export const useProducts = () => {
         
         const fetchedProducts: Product[] = [];
         querySnapshot.forEach((doc) => {
-          const productData = doc.data();
+          const productData = doc.data() as Record<string, any>;
           
           const productWithId: Product = {
             id: doc.id,
