@@ -11,13 +11,19 @@ const Products = () => {
     products,
     loading,
     searchQuery,
-    filter,
-    hasMore,
+    categoryFilter,
+    subcategoryFilter,
+    categories,
+    subcategories,
+    totalProducts,
+    currentPage,
+    pageSize,
     handleSearch,
-    handleFilterChange,
+    handleCategoryChange,
+    handleSubcategoryChange,
     handleRefresh,
     deleteProduct,
-    loadMore,
+    handlePageChange,
   } = useProducts();
 
   const handleViewProduct = (id: string) => {
@@ -31,17 +37,24 @@ const Products = () => {
       <ProductsFilter 
         searchQuery={searchQuery}
         onSearch={handleSearch}
-        filter={filter}
-        onFilterChange={handleFilterChange}
+        categoryFilter={categoryFilter}
+        subcategoryFilter={subcategoryFilter}
+        categories={categories}
+        subcategories={subcategories}
+        onCategoryChange={handleCategoryChange}
+        onSubcategoryChange={handleSubcategoryChange}
+        loading={loading}
       />
       
       <ProductsList 
         products={products}
         loading={loading}
-        onLoadMore={loadMore}
+        totalProducts={totalProducts}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
         onDelete={deleteProduct}
         onView={handleViewProduct}
-        hasMore={hasMore}
       />
     </div>
   );

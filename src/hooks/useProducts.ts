@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit, startAfter, where, deleteDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit, where, deleteDoc, doc, updateDoc, serverTimestamp, startAt, endAt, getCountFromServer } from "firebase/firestore";
 import { Product } from "@/types/product";
 import { isCacheValid, saveToCache, getFromCache, clearCache } from "@/utils/cacheUtils";
 import { Notifications } from "@/utils/notifications";
@@ -13,124 +14,309 @@ import {
 
 const PRODUCTS_CACHE_KEY = "products_cache";
 const PRODUCTS_LIST_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_list`;
+const PRODUCTS_PAGE_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_page`;
 const PRODUCTS_LAST_UPDATE_KEY = `${PRODUCTS_CACHE_KEY}_lastUpdate`;
+const PRODUCTS_CATEGORIES_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_categories`;
+const PRODUCTS_SUBCATEGORIES_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_subcategories`;
+const PAGE_SIZE = 10;
 
 export const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [subcategoryFilter, setSubcategoryFilter] = useState("all");
   const [refreshKey, setRefreshKey] = useState(0);
   const [forceRefresh, setForceRefresh] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [subcategories, setSubcategories] = useState<string[]>([]);
 
+  // Load categories and subcategories
+  useEffect(() => {
+    fetchCategoriesAndSubcategories();
+  }, [refreshKey, forceRefresh]);
+
+  // Fetch products when filters change
   useEffect(() => {
     fetchProducts();
-  }, [filter, refreshKey, forceRefresh]);
+  }, [categoryFilter, subcategoryFilter, currentPage, refreshKey, forceRefresh]);
 
-  const fetchProducts = async (next = false) => {
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilter, subcategoryFilter, searchQuery]);
+
+  // Handle search with debounce
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+    
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Fetch distinct categories and subcategories
+  const fetchCategoriesAndSubcategories = async () => {
     try {
-      setLoading(true);
-
-      const skipCache = !!searchQuery || forceRefresh || next;
-      
-      const cacheKey = `${PRODUCTS_LIST_CACHE_KEY}_${filter}`;
-      
+      // Try to get from cache first
       const shouldRefresh = shouldFetchCollection(COLLECTION_KEYS.PRODUCTS);
       
-      if (!skipCache && !shouldRefresh && isCacheValid(cacheKey)) {
-        const cachedProducts = getFromCache<Product[]>(cacheKey);
-        if (cachedProducts && cachedProducts.length > 0) {
-          setProducts(cachedProducts);
-          setLoading(false);
-          console.log("Using cached products list");
+      if (!shouldRefresh && !forceRefresh) {
+        const cachedCategories = getFromCache<string[]>(PRODUCTS_CATEGORIES_CACHE_KEY);
+        const cachedSubcategories = getFromCache<string[]>(PRODUCTS_SUBCATEGORIES_CACHE_KEY);
+        
+        if (cachedCategories && cachedSubcategories) {
+          setCategories(cachedCategories);
+          setSubcategories(cachedSubcategories);
           return;
         }
       }
-
-      let q;
+      
+      // Fetch from Firestore
       const productsCollection = collection(db, PRODUCT_COLLECTION);
-
-      if (searchQuery) {
-        q = query(
-          productsCollection,
-          where("name", ">=", searchQuery),
-          where("name", "<=", searchQuery + "\uf8ff"),
-          limit(25)
-        );
-      } else if (filter !== "all") {
-        q = query(
-          productsCollection,
-          where("category", "==", filter),
-          orderBy("name"),
-          limit(25)
-        );
-      } else if (next && lastVisible) {
-        q = query(
-          productsCollection,
-          orderBy("name"),
-          startAfter(lastVisible),
-          limit(25)
-        );
-      } else {
-        q = query(productsCollection, orderBy("name"), limit(25));
-      }
-
+      const q = query(productsCollection);
       const querySnapshot = await getDocs(q);
       
-      if (querySnapshot.docs.length > 0) {
-        setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1]);
-        setHasMore(querySnapshot.docs.length === 25);
-      } else {
-        setHasMore(false);
-      }
-
-      const fetchedProducts: Product[] = [];
+      const uniqueCategories = new Set<string>();
+      const uniqueSubcategories = new Set<string>();
+      
       querySnapshot.forEach((doc) => {
-        const productData = doc.data() as Record<string, any>;
-        
-        const productWithId: Product = {
-          id: doc.id,
-          name: productData.name || "",
-          costPrice: productData.costPrice || 0,
-          sellingPrice: productData.sellingPrice || 0,
-          stock: productData.stock || 0,
-          category: productData.category || "",
-          subcategory: productData.subcategory || "",
-          location: productData.location || "loc-1",
-          keywords: productData.keywords || [],
-          discount: productData.discount,
-          grnNumber: productData.grnNumber,
-          barcode: productData.barcode,
-          imageUrl: productData.imageUrl,
-          description: productData.description,
-          sku: productData.sku,
-          specifications: productData.specifications,
-          createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
-          createdBy: productData.createdBy || "Unknown",
-          modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,
-          modifiedBy: productData.modifiedBy || "Unknown"
-        };
-        
-        fetchedProducts.push(productWithId);
-        
-        saveToCache(`${PRODUCTS_CACHE_KEY}_${doc.id}`, productWithId);
+        const data = doc.data();
+        if (data.category) uniqueCategories.add(data.category);
+        if (data.subcategory) uniqueSubcategories.add(data.subcategory);
       });
+      
+      const categoriesArray = Array.from(uniqueCategories).sort();
+      const subcategoriesArray = Array.from(uniqueSubcategories).sort();
+      
+      setCategories(categoriesArray);
+      setSubcategories(subcategoriesArray);
+      
+      // Save to cache
+      saveToCache(PRODUCTS_CATEGORIES_CACHE_KEY, categoriesArray);
+      saveToCache(PRODUCTS_SUBCATEGORIES_CACHE_KEY, subcategoriesArray);
+      
+    } catch (error) {
+      console.error("Error fetching categories and subcategories:", error);
+    }
+  };
 
-      if (next) {
-        setProducts((prev) => {
-          const newProducts = [...prev, ...fetchedProducts];
-          return newProducts;
-        });
-      } else {
-        setProducts(fetchedProducts);
-        if (!searchQuery) {
-          saveToCache(cacheKey, fetchedProducts);
+  // Get total count of products based on filters
+  const fetchTotalProducts = useCallback(async () => {
+    try {
+      const productsCollection = collection(db, PRODUCT_COLLECTION);
+      let q = query(productsCollection);
+      
+      if (categoryFilter !== "all") {
+        q = query(q, where("category", "==", categoryFilter));
+      }
+      
+      if (subcategoryFilter !== "all") {
+        q = query(q, where("subcategory", "==", subcategoryFilter));
+      }
+      
+      if (searchQuery) {
+        // We can't get exact count with text search, we'll estimate
+        return null;
+      }
+      
+      const countSnapshot = await getCountFromServer(q);
+      return countSnapshot.data().count;
+    } catch (error) {
+      console.error("Error fetching product count:", error);
+      return null;
+    }
+  }, [categoryFilter, subcategoryFilter, searchQuery]);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      
+      // Calculate cache key based on filters and pagination
+      const cacheKey = `${PRODUCTS_PAGE_CACHE_KEY}_${categoryFilter}_${subcategoryFilter}_${currentPage}_${PAGE_SIZE}`;
+      const searchCacheKey = `${PRODUCTS_PAGE_CACHE_KEY}_search_${searchQuery.toLowerCase()}_${currentPage}`;
+      
+      const skipCache = forceRefresh || searchQuery !== "";
+      const shouldRefresh = shouldFetchCollection(COLLECTION_KEYS.PRODUCTS);
+      
+      // Try to get from cache if not searching and cache is valid
+      if (!skipCache && !shouldRefresh && isCacheValid(cacheKey)) {
+        const cachedData = getFromCache<{products: Product[], total: number}>(cacheKey);
+        if (cachedData) {
+          setProducts(cachedData.products);
+          setTotalProducts(cachedData.total);
+          setLoading(false);
+          console.log("Using cached products page");
+          return;
         }
       }
       
-      if (!next) {
+      // Firestore query construction
+      const productsCollection = collection(db, PRODUCT_COLLECTION);
+      let q;
+      
+      // Base query with filters
+      let baseQuery = query(productsCollection);
+      
+      if (categoryFilter !== "all") {
+        baseQuery = query(baseQuery, where("category", "==", categoryFilter));
+      }
+      
+      if (subcategoryFilter !== "all") {
+        baseQuery = query(baseQuery, where("subcategory", "==", subcategoryFilter));
+      }
+      
+      // Get total count if not searching
+      let totalCount = null;
+      if (!searchQuery) {
+        totalCount = await fetchTotalProducts();
+      }
+      
+      // Handle search query
+      if (searchQuery) {
+        // First search by name (case insensitive - convert to lowercase for comparison)
+        const searchLower = searchQuery.toLowerCase();
+        
+        // We need to fetch all products to do complex filtering in memory for search across multiple fields
+        const allProductsSnapshot = await getDocs(baseQuery);
+        const allProducts: Product[] = [];
+        
+        allProductsSnapshot.forEach((doc) => {
+          const productData = doc.data();
+          const product: Product = {
+            id: doc.id,
+            name: productData.name || "",
+            productCode: productData.productCode || "",
+            costPrice: productData.costPrice || 0,
+            sellingPrice: productData.sellingPrice || 0,
+            stock: productData.stock || 0,
+            category: productData.category || "",
+            subcategory: productData.subcategory || "",
+            location: productData.location || "loc-1",
+            keywords: productData.keywords || [],
+            discount: productData.discount,
+            grnNumber: productData.grnNumber,
+            barcode: productData.barcode,
+            imageUrl: productData.imageUrl,
+            description: productData.description,
+            sku: productData.sku,
+            specifications: productData.specifications,
+            createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
+            createdBy: productData.createdBy || "Unknown",
+            modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,
+            modifiedBy: productData.modifiedBy || "Unknown"
+          };
+          
+          allProducts.push(product);
+        });
+        
+        // Filter by name, code, keywords, or other fields (case insensitive)
+        const filteredProducts = allProducts.filter(product => {
+          // Check product name
+          if (product.name.toLowerCase().includes(searchLower)) return true;
+          
+          // Check product code
+          if (product.productCode && product.productCode.toLowerCase().includes(searchLower)) return true;
+          
+          // Check barcode
+          if (product.barcode && product.barcode.toLowerCase().includes(searchLower)) return true;
+          
+          // Check SKU
+          if (product.sku && product.sku.toLowerCase().includes(searchLower)) return true;
+          
+          // Check category
+          if (product.category.toLowerCase().includes(searchLower)) return true;
+          
+          // Check subcategory
+          if (product.subcategory.toLowerCase().includes(searchLower)) return true;
+          
+          // Check keywords
+          if (product.keywords && product.keywords.some(keyword => 
+            keyword.toLowerCase().includes(searchLower))) return true;
+          
+          return false;
+        });
+        
+        // Update total count
+        totalCount = filteredProducts.length;
+        
+        // Paginate in memory
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const endIndex = startIndex + PAGE_SIZE;
+        const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+        
+        setProducts(paginatedProducts);
+        setTotalProducts(totalCount);
+        
+        // Cache search results
+        if (filteredProducts.length > 0) {
+          saveToCache(searchCacheKey, {
+            products: paginatedProducts,
+            total: totalCount
+          });
+        }
+      } else {
+        // Not searching - use Firestore pagination
+        const offset = (currentPage - 1) * PAGE_SIZE;
+        
+        q = query(
+          baseQuery,
+          orderBy("name"),
+          limit(PAGE_SIZE)
+        );
+
+        const querySnapshot = await getDocs(q);
+        
+        const fetchedProducts: Product[] = [];
+        querySnapshot.forEach((doc) => {
+          const productData = doc.data();
+          
+          const productWithId: Product = {
+            id: doc.id,
+            name: productData.name || "",
+            productCode: productData.productCode || "",
+            costPrice: productData.costPrice || 0,
+            sellingPrice: productData.sellingPrice || 0,
+            stock: productData.stock || 0,
+            category: productData.category || "",
+            subcategory: productData.subcategory || "",
+            location: productData.location || "loc-1",
+            keywords: productData.keywords || [],
+            discount: productData.discount,
+            grnNumber: productData.grnNumber,
+            barcode: productData.barcode,
+            imageUrl: productData.imageUrl,
+            description: productData.description,
+            sku: productData.sku,
+            specifications: productData.specifications,
+            createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
+            createdBy: productData.createdBy || "Unknown",
+            modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,
+            modifiedBy: productData.modifiedBy || "Unknown"
+          };
+          
+          fetchedProducts.push(productWithId);
+          
+          // Cache individual product
+          saveToCache(`${PRODUCTS_CACHE_KEY}_${doc.id}`, productWithId);
+        });
+        
+        setProducts(fetchedProducts);
+        
+        if (totalCount !== null) {
+          setTotalProducts(totalCount);
+          
+          // Cache paginated results
+          saveToCache(cacheKey, {
+            products: fetchedProducts,
+            total: totalCount
+          });
+        }
+      }
+      
+      if (!searchQuery) {
         saveCollectionFetchTime(COLLECTION_KEYS.PRODUCTS);
         saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
       }
@@ -140,10 +326,11 @@ export const useProducts = () => {
       console.error("Error fetching products:", error);
       
       if (!searchQuery) {
-        const cacheKey = `${PRODUCTS_LIST_CACHE_KEY}_${filter}`;
-        const cachedProducts = getFromCache<Product[]>(cacheKey);
-        if (cachedProducts) {
-          setProducts(cachedProducts);
+        const cacheKey = `${PRODUCTS_PAGE_CACHE_KEY}_${categoryFilter}_${subcategoryFilter}_${currentPage}_${PAGE_SIZE}`;
+        const cachedData = getFromCache<{products: Product[], total: number}>(cacheKey);
+        if (cachedData) {
+          setProducts(cachedData.products);
+          setTotalProducts(cachedData.total);
           console.log("Using cached products after fetch error");
         }
       }
@@ -166,8 +353,19 @@ export const useProducts = () => {
       
       clearCache(`${PRODUCTS_CACHE_KEY}_${id}`);
       
+      // Clear all paginated caches
+      Object.keys(localStorage)
+        .filter(key => key.startsWith(PRODUCTS_PAGE_CACHE_KEY))
+        .forEach(key => clearCache(key));
+      
       saveCollectionUpdateTime(COLLECTION_KEYS.PRODUCTS);
       saveToCache(PRODUCTS_LAST_UPDATE_KEY, { timestamp: Date.now() });
+      
+      // Refresh categories and subcategories
+      fetchCategoriesAndSubcategories();
+      
+      // Refresh product counts and current page
+      fetchProducts();
       
       Notifications.success("Product deleted successfully.");
     } catch (error) {
@@ -178,35 +376,40 @@ export const useProducts = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query === "") {
-      setRefreshKey(prev => prev + 1);
-    } else {
-      fetchProducts();
-    }
   };
 
-  const handleFilterChange = (value: string) => {
-    setFilter(value);
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value);
+  };
+  
+  const handleSubcategoryChange = (value: string) => {
+    setSubcategoryFilter(value);
   };
 
   const handleRefresh = () => {
     setForceRefresh(true);
   };
 
-  const loadMore = () => {
-    fetchProducts(true);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   return {
     products,
     loading,
     searchQuery,
-    filter,
-    hasMore,
+    categoryFilter,
+    subcategoryFilter,
+    categories,
+    subcategories,
+    totalProducts,
+    currentPage,
+    pageSize: PAGE_SIZE,
     handleSearch,
-    handleFilterChange,
+    handleCategoryChange,
+    handleSubcategoryChange,
     handleRefresh,
     deleteProduct,
-    loadMore,
+    handlePageChange,
   };
 };

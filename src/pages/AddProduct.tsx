@@ -1,11 +1,12 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Notifications } from "@/utils/notifications";
 import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { Package, Save } from "lucide-react";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { Package, Save, Plus } from "lucide-react";
 import { 
   BasicInfoSection, 
   PricingSection, 
@@ -16,28 +17,84 @@ import {
 import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { saveToCache } from "@/utils/cacheUtils";
 import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUtils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 // Cache key prefix for products
 const PRODUCTS_CACHE_KEY = "products_cache";
+const LOCATIONS_COLLECTION = "locations";
+
+// Define Location type
+interface Location {
+  id: string;
+  name: string;
+  code: string;
+  description?: string;
+}
 
 const AddProduct = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [productImage, setProductImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [locationDialogOpen, setLocationDialogOpen] = useState(false);
+  const [saving, setSaving] = useState<"save" | "saveAndNew" | null>(null);
   
   const [formData, setFormData] = useState({
+    productCode: "",
     name: "",
     costPrice: "",
     sellingPrice: "",
     stock: "0",
     category: "",
     subcategory: "",
-    location: "loc-1",
+    location: "",
     keywords: "",
     barcode: "",
     discount: "",
   });
+
+  const [newLocation, setNewLocation] = useState({
+    name: "",
+    code: "",
+    description: "",
+  });
+
+  // Fetch locations
+  useEffect(() => {
+    fetchLocations();
+  }, []);
+
+  const fetchLocations = async () => {
+    try {
+      const locationsCollection = collection(db, LOCATIONS_COLLECTION);
+      const locationsSnapshot = await getDocs(locationsCollection);
+      
+      const locationsList: Location[] = [];
+      locationsSnapshot.forEach((doc) => {
+        const data = doc.data();
+        locationsList.push({
+          id: doc.id,
+          name: data.name || "",
+          code: data.code || "",
+          description: data.description || "",
+        });
+      });
+      
+      setLocations(locationsList);
+      
+      // Set default location if available
+      if (locationsList.length > 0 && !formData.location) {
+        setFormData(prev => ({ ...prev, location: locationsList[0].id }));
+      }
+    } catch (error) {
+      console.error("Error fetching locations:", error);
+      Notifications.error("Failed to load locations");
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -50,11 +107,35 @@ const AddProduct = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const validateForm = async () => {
+    if (!formData.productCode || !formData.name || !formData.costPrice || !formData.sellingPrice) {
+      Notifications.error("Please fill in all required fields (product code, name, cost price, selling price).");
+      return false;
+    }
+    
+    // Check if product code is unique
+    try {
+      const productsRef = collection(db, PRODUCT_COLLECTION);
+      const q = query(productsRef, where("productCode", "==", formData.productCode));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        Notifications.error("Product code already exists. Please use a unique product code.");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error checking product code uniqueness:", error);
+      Notifications.error("Failed to verify product code uniqueness");
+      return false;
+    }
+    
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.costPrice || !formData.sellingPrice) {
-      Notifications.error("Please fill in all required fields (name, cost price, selling price).");
+    if (!(await validateForm())) {
       return;
     }
 
@@ -82,6 +163,7 @@ const AddProduct = () => {
       const userName = localStorage.getItem("userName") || "Unknown";
       
       const productData = {
+        productCode: formData.productCode,
         name: formData.name,
         costPrice: parseFloat(formData.costPrice),
         sellingPrice: parseFloat(formData.sellingPrice),
@@ -118,12 +200,81 @@ const AddProduct = () => {
 
       Notifications.success("Product added successfully.");
 
-      navigate("/products");
+      // Handle navigation based on button clicked
+      if (saving === "saveAndNew") {
+        // Reset form for a new product
+        setFormData({
+          productCode: "",
+          name: "",
+          costPrice: "",
+          sellingPrice: "",
+          stock: "0",
+          category: formData.category, // Keep the same category
+          subcategory: formData.subcategory, // Keep the same subcategory
+          location: formData.location, // Keep the same location
+          keywords: "",
+          barcode: "",
+          discount: "",
+        });
+        setProductImage(null);
+        setImagePreview(null);
+      } else {
+        // Navigate back to products list
+        navigate("/products");
+      }
     } catch (error) {
       console.error("Error adding product:", error);
       Notifications.error("Failed to add product. Please try again.");
     } finally {
       setLoading(false);
+      setSaving(null);
+    }
+  };
+
+  const handleAddLocation = async () => {
+    if (!newLocation.name || !newLocation.code) {
+      Notifications.error("Location name and code are required");
+      return;
+    }
+    
+    try {
+      // Check if code already exists
+      const locationsRef = collection(db, LOCATIONS_COLLECTION);
+      const q = query(locationsRef, where("code", "==", newLocation.code));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
+        Notifications.error("Location code already exists. Please use a unique code.");
+        return;
+      }
+      
+      const docRef = await addDoc(collection(db, LOCATIONS_COLLECTION), {
+        ...newLocation,
+        createdAt: serverTimestamp()
+      });
+      
+      const newLocationWithId = {
+        id: docRef.id,
+        ...newLocation
+      };
+      
+      setLocations(prev => [...prev, newLocationWithId]);
+      setFormData(prev => ({ ...prev, location: docRef.id }));
+      
+      // Reset new location form
+      setNewLocation({
+        name: "",
+        code: "",
+        description: "",
+      });
+      
+      // Close dialog
+      setLocationDialogOpen(false);
+      
+      Notifications.success("Location added successfully");
+    } catch (error) {
+      console.error("Error adding location:", error);
+      Notifications.error("Failed to add location");
     }
   };
 
@@ -145,6 +296,8 @@ const AddProduct = () => {
                 formData={formData}
                 handleChange={handleChange}
                 handleSelectChange={handleSelectChange}
+                locations={locations}
+                onAddLocation={() => setLocationDialogOpen(true)}
             />
             <PricingSection formData={formData} handleChange={handleChange} />
             <ImageSection
@@ -163,8 +316,35 @@ const AddProduct = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={loading} className="bg-primary hover:bg-primary/80">
-                {loading ? (
+              <Button 
+                type="button" 
+                onClick={() => {
+                  setSaving("saveAndNew");
+                  handleSubmit(new Event('submit') as any);
+                }} 
+                disabled={loading} 
+                variant="outline" 
+                className="border-primary text-primary hover:bg-primary/10"
+              >
+                {loading && saving === "saveAndNew" ? (
+                  <>
+                    <span className="mr-2">Saving...</span>
+                    <span className="animate-spin">⌛</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Save &amp; New
+                  </>
+                )}
+              </Button>
+              <Button 
+                type="submit" 
+                onClick={() => setSaving("save")} 
+                disabled={loading} 
+                className="bg-primary hover:bg-primary/80"
+              >
+                {loading && saving === "save" ? (
                   <>
                     <span className="mr-2">Saving...</span>
                     <span className="animate-spin">⌛</span>
@@ -180,6 +360,56 @@ const AddProduct = () => {
           </form>
         </CardContent>
       </Card>
+
+      {/* Add Location Dialog */}
+      <Dialog open={locationDialogOpen} onOpenChange={setLocationDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Location</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="location-name">
+                Location Name <span className="text-red-500">*</span>
+              </Label>
+              <Input 
+                id="location-name" 
+                value={newLocation.name}
+                onChange={(e) => setNewLocation(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter location name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location-code">
+                Location Code <span className="text-red-500">*</span>
+              </Label>
+              <Input 
+                id="location-code" 
+                value={newLocation.code}
+                onChange={(e) => setNewLocation(prev => ({ ...prev, code: e.target.value }))}
+                placeholder="Enter location code"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location-description">Description</Label>
+              <Textarea 
+                id="location-description" 
+                value={newLocation.description}
+                onChange={(e) => setNewLocation(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Enter location description (optional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLocationDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddLocation}>
+              Add Location
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

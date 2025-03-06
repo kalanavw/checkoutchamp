@@ -1,11 +1,13 @@
+
 import React from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { DialogTrigger } from "@/components/ui/dialog";
 
 // Price and Discount Section
 export const PricingSection = ({ 
@@ -80,13 +82,28 @@ export const BasicInfoSection = ({
   handleChange 
 }: { 
   formData: {
+    productCode: string;
     name: string;
     barcode: string;
   };
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     <div className="space-y-2">
+      <Label htmlFor="productCode">
+        Product Code <span className="text-red-500">*</span>
+      </Label>
+      <Input
+        id="productCode"
+        name="productCode"
+        placeholder="Enter product code"
+        value={formData.productCode}
+        onChange={handleChange}
+        required
+      />
+    </div>
+
+    <div className="space-y-2 md:col-span-2">
       <Label htmlFor="name">
         Product Name <span className="text-red-500">*</span>
       </Label>
@@ -117,7 +134,9 @@ export const BasicInfoSection = ({
 export const CategorySection = ({ 
   formData, 
   handleChange,
-  handleSelectChange 
+  handleSelectChange,
+  locations,
+  onAddLocation
 }: { 
   formData: {
     category: string;
@@ -126,6 +145,8 @@ export const CategorySection = ({
   };
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSelectChange: (name: string, value: string) => void;
+  locations: {id: string, name: string}[];
+  onAddLocation: () => void;
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     <div className="space-y-2">
@@ -151,7 +172,21 @@ export const CategorySection = ({
     </div>
 
     <div className="space-y-2">
-      <Label htmlFor="location">Location</Label>
+      <div className="flex justify-between items-center">
+        <Label htmlFor="location">Location</Label>
+        <DialogTrigger asChild>
+          <Button 
+            type="button" 
+            variant="ghost" 
+            size="sm" 
+            onClick={onAddLocation}
+            className="h-6 px-2 text-xs text-green-600"
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Add New
+          </Button>
+        </DialogTrigger>
+      </div>
       <Select
         value={formData.location}
         onValueChange={(value) => handleSelectChange("location", value)}
@@ -160,8 +195,9 @@ export const CategorySection = ({
           <SelectValue placeholder="Select location" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="loc-1">Location 1</SelectItem>
-          <SelectItem value="loc-2">Location 2</SelectItem>
+          {locations.map(loc => (
+            <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>
@@ -211,7 +247,7 @@ export const ImageSection = ({
   imagePreview, 
   setImagePreview, 
   setProductImage,
-  uploadType = "base64" // Changed default to "base64"
+  uploadType = "base64" 
 }: { 
   imagePreview: string | null;
   setImagePreview: React.Dispatch<React.SetStateAction<string | null>>;
