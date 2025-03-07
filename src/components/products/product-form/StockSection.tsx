@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface StockSectionProps {
   formData: {
-    stock: string;
     keywords: string;
   };
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
@@ -17,19 +16,6 @@ export const StockSection: React.FC<StockSectionProps> = ({
   handleChange 
 }) => (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div className="space-y-2">
-      <Label htmlFor="stock">Initial Stock</Label>
-      <Input
-        id="stock"
-        name="stock"
-        type="number"
-        min="0"
-        placeholder="Enter initial stock"
-        value={formData.stock}
-        onChange={handleChange}
-      />
-    </div>
-
     <div className="space-y-2">
       <Label htmlFor="keywords">Keywords (comma separated)</Label>
       <Textarea

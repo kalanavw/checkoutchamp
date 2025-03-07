@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
-import {db, LOCATIONS_COLLECTION, PRODUCT_COLLECTION} from "@/lib/firebase";
+import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
 import { Save, Plus } from "lucide-react";
 import { 
-  BasicInfoSection, 
-  PricingSection, 
+  BasicInfoSection,
   ImageSection, 
   CategorySection, 
   StockSection 
@@ -15,12 +14,9 @@ import { optimizeImageToBase64 } from "@/utils/imageUtils";
 import { saveToCache } from "@/utils/cacheUtils";
 import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUtils";
 import { Notifications } from "@/utils/notifications";
-import { LocationDialog } from "./LocationDialog";
-import { Dialog } from "@/components/ui/dialog";
 
 // Cache key prefix for products
 const PRODUCTS_CACHE_KEY = "products_cache";
-
 
 export const ProductForm = () => {
   const navigate = useNavigate();
@@ -32,15 +28,10 @@ export const ProductForm = () => {
   const [formData, setFormData] = useState({
     productCode: "",
     name: "",
-    costPrice: "",
-    sellingPrice: "",
-    stock: "0",
     category: "",
     subcategory: "",
-    location: "",
     keywords: "",
-    barcode: "",
-    discount: "",
+    barcode: ""
   });
 
 
@@ -56,8 +47,8 @@ export const ProductForm = () => {
   };
 
   const validateForm = async () => {
-    if (!formData.productCode || !formData.name || !formData.costPrice || !formData.sellingPrice) {
-      Notifications.error("Please fill in all required fields (product code, name, cost price, selling price).");
+    if (!formData.productCode || !formData.name) {
+      Notifications.error("Please fill in all required fields (product code, name, barcode, category, subcategory, keywords).");
       return false;
     }
     
@@ -111,14 +102,9 @@ export const ProductForm = () => {
       const productData = {
         productCode: formData.productCode,
         name: formData.name,
-        costPrice: parseFloat(formData.costPrice),
-        sellingPrice: parseFloat(formData.sellingPrice),
-        stock: parseInt(formData.stock),
         category: formData.category,
         subcategory: formData.subcategory,
-        location: formData.location,
         keywords: keywordsArray,
-        discount: formData.discount ? parseFloat(formData.discount) : 0,
         barcode: formData.barcode || null,
         imageUrl: imageUrl || null,
         createdAt: serverTimestamp(),
@@ -139,7 +125,7 @@ export const ProductForm = () => {
       };
       
       saveCollectionUpdateTime(COLLECTION_KEYS.PRODUCTS);
-      
+
       saveToCache(`${PRODUCTS_CACHE_KEY}_${docRef.id}`, productWithId, Date.now());
 
       Notifications.success("Product added successfully.");
@@ -148,15 +134,10 @@ export const ProductForm = () => {
         setFormData({
           productCode: "",
           name: "",
-          costPrice: "",
-          sellingPrice: "",
-          stock: "0",
           category: formData.category,
           subcategory: formData.subcategory,
-          location: formData.location,
           keywords: "",
           barcode: "",
-          discount: "",
         });
         setProductImage(null);
         setImagePreview(null);
@@ -202,7 +183,17 @@ export const ProductForm = () => {
           type="button" 
           onClick={() => {
             setSaving("saveAndNew");
-            handleSubmit(new Event('submit') as any);
+            handleSubmit(new Event('submit') as any).then(r => {
+              setFormData({
+                productCode: "",
+                name: "",
+                category: formData.category,
+                subcategory: formData.subcategory,
+                keywords: "",
+                barcode: "",
+              });
+              navigate("/add-product")
+            });
           }} 
           disabled={loading} 
           variant="outline" 
