@@ -1,9 +1,8 @@
-
-import { useNavigate } from "react-router-dom";
-import { useProducts } from "@/hooks/useProducts";
-import { ProductsHeader } from "@/components/products/ProductsHeader";
-import { ProductsFilter } from "@/components/products/ProductsFilter";
-import { ProductsList } from "@/components/products/ProductsList";
+import {useNavigate} from "react-router-dom";
+import {useProducts} from "@/hooks/useProducts.ts";
+import {ProductsHeader} from "@/components/products/ProductsHeader.tsx";
+import {ProductsFilter} from "@/components/products/ProductsFilter.tsx";
+import {ProductsList} from "@/components/products/ProductsList.tsx";
 
 const Products = () => {
   const navigate = useNavigate();

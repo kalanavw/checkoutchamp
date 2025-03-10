@@ -4,7 +4,7 @@ export interface Invoice {
     invoiceNumber: string; //generate invoice number ex - INV-{ddMMyy)-0001, increment from last generated number, none editable lable
     invoiceDate: Date; //show the date in the form, none editable lable
     customerName: string; // searchable dropdown from customer collection, if user not available add + button to save
-    products: InvoiceItems[]; // can be able to search by name, id or barcode from the store collection and add the item to table
+    products: InvoiceItem[]; // can be able to search by name, id or barcode from the store collection and add the item to table
     subTotal: number;
     tax: number;
     shippingFees:number;
@@ -14,10 +14,14 @@ export interface Invoice {
     amountPaid: number,
     balance: number
     status: string; // Pending, Paid, Overdue, Canceled
+    createdAt?: Date;
+    createdBy?: string;
+    modifiedDate?: Date;
+    modifiedBy?: string;
 }
 
 
-export interface InvoiceItems {
+export interface InvoiceItem {
     id: string; //generate UUID when save
     product: InvoiceProduct;
     quantity: number;

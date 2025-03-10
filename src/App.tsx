@@ -1,15 +1,12 @@
-
-import { Routes, Route } from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
-import Products from "@/pages/Products";
-import ProductDetail from "@/pages/ProductDetail";
-import AddProduct from "@/pages/AddProduct";
-import GRN from "@/pages/GRN";
-import GRNList from "@/pages/GRNList";
+import Products from "@/pages/product/Products.tsx";
+import ProductDetail from "@/pages/product/ProductDetail.tsx";
+import AddProduct from "@/pages/product/AddProduct.tsx";
 import Customers from "@/pages/Customers";
 import Orders from "@/pages/Orders";
-import Invoice from "@/pages/Invoice";
+import Invoice from "@/pages/invoice/CreateInvoice.tsx";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import UserManagement from "@/pages/UserManagement";
@@ -17,6 +14,8 @@ import UserProfile from "@/pages/UserProfile";
 import Checkout from "@/pages/Checkout";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
+import StorePage from "@/pages/Store.tsx";
+import AddInventory from "@/pages/inventory/AddInventory.tsx";
 
 function App() {
   return (
@@ -28,10 +27,10 @@ function App() {
         <Route path="products/:id" element={<ProductDetail />} />
         <Route path="add-product" element={<AddProduct />} />
         <Route path="edit-product/:id" element={<AddProduct />} />
-        <Route path="grn" element={<GRN />} />
-        <Route path="grn-list" element={<GRNList />} />
         <Route path="customers" element={<Customers />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="store" element={<StorePage/>}/>
+        <Route path="/add-inventory" element={<AddInventory/>}/>
         <Route path="invoice" element={<Invoice />} />
         <Route path="checkout" element={<Checkout />} />
         <Route path="reports" element={<Reports />} />

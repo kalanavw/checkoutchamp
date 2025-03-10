@@ -1,8 +1,9 @@
-
 /**
  * Utilities for local caching and optimizing Firestore fetching
  */
-import { getCollectionTimestamps, shouldFetchCollection } from './collectionUtils';
+import {getCollectionTimestamps, shouldFetchCollection} from './collectionUtils';
+
+export const STORE_CACHE_KEY = "users_cache";
 
 interface CacheMetadata {
   lastFetched: number;  // Timestamp when data was last fetched

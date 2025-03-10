@@ -1,6 +1,6 @@
-
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import {Input} from "@/components/ui/input";
+import {Search} from "lucide-react";
+import React from "react";
 
 interface SearchBarProps {
   value: string;
@@ -32,6 +32,3 @@ export const SearchBar = ({ value, onChange, onSearch, placeholder = "Search pro
     </div>
   );
 };
-
-// Add default export for backward compatibility
-export default SearchBar;

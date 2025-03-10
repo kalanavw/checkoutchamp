@@ -1,15 +1,13 @@
-
-import { useEffect, useState } from "react";
-import { Product } from "@/types/product";
-import { ProductsTable } from "@/components/products/ProductsTable";
-import { Button } from "@/components/ui/button";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
+import {useEffect, useState} from "react";
+import {Product} from "@/types/product";
+import {ProductsTable} from "@/components/products/ProductsTable";
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious
 } from "@/components/ui/pagination";
 
 interface ProductsListProps {

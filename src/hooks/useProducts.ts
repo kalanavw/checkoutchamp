@@ -1,19 +1,29 @@
-
-import { useState, useEffect, useCallback } from "react";
-import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
-import { collection, getDocs, query, orderBy, limit, where, deleteDoc, doc, updateDoc, serverTimestamp, startAt, endAt, getCountFromServer } from "firebase/firestore";
-import { Product } from "@/types/product";
-import { isCacheValid, saveToCache, getFromCache, clearCache } from "@/utils/cacheUtils";
-import { Notifications } from "@/utils/notifications";
-import { 
+import {useCallback, useEffect, useState} from "react";
+import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getCountFromServer,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where
+} from "firebase/firestore";
+import {Product} from "@/types/product";
+import {clearCache, getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils";
+import {Notifications} from "@/utils/notifications";
+import {
   COLLECTION_KEYS,
-  saveCollectionUpdateTime,
   saveCollectionFetchTime,
+  saveCollectionUpdateTime,
   shouldFetchCollection,
 } from "@/utils/collectionUtils";
 
 const PRODUCTS_CACHE_KEY = "products_cache";
-const PRODUCTS_LIST_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_list`;
 const PRODUCTS_PAGE_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_page`;
 const PRODUCTS_LAST_UPDATE_KEY = `${PRODUCTS_CACHE_KEY}_lastUpdate`;
 const PRODUCTS_CATEGORIES_CACHE_KEY = `${PRODUCTS_CACHE_KEY}_categories`;
@@ -62,42 +72,42 @@ export const useProducts = () => {
     try {
       // Try to get from cache first
       const shouldRefresh = shouldFetchCollection(COLLECTION_KEYS.PRODUCTS);
-      
+
       if (!shouldRefresh && !forceRefresh) {
         const cachedCategories = getFromCache<string[]>(PRODUCTS_CATEGORIES_CACHE_KEY);
         const cachedSubcategories = getFromCache<string[]>(PRODUCTS_SUBCATEGORIES_CACHE_KEY);
-        
+
         if (cachedCategories && cachedSubcategories) {
           setCategories(cachedCategories);
           setSubcategories(cachedSubcategories);
           return;
         }
       }
-      
+
       // Fetch from Firestore
       const productsCollection = collection(db, PRODUCT_COLLECTION);
       const q = query(productsCollection);
       const querySnapshot = await getDocs(q);
-      
+
       const uniqueCategories = new Set<string>();
       const uniqueSubcategories = new Set<string>();
-      
+
       querySnapshot.forEach((doc) => {
         const data = doc.data();
         if (data.category) uniqueCategories.add(data.category);
         if (data.subcategory) uniqueSubcategories.add(data.subcategory);
       });
-      
+
       const categoriesArray = Array.from(uniqueCategories).sort();
       const subcategoriesArray = Array.from(uniqueSubcategories).sort();
-      
+
       setCategories(categoriesArray);
       setSubcategories(subcategoriesArray);
-      
+
       // Save to cache
       saveToCache(PRODUCTS_CATEGORIES_CACHE_KEY, categoriesArray);
       saveToCache(PRODUCTS_SUBCATEGORIES_CACHE_KEY, subcategoriesArray);
-      
+
     } catch (error) {
       console.error("Error fetching categories and subcategories:", error);
     }
@@ -189,20 +199,12 @@ export const useProducts = () => {
             id: doc.id,
             name: productData.name || "",
             productCode: productData.productCode || "",
-            costPrice: productData.costPrice || 0,
-            sellingPrice: productData.sellingPrice || 0,
-            stock: productData.stock || 0,
             category: productData.category || "",
             subcategory: productData.subcategory || "",
-            location: productData.location || "loc-1",
             keywords: productData.keywords || [],
-            discount: productData.discount,
-            grnNumber: productData.grnNumber,
             barcode: productData.barcode,
             imageUrl: productData.imageUrl,
             description: productData.description,
-            sku: productData.sku,
-            specifications: productData.specifications,
             createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
             createdBy: productData.createdBy || "Unknown",
             modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,
@@ -222,9 +224,6 @@ export const useProducts = () => {
           
           // Check barcode
           if (product.barcode && product.barcode.toLowerCase().includes(searchLower)) return true;
-          
-          // Check SKU
-          if (product.sku && product.sku.toLowerCase().includes(searchLower)) return true;
           
           // Check category
           if (product.category.toLowerCase().includes(searchLower)) return true;
@@ -277,20 +276,12 @@ export const useProducts = () => {
             id: doc.id,
             name: productData.name || "",
             productCode: productData.productCode || "",
-            costPrice: productData.costPrice || 0,
-            sellingPrice: productData.sellingPrice || 0,
-            stock: productData.stock || 0,
             category: productData.category || "",
             subcategory: productData.subcategory || "",
-            location: productData.location || "loc-1",
             keywords: productData.keywords || [],
-            discount: productData.discount,
-            grnNumber: productData.grnNumber,
             barcode: productData.barcode,
             imageUrl: productData.imageUrl,
             description: productData.description,
-            sku: productData.sku,
-            specifications: productData.specifications,
             createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
             createdBy: productData.createdBy || "Unknown",
             modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,

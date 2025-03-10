@@ -1,24 +1,20 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Notifications } from "@/utils/notifications";
-import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
-import { Product } from "@/types/product";
+import {useEffect, useState} from "react";
+import {useParams} from "react-router-dom";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
+import {Notifications} from "@/utils/notifications.ts";
+import {db, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
+import {doc, getDoc} from "firebase/firestore";
+import {Product} from "@/types/product.ts";
 
 // Imported components
-import { ProductDetailHeader } from "@/components/product/ProductDetailHeader";
-import ProductInfo from "@/components/product/ProductInfo";
-import { QuickActions } from "@/components/product/QuickActions";
-import { SalesInformation } from "@/components/product/SalesInformation";
-import { ProductNotFound } from "@/components/product/ProductNotFound";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { isCacheValid, saveToCache, getFromCache } from "@/utils/cacheUtils";
-import { 
-  COLLECTION_KEYS, 
-  shouldFetchCollection,
-  saveCollectionFetchTime
-} from "@/utils/collectionUtils";
+import {ProductDetailHeader} from "@/components/product/ProductDetailHeader.tsx";
+import ProductInfo from "@/components/product/ProductInfo.tsx";
+import {QuickActions} from "@/components/product/QuickActions.tsx";
+import {SalesInformation} from "@/components/product/SalesInformation.tsx";
+import {ProductNotFound} from "@/components/product/ProductNotFound.tsx";
+import {LoadingSpinner} from "@/components/ui/LoadingSpinner.tsx";
+import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
+import {COLLECTION_KEYS, saveCollectionFetchTime, shouldFetchCollection} from "@/utils/collectionUtils.ts";
 
 // Cache key
 const PRODUCTS_CACHE_KEY = "products_cache";
@@ -57,20 +53,12 @@ const ProductDetail = () => {
           const productWithId: Product = { 
             id: productDoc.id,
             name: productData.name || "",
-            costPrice: productData.costPrice || 0,
-            sellingPrice: productData.sellingPrice || 0,
-            stock: productData.stock || 0,
             category: productData.category || "",
             subcategory: productData.subcategory || "",
-            location: productData.location as "loc-1" | "loc-2" || "loc-1",
             keywords: productData.keywords || [],
-            discount: productData.discount,
-            grnNumber: productData.grnNumber,
             barcode: productData.barcode,
             imageUrl: productData.imageUrl,
             description: productData.description,
-            sku: productData.sku,
-            specifications: productData.specifications,
             createdAt: productData.createdAt ? new Date(productData.createdAt.toDate()) : undefined,
             createdBy: productData.createdBy || "Unknown",
             modifiedDate: productData.modifiedDate ? new Date(productData.modifiedDate.toDate()) : undefined,

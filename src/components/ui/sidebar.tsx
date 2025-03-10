@@ -1,25 +1,23 @@
-
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import {NavLink, useLocation, useNavigate} from "react-router-dom";
+import {cn} from "@/lib/utils";
+import {Button} from "@/components/ui/button";
 import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Settings,
-  LogOut,
-  Users,
-  FileSpreadsheet,
-  Receipt,
-  Truck,
   ClipboardList,
-  FileText,
   FileBarChart,
-  Store
+  FileSpreadsheet,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  Settings,
+  ShoppingCart,
+  Store,
+  Truck,
+  Users
 } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
-import { clearAllAppCache } from "@/utils/cacheUtils";
+import {auth} from "@/lib/firebase";
+import {signOut} from "firebase/auth";
+import {clearAllAppCache} from "@/utils/cacheUtils";
 
 const Sidebar = () => {
   const navigate = useNavigate();
@@ -131,6 +129,23 @@ const Sidebar = () => {
             Invoicing
           </div>
         </div>
+
+        <NavLink to="/store">
+          {({isActive}) => (
+              <Button
+                  variant="ghost"
+                  className={cn(
+                      "w-full justify-start",
+                      isActive
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-accent hover:text-accent-foreground"
+                  )}
+              >
+                <FileText className="mr-2 h-4 w-4"/>
+                Store
+              </Button>
+          )}
+        </NavLink>
 
         <NavLink to="/invoice">
           {({ isActive }) => (

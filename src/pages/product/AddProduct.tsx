@@ -1,7 +1,6 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package } from "lucide-react";
-import { ProductForm } from "@/components/products/ProductForm";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
+import {Package} from "lucide-react";
+import {ProductForm} from "@/components/products/ProductForm.tsx";
 
 const AddProduct = () => {
   return (
