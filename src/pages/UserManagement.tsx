@@ -183,7 +183,6 @@ const UserManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    debugger;
 
     if (!formData.name || !formData.email || !formData.password) {
       Notifications.error("All fields are required.")
@@ -209,7 +208,6 @@ const UserManagement = () => {
         updatedAt: serverTimestamp(),
         id: authCreateUser.user.uid
       };
-      debugger
       const docRef = await addDoc(collection(db, USER_COLLECTION), newUser);
       console.log("User created:", formData.email);
       

@@ -1,6 +1,6 @@
 import {useEffect, useMemo, useState} from 'react';
 import {COLLECTION_KEYS, markCollectionUpdated, shouldFetchCollection} from '@/utils/collectionUtils';
-import {getFromCache, STORE_CACHE_KEY} from '@/utils/cacheUtils';
+import {CACHE_KEYS, getFromCache} from '@/utils/cacheUtils';
 import {Store} from "@/types/store.ts";
 import {storeService} from "@/services/StoreService.ts";
 
@@ -30,7 +30,7 @@ export const useStoreData = (pageSize: number = 20) => {
                     markCollectionUpdated(COLLECTION_KEYS.STORE);
                 } else {
                     // Get from cache
-                    const cachedData = getFromCache<Store[]>(STORE_CACHE_KEY);
+                    const cachedData = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY);
                     if (cachedData && cachedData.length > 0) {
                         data = cachedData;
                         console.log('Using cached store data');

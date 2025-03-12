@@ -1,7 +1,7 @@
 import {Customer} from '@/types/customer';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
-import {CUSTOMER_COLLECTION, findAll, findByFilter, findById, insertOne} from '@/lib/firebase';
+import {CUSTOMER_COLLECTION, findAll, findByFilter, findById, saveDocument} from '@/lib/firebase';
 
 export class CustomerService {
 
@@ -76,7 +76,7 @@ export class CustomerService {
                 registrationDate: now
             };
 
-            const result = await insertOne<Customer>(CUSTOMER_COLLECTION, newCustomer);
+            const result = await saveDocument<Customer>(CUSTOMER_COLLECTION, newCustomer);
 
             return result || newCustomer;
         } catch (error) {

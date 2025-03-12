@@ -65,19 +65,6 @@ export function getCollection(collectionName: string): CollectionReference<Docum
     return collection(db, collectionName);
 }
 
-// Convert Firebase document to our expected format
-export function convertDoc<T>(doc: DocumentData): T {
-    if (!doc) return null as unknown as T;
-
-    const data = doc.data ? doc.data() : doc;
-    return {
-        id: doc.id,
-        ...data
-    } as unknown as T;
-}
-
-// ==================== Generic CRUD Operations ====================
-
 // Find all documents in a collection
 export async function findAll<T>(collectionName: string): Promise<T[]> {
     try {
@@ -146,58 +133,42 @@ export async function findById<T>(collectionName: string, id: string): Promise<T
     }
 }
 
-// Insert a document
-export async function insertOne<T extends { id?: string }>(
-    collectionName: string,
-    document: T
-): Promise<T | null> {
+// Insert or Update a document
+export async function insertDocument<T extends { id?: string }>(collectionName: string, document: T): Promise<T | null> {
     try {
-        // Prepare document for Firebase
-        // If document has an id, use it as the document ID, otherwise let Firebase generate one
-        const {id, ...data} = document;
-
+        const { id, ...data } = document;
         let docRef: DocumentReference;
 
         if (id) {
-            // Use existing id
+            // Update existing document
             docRef = doc(db, collectionName, id);
-            await updateDoc(docRef, data);
+            await updateDoc(docRef, {
+                ...data,
+                modifiedDate: Date.now(),
+                modifiedBy: ""
+            });
         } else {
-            // Let Firebase generate an id
-            docRef = await addDoc(collection(db, collectionName), data);
+            // Create new document
+            docRef = await addDoc(collection(db, collectionName), {
+                ...data,
+                modifiedDate: Date.now(),
+                modifiedBy: "",
+                createdAt: Date.now(),
+                createdBy: "string"
+            });
         }
 
-        // Return the document with the id
+        // Return document with the assigned id
         return {
             id: docRef.id,
             ...data
         } as T;
     } catch (error) {
-        console.error(`Error inserting document into ${collectionName}:`, error);
+        console.error(`Error saving document in ${collectionName}:`, error);
         throw error;
     }
 }
 
-// Update a document
-export async function updateOne<T>(
-    collectionName: string,
-    id: string,
-    update: Partial<T>
-): Promise<boolean> {
-    try {
-        const docRef = doc(db, collectionName, id);
-
-        await updateDoc(docRef, {
-            ...update,
-            updatedAt: new Date()
-        });
-
-        return true;
-    } catch (error) {
-        console.error(`Error updating document in ${collectionName}:`, error);
-        return false;
-    }
-}
 
 // Delete a document
 export async function deleteOne(collectionName: string, id: string): Promise<boolean> {

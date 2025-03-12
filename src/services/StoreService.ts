@@ -1,8 +1,8 @@
 import {toast} from 'sonner';
 import {COLLECTION_KEYS, markCollectionUpdated} from '@/utils/collectionUtils';
-import {getFromCache, isCacheValid, saveToCache, STORE_CACHE_KEY} from '@/utils/cacheUtils';
+import {CACHE_KEYS, getFromCache, isCacheValid, saveToCache} from '@/utils/cacheUtils';
 import {v4 as uuidv4} from 'uuid';
-import {findAll, insertOne} from '@/lib/firebase';
+import {findAll, saveDocument} from '@/lib/firebase';
 import {Store} from "@/types/store.ts";
 
 export class StoreService {
@@ -12,8 +12,8 @@ export class StoreService {
     async getStoreItems(): Promise<Store[]> {
         try {
             // Check if we have valid cached data
-            if (isCacheValid(STORE_CACHE_KEY)) {
-                const cachedData = getFromCache<Store[]>(STORE_CACHE_KEY);
+            if (isCacheValid(CACHE_KEYS.STORE_CACHE_KEY)) {
+                const cachedData = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY);
                 if (cachedData && cachedData.length > 0) {
                     console.log('Using cached store data');
                     return cachedData;
@@ -31,7 +31,7 @@ export class StoreService {
             }
 
             // Cache the fetched data
-            saveToCache(STORE_CACHE_KEY, storeItems);
+            saveToCache(CACHE_KEYS.STORE_CACHE_KEY, storeItems);
             return storeItems;
         } catch (error) {
             console.error("Error getting store items:", error);
@@ -85,16 +85,16 @@ export class StoreService {
             // Save each item to Firebase
             const savedItems: Store[] = [];
             for (const item of itemsWithIds) {
-                const savedItem = await insertOne<Store>(this.collectionName, item);
+                const savedItem = await saveDocument<Store>(this.collectionName, item);
                 if (savedItem) {
                     savedItems.push(savedItem);
                 }
             }
 
             // Update the cache with the new items
-            const cachedItems = getFromCache<Store[]>(STORE_CACHE_KEY) || [];
+            const cachedItems = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY) || [];
             const updatedCache = [...cachedItems, ...savedItems];
-            saveToCache(STORE_CACHE_KEY, updatedCache);
+            saveToCache(CACHE_KEYS.STORE_CACHE_KEY, updatedCache);
 
             // Mark the collection as updated
             markCollectionUpdated(COLLECTION_KEYS.STORE);

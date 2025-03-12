@@ -1,7 +1,7 @@
 import {Invoice} from '@/types/invoce';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
-import {insertOne} from '@/lib/firebase';
+import {saveDocument} from "@/lib/firebase.ts";
 
 export class InvoiceService {
     private collectionName: string = 'invoices';
@@ -24,7 +24,7 @@ export class InvoiceService {
                 ...invoiceData
             };
 
-            const result = await insertOne<Invoice>(this.collectionName, newInvoice);
+            const result = await saveDocument<Invoice>(this.collectionName, newInvoice);
             return result || newInvoice;
         } catch (error) {
             console.error("Error creating invoice:", error);

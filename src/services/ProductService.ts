@@ -1,5 +1,5 @@
 import {Product} from "@/types/product.ts";
-import {findByFilter, findById, insertOne, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
+import {findByFilter, findById, PRODUCT_COLLECTION, saveDocument} from "@/lib/firebase.ts";
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
 
@@ -62,7 +62,7 @@ export class ProductService {
                 modifiedDate: now
             };
 
-            const result = await insertOne<Product>(PRODUCT_COLLECTION, newProduct);
+            const result = await saveDocument<Product>(PRODUCT_COLLECTION, newProduct);
 
             return result || newProduct;
         } catch (error) {

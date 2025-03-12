@@ -1,18 +1,19 @@
 import {v4 as uuidv4} from 'uuid';
-import {findAll, insertOne, WAREHOUSE_COLLECTION} from '@/lib/firebase';
+import {saveDocument, WAREHOUSE_COLLECTION} from '@/lib/firebase';
 import {toast} from 'sonner';
 import {Warehouse} from "@/types/warehouse.ts";
+import {COLLECTION_KEYS, saveCollectionFetchTime, shouldFetchCollection} from "@/utils/collectionUtils.ts";
+import {CACHE_KEYS, getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
+import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 
 export class WarehouseService {
 
 
-    async getLocations(): Promise<Warehouse[]> {
+    async fetchWarehouses(): Promise<Warehouse[]> {
         try {
-            const warehouses = await findAll<Warehouse>(WAREHOUSE_COLLECTION);
-            return warehouses;
+            return cacheAwareDBService.fetchDocuments<Warehouse>(WAREHOUSE_COLLECTION, COLLECTION_KEYS.WAREHOUSE, CACHE_KEYS.WAREHOUSE_CACHE_KEY);
         } catch (error) {
             console.error('Error fetching warehouses:', error);
-            toast.error('Failed to load warehouses');
             return [];
         }
     }
@@ -25,7 +26,7 @@ export class WarehouseService {
                 createdAt: new Date()
             };
 
-            const savedWarehouse = await insertOne<Warehouse>(WAREHOUSE_COLLECTION, newWarehouse);
+            const savedWarehouse = await saveDocument<Warehouse>(WAREHOUSE_COLLECTION, newWarehouse);
 
             toast.success('Warehouse added successfully');
             return savedWarehouse || newWarehouse;

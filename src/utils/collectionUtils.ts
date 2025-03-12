@@ -9,7 +9,8 @@ export const COLLECTION_KEYS = {
   PRODUCTS: "products_collection",
   STORE_INFO: "store_info_collection",
   GRN: "grn_collection",
-  STORE: "store_collection"
+  STORE: "store_collection",
+  WAREHOUSE: "warehouse_collection"
 };
 
 interface CollectionTimestamps {
