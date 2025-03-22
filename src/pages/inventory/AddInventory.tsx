@@ -12,13 +12,14 @@ import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {COLLECTION_KEYS, markCollectionUpdated} from '@/utils/collectionUtils';
-import {getFromCache, saveToCache, CACHE_KEYS} from '@/utils/cacheUtils';
+import {CACHE_KEYS, getFromCache, saveToCache} from '@/utils/cacheUtils';
 import {Product} from "@/types/product.ts";
 import {Warehouse} from "@/types/warehouse.ts";
 import {warehouseService} from "@/services/WarehouseService.ts";
 import {productService} from "@/services/ProductService.ts";
 import {Store} from "@/types/store.ts";
 import {storeService} from "@/services/StoreService.ts";
+import {Notifications} from "@/utils/notifications.ts";
 
 interface ProductInventoryItem {
     id: string;
@@ -40,7 +41,7 @@ const AddInventory = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    const fetchLocations = async () => {
+    const fetchWarehouses = async () => {
         try {
             setIsLoading(true);
             const warehousesData = await warehouseService.fetchWarehouses();
@@ -51,14 +52,13 @@ const AddInventory = () => {
             }
         } catch (error) {
             console.error("Error fetching warehouses:", error);
-            toast.error("Failed to load warehouses");
         } finally {
             setIsLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchLocations();
+        fetchWarehouses();
     }, []);
 
     // Search products
@@ -71,6 +71,7 @@ const AddInventory = () => {
 
             try {
                 const products = await productService.searchProducts(searchTerm);
+                console.log(products)
                 setFilteredProducts(products);
             } catch (error) {
                 console.error("Error searching products:", error);
@@ -96,7 +97,7 @@ const AddInventory = () => {
             setItems([...items, {
                 id: uuidv4(),
                 product,
-                quantity: 1,
+                quantity: 0,
                 costPrice: 0,
                 sellingPrice: 0,
                 discount: 0
@@ -144,24 +145,24 @@ const AddInventory = () => {
     };
 
     const handleLocationAdded = async (locationId: string) => {
-        await fetchLocations();
+        await fetchWarehouses();
         setSelectedLocation(locationId);
     };
 
     const handleSaveInventory = async () => {
         if (!selectedLocation) {
-            toast.error("Please select a warehouse");
+            Notifications.error("Please select a warehouse");
             return;
         }
 
         if (items.length === 0) {
-            toast.error("Please add at least one product");
+            Notifications.error("Please add at least one product");
             return;
         }
 
         const warehouse = warehouses.find(loc => loc.id === selectedLocation);
         if (!warehouse) {
-            toast.error("Invalid warehouse selected");
+            Notifications.error("Invalid warehouse selected");
             return;
         }
 
@@ -171,16 +172,20 @@ const AddInventory = () => {
             const storeItems: Omit<Store, 'id'>[] = items.map(item => ({
                 costPrice: item.costPrice,
                 sellingPrice: item.sellingPrice,
-                location: warehouse,
+                location: {id: warehouse.id, name: warehouse.name, code: warehouse.code},
                 discount: item.discount,
                 grnNumber,
-                product: item.product,
+                product: {
+                    id: item.product.id,
+                    name: item.product.name,
+                    productCode: item.product.productCode,
+                    barcode: item.product.barcode,
+                    imageUrl: item.product.imageUrl
+                },
                 qty: {
                     totalQty: item.quantity,
                     availableQty: item.quantity
-                },
-                createdBy: "Admin User",
-                modifiedBy: "Admin User"
+                }
             }));
 
             // Save to Firebase and update cache
@@ -200,7 +205,7 @@ const AddInventory = () => {
             }, 1500);
         } catch (error) {
             console.error("Error saving inventory:", error);
-            toast.error("Failed to save inventory. Please try again.");
+            Notifications.error("Failed to save inventory. Please try again.");
         } finally {
             setIsSaving(false);
         }

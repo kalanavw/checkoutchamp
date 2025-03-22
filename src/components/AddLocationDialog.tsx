@@ -16,6 +16,8 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import {warehouseService} from "@/services/WarehouseService.ts";
+import {Notifications} from "@/utils/notifications.ts";
+import {Warehouse} from "@/types/warehouse.ts";
 
 interface AddLocationDialogProps {
     onLocationAdded: (locationId: string) => void;
@@ -32,14 +34,14 @@ const AddLocationDialog: React.FC<AddLocationDialogProps> = ({onLocationAdded}) 
         e.preventDefault();
 
         if (!name.trim() || !code.trim()) {
-            toast.error('Name and code are required');
+            Notifications.error("Name and code are required")
             return;
         }
 
         setIsSubmitting(true);
 
         try {
-            const newLocation = await warehouseService.createLocation({
+            const newLocation: Warehouse = await warehouseService.createWareHouse({
                 name: name.trim(),
                 code: code.trim(),
                 description: description.trim()
@@ -71,14 +73,15 @@ const AddLocationDialog: React.FC<AddLocationDialogProps> = ({onLocationAdded}) 
                     Add Warehouse
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px]" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle>Add New Warehouse</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="name" className="required">Name</Label>
+                            <Label htmlFor="name" className="required">Name <span
+                                style={{color: "red"}}>*</span></Label>
                             <Input
                                 id="name"
                                 value={name}
@@ -88,7 +91,8 @@ const AddLocationDialog: React.FC<AddLocationDialogProps> = ({onLocationAdded}) 
                             />
                         </div>
                         <div className="grid gap-2">
-                            <Label htmlFor="code" className="required">Code</Label>
+                            <Label htmlFor="code" className="required">Code <span
+                                style={{color: "red"}}>*</span></Label>
                             <Input
                                 id="code"
                                 value={code}

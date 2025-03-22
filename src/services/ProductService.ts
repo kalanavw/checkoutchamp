@@ -1,40 +1,23 @@
 import {Product} from "@/types/product.ts";
-import {findByFilter, findById, PRODUCT_COLLECTION, saveDocument} from "@/lib/firebase.ts";
+import {findById, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
+import {CollectionData} from "@/utils/collectionData.ts";
+import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
+import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
+import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 
 export class ProductService {
-
+    collectionData: CollectionData<Product> = {
+        collection: PRODUCT_COLLECTION,
+        collectionKey: COLLECTION_KEYS.PRODUCTS,
+        cacheKey: CACHE_KEYS.PRODUCTS_CACHE_KEY,
+        document: null
+    }
     async searchProducts(searchTerm: string): Promise<Product[]> {
         try {
-            // Create search filters for name, barcode, and sku
-            const nameFilters = [
-                {field: 'name', operator: '>=', value: searchTerm},
-                {field: 'name', operator: '<=', value: searchTerm + '\uf8ff'}
-            ];
-
-            const barcodeFilters = [
-                {field: 'barcode', operator: '>=', value: searchTerm},
-                {field: 'barcode', operator: '<=', value: searchTerm + '\uf8ff'}
-            ];
-
-            const skuFilters = [
-                {field: 'sku', operator: '>=', value: searchTerm},
-                {field: 'sku', operator: '<=', value: searchTerm + '\uf8ff'}
-            ];
-
-            // Firebase doesn't support $or queries like MongoDB
-            // So we need to run multiple queries and combine the results
-            const [nameResults, barcodeResults, skuResults] = await Promise.all([
-                findByFilter<Product>(PRODUCT_COLLECTION, nameFilters),
-                findByFilter<Product>(PRODUCT_COLLECTION, barcodeFilters),
-                findByFilter<Product>(PRODUCT_COLLECTION, skuFilters)
-            ]);
-
-            // Combine and remove duplicates
-            const allResults = [...nameResults, ...barcodeResults, ...skuResults];
-            const uniqueResults = Array.from(new Map(allResults.map(item => [item.id, item])).values());
-            return uniqueResults.slice(0, 10); // Limit to 10 results
+            // todo need to modify
+            return await cacheAwareDBService.fetchDocuments<Product>(this.collectionData);
         } catch (error) {
             console.error("Error searching products:", error);
         }
@@ -61,8 +44,9 @@ export class ProductService {
                 createdAt: now,
                 modifiedDate: now
             };
+            this.collectionData.document = newProduct;
 
-            const result = await saveDocument<Product>(PRODUCT_COLLECTION, newProduct);
+            const result = await cacheAwareDBService.saveDocument<Product>(this.collectionData);
 
             return result || newProduct;
         } catch (error) {

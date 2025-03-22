@@ -1,8 +1,6 @@
-
-import { ListFilter } from "lucide-react";
-import { SearchBar } from "@/components/products/SearchBar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import {SearchBar} from "@/components/products/SearchBar";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Label} from "@/components/ui/label";
 
 interface ProductsFilterProps {
   searchQuery: string;
@@ -16,7 +14,8 @@ interface ProductsFilterProps {
   loading: boolean;
 }
 
-export const ProductsFilter = ({ 
+export const
+    ProductsFilter = ({
   searchQuery, 
   onSearch, 
   categoryFilter, 

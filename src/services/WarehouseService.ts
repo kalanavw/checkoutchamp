@@ -1,45 +1,42 @@
-import {v4 as uuidv4} from 'uuid';
-import {saveDocument, WAREHOUSE_COLLECTION} from '@/lib/firebase';
-import {toast} from 'sonner';
+import {WAREHOUSE_COLLECTION} from '@/lib/firebase';
 import {Warehouse} from "@/types/warehouse.ts";
-import {COLLECTION_KEYS, saveCollectionFetchTime, shouldFetchCollection} from "@/utils/collectionUtils.ts";
-import {CACHE_KEYS, getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
+import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
+import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
+import {CollectionData} from "@/utils/collectionData.ts";
+import {Notifications} from "@/utils/notifications.ts";
 
 export class WarehouseService {
 
+    collectionData: CollectionData<Warehouse> = {
+        collection: WAREHOUSE_COLLECTION,
+        collectionKey: COLLECTION_KEYS.WAREHOUSE,
+        cacheKey: CACHE_KEYS.STORE_CACHE_KEY,
+        document: null
+    }
 
     async fetchWarehouses(): Promise<Warehouse[]> {
         try {
-            return cacheAwareDBService.fetchDocuments<Warehouse>(WAREHOUSE_COLLECTION, COLLECTION_KEYS.WAREHOUSE, CACHE_KEYS.WAREHOUSE_CACHE_KEY);
+            return cacheAwareDBService.fetchDocuments<Warehouse>(this.collectionData);
         } catch (error) {
             console.error('Error fetching warehouses:', error);
             return [];
         }
     }
 
-    async createLocation(location: Omit<Warehouse, 'id'>): Promise<Warehouse> {
+    async createWareHouse(warehouse: Omit<Warehouse, 'id'>): Promise<Warehouse> {
         try {
-            const newWarehouse = {
-                id: uuidv4(),
-                ...location,
-                createdAt: new Date()
-            };
+            this.collectionData.document = warehouse;
+            const savedWarehouse = await cacheAwareDBService.saveDocument<Warehouse>(this.collectionData);
 
-            const savedWarehouse = await saveDocument<Warehouse>(WAREHOUSE_COLLECTION, newWarehouse);
-
-            toast.success('Warehouse added successfully');
-            return savedWarehouse || newWarehouse;
+            Notifications.success('Warehouse added successfully');
+            return savedWarehouse;
         } catch (error) {
             console.error('Error adding warehouse:', error);
-            toast.error('Failed to add warehouse');
             throw error;
         }
     }
 
-    async addLocation(name: string, code: string, description?: string): Promise<Warehouse> {
-        return this.createLocation({name, code, description});
-    }
 }
 
 

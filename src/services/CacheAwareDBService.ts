@@ -6,66 +6,66 @@ import {
 } from "@/utils/collectionUtils.ts";
 import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
 import {findAll, findById, insertDocument} from "@/lib/firebase.ts";
+import {CollectionData} from "@/utils/collectionData.ts";
 
 export class CacheAwareDBService {
-    async fetchDocuments<T>(collectionName: string, collectionKey: string, cacheKey: string): Promise<T[]> {
+    async fetchDocuments<T>(collectionData: CollectionData<T>): Promise<T[]> {
         try {
-            const shouldRefresh = shouldFetchCollection(collectionKey);
-            if (!shouldRefresh && isCacheValid(cacheKey)) {
-                const cachedDocuments = getFromCache<T[]>(cacheKey);
+            const shouldRefresh = shouldFetchCollection(collectionData.collectionKey);
+            if (!shouldRefresh && isCacheValid(collectionData.cacheKey)) {
+                const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey);
                 if (cachedDocuments.length > 0) {
-                    console.log(`Using cached data for collection: ${collectionKey}`);
+                    console.log(`Using cached data for collection: ${collectionData.collectionKey}`);
                     return cachedDocuments;
                 }
             }
-            const documents = await findAll<T>(collectionName);
-            saveToCache(cacheKey, documents);
-            saveCollectionFetchTime(collectionKey);
+            const documents = await findAll<T>(collectionData.collection);
+            saveToCache(collectionData.cacheKey, documents);
+            saveCollectionFetchTime(collectionData.collectionKey);
             return documents;
         } catch (error) {
-            console.error(`Error fetching documents for collection: ${collectionName}`, error);
+            console.error(`Error fetching documents for collection: ${collectionData.collection}`, error);
             return [];
         }
     }
 
-    async findById<T>(collectionName: string, collectionKey: string, cacheKey: string, id: string): Promise<T | null> {
+    async findById<T extends { id: string }>(collectionData: CollectionData<T>, id: string): Promise<T | null> {
         try {
-            const {lastFetchTime, lastUpdateTime} = getCollectionTimestamps(collectionKey);
-            const cachedDocuments = getFromCache<T[]>(cacheKey) || [];
+            const {lastFetchTime, lastUpdateTime} = getCollectionTimestamps(collectionData.collectionKey);
+            const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
             const cachedDocument = cachedDocuments.find(doc => doc.id === id);
 
             if (cachedDocument && lastFetchTime > lastUpdateTime) {
-                console.log(`Using cached document for ${collectionName} with ID: ${id}`);
+                console.log(`Using cached document for ${collectionData.collection} with ID: ${id}`);
                 return cachedDocument;
             }
 
-            console.log(`Fetching fresh document for ${collectionName} with ID: ${id}`);
-            const document = await findById<T>(collectionName, id);
+            console.log(`Fetching fresh document for ${collectionData.collection} with ID: ${id}`);
+            const document = await findById<T>(collectionData.collection, id);
 
             if (document) {
-                saveToCache(cacheKey, [...cachedDocuments.filter(doc => doc.id !== id), document]);
+                saveToCache(collectionData.cacheKey, [...cachedDocuments.filter(doc => doc.id !== id), document]);
             }
 
             return document;
         } catch (error) {
-            console.error(`Error fetching document by ID from ${collectionName}:`, error);
+            console.error(`Error fetching document by ID from ${collectionData.collection}:`, error);
             return null;
         }
     }
 
-    async saveDocument<T>(collectionName: string, collectionKey: string, cacheKey: string, document: T): Promise<T | null> {
+    async saveDocument<T>(collectionData: CollectionData<T>): Promise<T | null> {
         try {
-            const newUser = await insertDocument(collectionName, document);
+            const newUser = await insertDocument(collectionData.collection, collectionData.document);
 
-            saveCollectionUpdateTime(collectionKey)
+            saveCollectionUpdateTime(collectionData.collectionKey)
 
-            // Update cache
-            const cachedDocuments = getFromCache<T[]>(cacheKey) || [];
-            saveToCache(cacheKey, [newUser, ...cachedDocuments]);
+            const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
+            saveToCache(collectionData.cacheKey, [newUser, ...cachedDocuments]);
 
             return newUser;
         } catch (error) {
-            console.error(`Error saving document in ${collectionKey}:`, error);
+            console.error(`Error saving document in ${collectionData.collectionKey}:`, error);
             throw error;
         }
     }

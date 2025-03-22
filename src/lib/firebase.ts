@@ -1,4 +1,5 @@
 import {initializeApp} from 'firebase/app';
+import {v4 as uuidv4} from 'uuid';
 import {
     addDoc,
     CACHE_SIZE_UNLIMITED,
@@ -59,6 +60,7 @@ export const PRODUCT_COLLECTION = "products";
 export const STOREINFO_COLLECTION = "storeInfo";
 export const WAREHOUSE_COLLECTION = "warehouses";
 export const STORE_COLLECTION = "store"
+export const INVOICE_COLLECTION = "invoices"
 
 // Get collection reference
 export function getCollection(collectionName: string): CollectionReference<DocumentData> {
@@ -144,17 +146,18 @@ export async function insertDocument<T extends { id?: string }>(collectionName: 
             docRef = doc(db, collectionName, id);
             await updateDoc(docRef, {
                 ...data,
-                modifiedDate: Date.now(),
-                modifiedBy: ""
+                modifiedDate: new Date(),
+                modifiedBy: localStorage.getItem("userName") || "Unknown",
             });
         } else {
             // Create new document
             docRef = await addDoc(collection(db, collectionName), {
+                id: uuidv4(),
                 ...data,
-                modifiedDate: Date.now(),
-                modifiedBy: "",
-                createdAt: Date.now(),
-                createdBy: "string"
+                modifiedDate: new Date(),
+                modifiedBy: localStorage.getItem("userName") || "Unknown",
+                createdAt: new Date(),
+                createdBy: localStorage.getItem("userName") || "Unknown"
             });
         }
 

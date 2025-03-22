@@ -1,14 +1,11 @@
-import {Product} from "@/types/product.ts";
-import {Warehouse} from "@/types/warehouse.ts";
-
 export interface Store {
-    id: string; //generate UUID when save
+    id?: string; //generate UUID when save
     costPrice: number;
     sellingPrice: number;
-    location: Warehouse;
+    location: { id: string; name: string; code: string };
     discount?: number;
     grnNumber?: string;
-    product: Product;
+    product: { id: string; name: string; productCode: string; imageUrl: string; barcode: string };
     qty: StockQuantity;
     createdAt?: Date;
     createdBy?: string;

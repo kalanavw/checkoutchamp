@@ -1,10 +1,19 @@
 import {Customer} from '@/types/customer';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
-import {CUSTOMER_COLLECTION, findAll, findByFilter, findById, saveDocument} from '@/lib/firebase';
+import {CUSTOMER_COLLECTION, findAll, findByFilter, findById} from '@/lib/firebase';
+import {CollectionData} from "@/utils/collectionData.ts";
+import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
+import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
+import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 
 export class CustomerService {
-
+    collectionData: CollectionData<Customer> = {
+        collection: CUSTOMER_COLLECTION,
+        collectionKey: COLLECTION_KEYS.CUSTOMERS,
+        cacheKey: CACHE_KEYS.CUSTOMERS_CACHE_KEY,
+        document: null
+    }
     // Get all customers
     async getCustomers(): Promise<Customer[]> {
         try {
@@ -76,7 +85,8 @@ export class CustomerService {
                 registrationDate: now
             };
 
-            const result = await saveDocument<Customer>(CUSTOMER_COLLECTION, newCustomer);
+            this.collectionData.document = newCustomer;
+            const result = await cacheAwareDBService.saveDocument<Customer>(this.collectionData);
 
             return result || newCustomer;
         } catch (error) {

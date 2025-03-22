@@ -1,11 +1,19 @@
 import {Invoice} from '@/types/invoce';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
-import {saveDocument} from "@/lib/firebase.ts";
+import {CollectionData} from "@/utils/collectionData.ts";
+import {INVOICE_COLLECTION} from "@/lib/firebase.ts";
+import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
+import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
+import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 
 export class InvoiceService {
-    private collectionName: string = 'invoices';
-
+    collectionData: CollectionData<Invoice> = {
+        collection: INVOICE_COLLECTION,
+        collectionKey: COLLECTION_KEYS.INVOICE,
+        cacheKey: CACHE_KEYS.INVOICE_CACHE_KEY,
+        document: null
+    }
     // Create invoice
     async createInvoice(invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'invoiceDate'>): Promise<Invoice> {
         try {
@@ -23,8 +31,8 @@ export class InvoiceService {
                 invoiceDate: now,
                 ...invoiceData
             };
-
-            const result = await saveDocument<Invoice>(this.collectionName, newInvoice);
+            this.collectionData.document = newInvoice;
+            const result = await cacheAwareDBService.saveDocument<Invoice>(this.collectionData);
             return result || newInvoice;
         } catch (error) {
             console.error("Error creating invoice:", error);

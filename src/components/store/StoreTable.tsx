@@ -12,6 +12,13 @@ interface StoreTableProps {
 }
 
 const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
+    function handleAfterDiscount(item: Store) {
+        if (item.discount) {
+            return item.sellingPrice - (item.sellingPrice * item.discount) / 100;
+        }
+        return 0;
+    }
+
     return (
         <div className="rounded-md border overflow-hidden">
             <Table>
@@ -20,11 +27,12 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                         <TableHead>Product</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>GRN Number</TableHead>
-                        <TableHead>Cost Price</TableHead>
-                        <TableHead>Selling Price</TableHead>
+                        <TableHead>Cost Price(Rs)</TableHead>
+                        <TableHead>Selling Price(Rs)</TableHead>
                         <TableHead>Quantity</TableHead>
                         <TableHead>Available</TableHead>
-                        <TableHead>Discount</TableHead>
+                        <TableHead>Disc.</TableHead>
+                        <TableHead>After Disc.(Rs)</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -36,47 +44,47 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                                     <div className="flex items-center">
                                         <div className="w-10 h-10 rounded overflow-hidden bg-muted mr-3">
                                             <img
-                                                src={item.product.imageUrl}
-                                                alt={item.product.name}
+                                                src={item.product?.imageUrl}
+                                                alt={item.product?.name}
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
                                         <div>
-                                            <div>{item.product.name}</div>
+                                            <div>{item.product?.name}</div>
                                             <div
-                                                className="text-xs text-muted-foreground">SKU: {item.product.productCode}</div>
+                                                className="text-xs text-muted-foreground">CODE: {item.product?.productCode}</div>
                                         </div>
                                     </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
-                                        {item.location.name}
+                                        {item?.location?.name}
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <Info size={14} className="text-muted-foreground cursor-help"/>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>Code: {item.location.code}</p>
-                                                    {item.location.description && <p>{item.location.description}</p>}
+                                                    <p>Code: {item?.location?.code}</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TooltipProvider>
                                     </div>
                                 </TableCell>
-                                <TableCell>{item.grnNumber || '-'}</TableCell>
-                                <TableCell>${item.costPrice.toFixed(2)}</TableCell>
-                                <TableCell>${item.sellingPrice.toFixed(2)}</TableCell>
-                                <TableCell>{item.qty.totalQty}</TableCell>
+                                <TableCell>{item?.grnNumber || '-'}</TableCell>
+                                <TableCell>{item?.costPrice.toFixed(2)}</TableCell>
+                                <TableCell>{item?.sellingPrice.toFixed(2)}</TableCell>
+                                <TableCell>{item?.qty.totalQty}</TableCell>
                                 <TableCell>
                                     <Badge
                                         variant={item.qty.availableQty < 10 ? "destructive" : "outline"}
-                                        className={item.qty.availableQty >= 10 ? "bg-green-100 text-green-800 hover:bg-green-100" : ""}
+                                        className={item.qty.availableQty >= 10 ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-amber-600-100 text-red-700 hover:bg-amber-100"}
                                     >
                                         {item.qty.availableQty}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>{item.discount ? `${item.discount.toFixed(1)}%` : '-'}</TableCell>
+                                <TableCell><span>{item.discount ? `${handleAfterDiscount(item).toFixed(2)}` : '-'}</span></TableCell>
                                 <TableCell className="text-right">
                                     <Button
                                         asChild
