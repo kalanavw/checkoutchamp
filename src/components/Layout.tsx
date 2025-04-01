@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/ui/sidebar";
@@ -97,7 +96,6 @@ const Layout = () => {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  // Handle closing sidebar when clicking outside on mobile
   const handleOverlayClick = () => {
     if (isMobile) {
       setSidebarOpen(false);
@@ -118,7 +116,6 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar with overlay for mobile */}
       <div className={`${sidebarOpen ? 'block' : 'hidden'} fixed inset-0 z-20 md:relative md:block`}>
         <div className="h-full">
           <Sidebar onCloseSidebar={() => setSidebarOpen(false)} />

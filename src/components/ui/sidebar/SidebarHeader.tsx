@@ -1,0 +1,26 @@
+
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+
+interface SidebarHeaderProps {
+  onCloseSidebar?: () => void;
+  isMobile: boolean;
+}
+
+export const SidebarHeader = ({ onCloseSidebar, isMobile }: SidebarHeaderProps) => {
+  return (
+    <div className="p-6 flex justify-between items-center">
+      <h2 className="text-xl font-bold">POS System</h2>
+      {isMobile && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onCloseSidebar}
+          className="md:hidden text-green-700 hover:bg-green-100/50"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      )}
+    </div>
+  );
+};

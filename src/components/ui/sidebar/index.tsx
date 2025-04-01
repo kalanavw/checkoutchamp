@@ -1,100 +1,166 @@
 
-import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import {NavLink, useLocation, useNavigate} from "react-router-dom";
+import {cn} from "@/lib/utils";
+import {Button} from "@/components/ui/button";
 import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Settings,
-  LogOut,
-  Users,
-  FileSpreadsheet,
-  Receipt,
-  Truck,
   ClipboardList,
+  FileBarChart,
+  FileSpreadsheet,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Package,
+  Settings,
+  ShoppingCart,
+  Store,
+  Truck,
+  Users,
+  X
 } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import { signOut } from "firebase/auth";
-import NavLink from "./nav-link";
-import SidebarSection from "./sidebar-section";
+import {auth} from "@/lib/firebase";
+import {signOut} from "firebase/auth";
+import {clearAllAppCache} from "@/utils/cacheUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { SidebarHeader } from "./SidebarHeader";
+import { SidebarNavItem } from "./SidebarNavItem";
+import { SidebarSection } from "./SidebarSection";
+import { SidebarFooter } from "./SidebarFooter";
 
-const Sidebar = () => {
+interface SidebarProps {
+  onCloseSidebar?: () => void;
+}
+
+const Sidebar = ({ onCloseSidebar }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
+      
+      // Clear all cache data
+      clearAllAppCache();
+      
+      // These are still needed for complete cleanup
       localStorage.removeItem("user");
       localStorage.removeItem("userName");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userImage");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("isLoggedIn");
+      
       navigate("/login");
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
 
-  const isActive = (path: string) => {
-    return location.pathname === path;
+  const handleNavClick = () => {
+    if (isMobile && onCloseSidebar) {
+      onCloseSidebar();
+    }
   };
 
   return (
-    <div className="h-screen w-64 border-r bg-background flex flex-col">
-      <div className="p-6">
-        <h2 className="text-xl font-bold">POS System</h2>
-      </div>
+    <div className="h-screen w-64 border-r bg-background flex flex-col z-30">
+      <SidebarHeader onCloseSidebar={onCloseSidebar} isMobile={isMobile} />
 
-      <nav className="flex-1 space-y-1 p-4">
-        <NavLink to="/" icon={LayoutDashboard} end>
-          Dashboard
-        </NavLink>
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+        <SidebarNavItem 
+          to="/" 
+          icon={<LayoutDashboard className="mr-2 h-4 w-4" />} 
+          label="Dashboard" 
+          onClick={handleNavClick} 
+          end 
+        />
 
-        <NavLink to="/products" icon={Package}>
-          Products
-        </NavLink>
+        <SidebarNavItem 
+          to="/products" 
+          icon={<Package className="mr-2 h-4 w-4" />} 
+          label="Products" 
+          onClick={handleNavClick} 
+        />
 
-        <NavLink to="/checkout" icon={ShoppingCart}>
-          Checkout
-        </NavLink>
+        <SidebarNavItem 
+          to="/checkout" 
+          icon={<ShoppingCart className="mr-2 h-4 w-4" />} 
+          label="Checkout" 
+          onClick={handleNavClick} 
+        />
 
-        <NavLink to="/orders" icon={FileSpreadsheet}>
-          Orders
-        </NavLink>
+        <SidebarNavItem 
+          to="/orders" 
+          icon={<FileSpreadsheet className="mr-2 h-4 w-4" />} 
+          label="Orders" 
+          onClick={handleNavClick} 
+        />
 
-        <NavLink to="/invoice" icon={Receipt}>
-          Invoice
-        </NavLink>
+        <SidebarSection title="Invoicing" />
 
-        <SidebarSection title="Inventory">
-          <NavLink to="/grn" icon={Truck}>
-            Create GRN
-          </NavLink>
+        <SidebarNavItem 
+          to="/store" 
+          icon={<FileText className="mr-2 h-4 w-4" />} 
+          label="Store" 
+          onClick={handleNavClick} 
+        />
 
-          <NavLink to="/grn-list" icon={ClipboardList}>
-            GRN Records
-          </NavLink>
-        </SidebarSection>
+        <SidebarNavItem 
+          to="/invoice" 
+          icon={<FileText className="mr-2 h-4 w-4" />} 
+          label="Create Invoice" 
+          onClick={handleNavClick} 
+        />
 
-        <SidebarSection title="Administration">
-          <NavLink to="/users" icon={Users}>
-            Users
-          </NavLink>
+        <SidebarNavItem 
+          to="/invoice-list" 
+          icon={<FileBarChart className="mr-2 h-4 w-4" />} 
+          label="Invoice Records" 
+          onClick={handleNavClick} 
+        />
 
-          <NavLink to="/settings" icon={Settings}>
-            Settings
-          </NavLink>
-        </SidebarSection>
+        <SidebarSection title="Inventory" />
+
+        <SidebarNavItem 
+          to="/grn" 
+          icon={<Truck className="mr-2 h-4 w-4" />} 
+          label="Create GRN" 
+          onClick={handleNavClick} 
+        />
+
+        <SidebarNavItem 
+          to="/grn-list" 
+          icon={<ClipboardList className="mr-2 h-4 w-4" />} 
+          label="GRN Records" 
+          onClick={handleNavClick} 
+        />
+
+        <SidebarSection title="Management" />
+
+        <SidebarNavItem 
+          to="/customers" 
+          icon={<Store className="mr-2 h-4 w-4" />} 
+          label="Customers" 
+          onClick={handleNavClick} 
+        />
+
+        <SidebarNavItem 
+          to="/users" 
+          icon={<Users className="mr-2 h-4 w-4" />} 
+          label="Users" 
+          onClick={handleNavClick} 
+        />
+
+        <SidebarNavItem 
+          to="/settings" 
+          icon={<Settings className="mr-2 h-4 w-4" />} 
+          label="Settings" 
+          onClick={handleNavClick} 
+        />
       </nav>
 
-      <div className="p-4 border-t">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-muted-foreground hover:text-foreground"
-          onClick={handleLogout}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
-      </div>
+      <SidebarFooter onLogout={handleLogout} />
     </div>
   );
 };
