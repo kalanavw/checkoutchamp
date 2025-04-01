@@ -19,7 +19,7 @@ export const AppHeader = ({ sidebarOpen, setSidebarOpen, storeInfo, user }: AppH
   if (!user) return null;
 
   return (
-    <header className="h-16 border-b border-green-100 dark:border-green-800/50 flex items-center px-6 sticky top-0 bg-white/90 dark:bg-green-900/90 backdrop-blur-sm z-10">
+    <header className="h-16 border-b border-green-100 dark:border-green-800/50 flex items-center px-6 sticky top-0 bg-white/90 dark:bg-green-900/90 backdrop-blur-sm z-30">
       {!sidebarOpen && (
         <Button
           variant="ghost"
@@ -58,7 +58,7 @@ export const AppHeader = ({ sidebarOpen, setSidebarOpen, storeInfo, user }: AppH
               {user.displayName?.charAt(0) || user.email?.charAt(0) || "U"}
             </div>
           )}
-          <span className="text-sm font-medium">{user.displayName || user.email}</span>
+          <span className="text-sm font-medium hidden sm:inline">{user.displayName || user.email}</span>
         </Button>
       </div>
     </header>

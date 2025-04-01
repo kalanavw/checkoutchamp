@@ -97,6 +97,13 @@ const Layout = () => {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
+  // Handle closing sidebar when clicking outside on mobile
+  const handleOverlayClick = () => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -111,17 +118,19 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      {sidebarOpen && (
-        <div className="z-20 fixed md:relative">
-          <Sidebar />
-          {isMobile && (
+      {/* Sidebar with overlay for mobile */}
+      <div className={`${sidebarOpen ? 'block' : 'hidden'} fixed inset-0 z-20 md:relative md:block`}>
+        <div className="h-full">
+          <Sidebar onCloseSidebar={() => setSidebarOpen(false)} />
+          {isMobile && sidebarOpen && (
             <div
               className="fixed inset-0 bg-black/50 z-10"
-              onClick={() => setSidebarOpen(false)}
+              onClick={handleOverlayClick}
+              aria-hidden="true"
             />
           )}
         </div>
-      )}
+      </div>
 
       <div className="flex flex-col flex-1 overflow-hidden">
         <AppHeader 

@@ -1,3 +1,4 @@
+
 import {NavLink, useLocation, useNavigate} from "react-router-dom";
 import {cn} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
@@ -13,15 +14,22 @@ import {
   ShoppingCart,
   Store,
   Truck,
-  Users
+  Users,
+  X
 } from "lucide-react";
 import {auth} from "@/lib/firebase";
 import {signOut} from "firebase/auth";
 import {clearAllAppCache} from "@/utils/cacheUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
-const Sidebar = () => {
+interface SidebarProps {
+  onCloseSidebar?: () => void;
+}
+
+const Sidebar = ({ onCloseSidebar }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
 
   const handleLogout = async () => {
     try {
@@ -45,18 +53,34 @@ const Sidebar = () => {
     }
   };
 
+  const handleNavClick = () => {
+    if (isMobile && onCloseSidebar) {
+      onCloseSidebar();
+    }
+  };
+
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
   return (
-    <div className="h-screen w-64 border-r bg-background flex flex-col">
-      <div className="p-6">
+    <div className="h-screen w-64 border-r bg-background flex flex-col z-30">
+      <div className="p-6 flex justify-between items-center">
         <h2 className="text-xl font-bold">POS System</h2>
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onCloseSidebar}
+            className="md:hidden text-green-700 hover:bg-green-100/50"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-        <NavLink to="/" end>
+        <NavLink to="/" end onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -73,7 +97,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/products">
+        <NavLink to="/products" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -90,7 +114,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/checkout">
+        <NavLink to="/checkout" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -107,7 +131,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/orders">
+        <NavLink to="/orders" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -130,7 +154,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <NavLink to="/store">
+        <NavLink to="/store" onClick={handleNavClick}>
           {({isActive}) => (
               <Button
                   variant="ghost"
@@ -147,7 +171,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/invoice">
+        <NavLink to="/invoice" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -164,7 +188,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/invoice-list">
+        <NavLink to="/invoice-list" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -187,7 +211,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <NavLink to="/grn">
+        <NavLink to="/grn" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -204,7 +228,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/grn-list">
+        <NavLink to="/grn-list" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -227,7 +251,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <NavLink to="/customers">
+        <NavLink to="/customers" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -244,7 +268,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/users">
+        <NavLink to="/users" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
@@ -261,7 +285,7 @@ const Sidebar = () => {
           )}
         </NavLink>
 
-        <NavLink to="/settings">
+        <NavLink to="/settings" onClick={handleNavClick}>
           {({ isActive }) => (
             <Button
               variant="ghost"
