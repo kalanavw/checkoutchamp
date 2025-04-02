@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/ui/sidebar";
@@ -93,13 +94,24 @@ const Layout = () => {
   }, []);
 
   useEffect(() => {
+    // Close sidebar by default on mobile
     setSidebarOpen(!isMobile);
+    
+    // Handle resize events
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [isMobile]);
 
-  const handleOverlayClick = () => {
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
   };
 
   if (loading) {
@@ -116,17 +128,18 @@ const Layout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
-      <div className={`${sidebarOpen ? 'block' : 'hidden'} fixed inset-0 z-20 md:relative md:block`}>
-        <div className="h-full">
-          <Sidebar onCloseSidebar={() => setSidebarOpen(false)} />
-          {isMobile && sidebarOpen && (
-            <div
-              className="fixed inset-0 bg-black/50 z-10"
-              onClick={handleOverlayClick}
-              aria-hidden="true"
-            />
-          )}
-        </div>
+      {/* Mobile sidebar with overlay */}
+      {isMobile && sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/50" onClick={handleCloseSidebar} />
+      )}
+      
+      {/* Sidebar container */}
+      <div 
+        className={`${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } fixed md:relative inset-y-0 left-0 z-50 md:z-30 transition-transform duration-300 ease-in-out md:translate-x-0`}
+      >
+        <Sidebar onCloseSidebar={handleCloseSidebar} />
       </div>
 
       <div className="flex flex-col flex-1 overflow-hidden">

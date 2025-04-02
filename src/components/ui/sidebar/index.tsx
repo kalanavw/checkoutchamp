@@ -1,6 +1,5 @@
 
 import {NavLink, useLocation, useNavigate} from "react-router-dom";
-import {cn} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
 import {
   ClipboardList,
@@ -64,7 +63,7 @@ const Sidebar = ({ onCloseSidebar }: SidebarProps) => {
   };
 
   return (
-    <div className="h-screen w-64 border-r bg-background flex flex-col z-30">
+    <div className="h-full min-h-screen w-full md:w-64 border-r bg-background flex flex-col z-30 overflow-hidden">
       <SidebarHeader onCloseSidebar={onCloseSidebar} isMobile={isMobile} />
 
       <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
