@@ -6,19 +6,13 @@ import {Badge} from '@/components/ui/badge';
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip';
 import {Button} from '@/components/ui/button';
 import {Store} from "@/types/store.ts";
+import {handleAfterDiscount} from "@/utils/Util.ts";
 
 interface StoreTableProps {
     storeItems: Store[];
 }
 
 const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
-    function handleAfterDiscount(item: Store) {
-        if (item.discount) {
-            return item.sellingPrice - (item.sellingPrice * item.discount) / 100;
-        }
-        return 0;
-    }
-
     return (
         <div className="rounded-md border overflow-hidden">
             <Table>

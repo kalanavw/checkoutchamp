@@ -5,6 +5,7 @@ import {STORE_COLLECTION} from '@/lib/firebase';
 import {Store} from "@/types/store.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
+import {Invoice} from "@/types/invoce.ts";
 
 export class StoreService {
     collectionData: CollectionData<Store> = {
@@ -50,7 +51,7 @@ export class StoreService {
     }
 
     // Save store items and update cache
-    async saveStoreItems(storeItems: Omit<Store, 'id'>[]): Promise<Store[]> {
+    async saveStoreItems(storeItems: Store[]): Promise<Store[]> {
         try {
 
             // Save each item to Firebase
@@ -75,6 +76,19 @@ export class StoreService {
         } catch (error) {
             console.error("Error saving store items:", error);
             throw error;
+        }
+    }
+
+    async updateProductQuantityAfterInvoice(result: Invoice) {
+        let updateble: Store[] = [];
+        if (result && result.products.length > 0) {
+            for (const product of result.products) {
+                const store: Store = await cacheAwareDBService.findById<Store>(this.collectionData, product.storeId);
+                store.qty.availableQty = store.qty.availableQty - product.quantity;
+                updateble.push(store)
+            }
+            this.collectionData.documents = updateble;
+            await cacheAwareDBService.saveDocuments(this.collectionData);
         }
     }
 }

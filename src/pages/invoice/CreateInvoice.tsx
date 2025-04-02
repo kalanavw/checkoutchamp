@@ -9,7 +9,7 @@ import {Badge} from '@/components/ui/badge.tsx';
 import AddCustomerDialog from '@/components/AddCustomerDialog.tsx';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
-import {CreditCard, DollarSign, FileCheck, FileText, Layout, Printer, Save, Search, Trash2} from 'lucide-react';
+import {CreditCard, DollarSign, FileCheck, FileText, Printer, Save, Search, Trash2} from 'lucide-react';
 import {invoiceService} from '@/services/InvoiceService.ts';
 import {customerService,} from '@/services/CustomerService.ts';
 import {Notifications} from "@/utils/notifications.ts";
@@ -17,6 +17,9 @@ import {Invoice, InvoiceItem, InvoiceProduct} from "@/types/invoce.ts";
 import {Customer} from "@/types/customer.ts";
 import {Product} from "@/types/product.ts";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@radix-ui/react-select";
+import {storeService} from "@/services/StoreService.ts";
+import {Store} from "@/types/store.ts";
+import {handleAfterDiscount} from "@/utils/Util.ts";
 
 const CreateInvoice: React.FC = () => {
     // State to track invoice data
@@ -32,11 +35,10 @@ const CreateInvoice: React.FC = () => {
     const [customerSearchTerm, setCustomerSearchTerm] = useState<string>('');
     const [productSearchTerm, setProductSearchTerm] = useState<string>('');
     const [customers, setCustomers] = useState<Customer[]>([]);
-    const [searchedProducts, setSearchedProducts] = useState<Product[]>([]);
+    const [searchedProducts, setSearchedProducts] = useState<Store[]>([]);
     const [showCustomerDropdown, setShowCustomerDropdown] = useState<boolean>(false);
     const [showProductDropdown, setShowProductDropdown] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
     // Load initial data
     useEffect(() => {
         const loadInitialData = async () => {
@@ -80,10 +82,9 @@ const CreateInvoice: React.FC = () => {
                 setShowProductDropdown(false);
                 return;
             }
-
             try {
-                //const results search from store= await productService.searchProducts(productSearchTerm);
-                setSearchedProducts([]);
+                const results = await storeService.getStoreItems();
+                setSearchedProducts(results);
                 setShowProductDropdown(true);
             } catch (error) {
                 console.error("Failed to search products:", error);
@@ -116,20 +117,21 @@ const CreateInvoice: React.FC = () => {
     }, [total, amountPaid]);
 
     // Handle adding a product to the invoice
-    const handleAddProduct = (product: Product) => {
+    const handleAddProduct = (store: Store) => {
         const invoiceProduct: InvoiceProduct = {
-            id: product.id,
-            name: product.name
+            id: store.product.id,
+            name: store.product.name
         };
 
         const newItem: InvoiceItem = {
             id: uuidv4(),
             product: invoiceProduct,
             quantity: 1,
-            costPrice: 100,
-            sellingPrice: 100,
-            discount: 0,
-            subTotal: 100
+            costPrice: store.costPrice,
+            sellingPrice: store.sellingPrice,
+            discount: store.discount,
+            subTotal: handleAfterDiscount(store),
+            storeId: store.id
         };
 
         setInvoiceItems(prev => [...prev, newItem]);
@@ -274,7 +276,7 @@ const CreateInvoice: React.FC = () => {
     };
 
     return (
-        <Layout>
+        <div className="container px-4 py-6 mx-auto">
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
@@ -424,19 +426,20 @@ const CreateInvoice: React.FC = () => {
                                     <div
                                         className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-md max-h-48 overflow-y-auto">
                                         {searchedProducts.length > 0 ? (
-                                            searchedProducts.map(product => (
+                                            searchedProducts.map(store => (
                                                 <div
-                                                    key={product.id}
+                                                    key={store.id}
                                                     className="p-2 hover:bg-accent cursor-pointer"
-                                                    onClick={() => handleAddProduct(product)}
+                                                    onClick={() => handleAddProduct(store)}
                                                 >
                                                     <div className="flex items-center justify-between">
-                                                        <div className="font-medium">{product.name}</div>
-                                                        <Badge variant="outline">${product.productCode}</Badge>
+                                                        <div className="font-medium">{store.product?.name}</div>
+                                                        <Badge
+                                                            variant="outline">Rs:{store.sellingPrice.toFixed(2)}</Badge>
                                                     </div>
                                                     <div className="text-xs text-muted-foreground flex justify-between">
-                                                        <span>SKU: {product.productCode}</span>
-                                                        <span>Stock: {product.barcode}</span>
+                                                        <span>Product Code: {store.product.productCode}</span>
+                                                        <span>Stock: {store.qty.availableQty}</span>
                                                     </div>
                                                 </div>
                                             ))
@@ -495,7 +498,7 @@ const CreateInvoice: React.FC = () => {
                                                         />
                                                     </TableCell>
                                                     <TableCell className="text-right font-medium">
-                                                        ${item.subTotal.toFixed(2)}
+                                                        Rs: {item.subTotal.toFixed(2)}
                                                     </TableCell>
                                                     <TableCell>
                                                         <Button
@@ -533,11 +536,11 @@ const CreateInvoice: React.FC = () => {
                             <div className="space-y-2">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Subtotal:</span>
-                                    <span>${subTotal.toFixed(2)}</span>
+                                    <span>Rs: {subTotal.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Tax:</span>
-                                    <span>${taxAmount.toFixed(2)}</span>
+                                    <span>Rs: {taxAmount.toFixed(2)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-muted-foreground">Shipping:</span>
@@ -556,7 +559,7 @@ const CreateInvoice: React.FC = () => {
 
                             <div className="flex justify-between text-lg font-semibold">
                                 <span>Total:</span>
-                                <span>${total.toFixed(2)}</span>
+                                <span>Rs: {total.toFixed(2)}</span>
                             </div>
 
                             <Separator/>
@@ -611,7 +614,7 @@ const CreateInvoice: React.FC = () => {
                                             <span>Balance:</span>
                                             <span
                                                 className={balance < 0 ? 'text-green-600' : balance > 0 ? 'text-red-600' : ''}>
-                        ${balance.toFixed(2)}
+                        Rs: {balance.toFixed(2)}
                       </span>
                                         </div>
 
@@ -668,7 +671,7 @@ const CreateInvoice: React.FC = () => {
                     </Card>
                 </div>
             </div>
-        </Layout>
+        </div>
     );
 };
 

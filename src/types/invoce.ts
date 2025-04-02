@@ -1,6 +1,6 @@
 
 export interface Invoice {
-    id: string; //generate UUID when save
+    id?: string; //generate UUID when save
     invoiceNumber: string; //generate invoice number ex - INV-{ddMMyy)-0001, increment from last generated number, none editable lable
     invoiceDate: Date; //show the date in the form, none editable lable
     customerName: string; // searchable dropdown from customer collection, if user not available add + button to save
@@ -22,13 +22,14 @@ export interface Invoice {
 
 
 export interface InvoiceItem {
-    id: string; //generate UUID when save
+    id?: string; //generate UUID when save
     product: InvoiceProduct;
     quantity: number;
     costPrice: number;
     sellingPrice: number; // should be editable in the item table
     discount: number;
     subTotal: number; //before tax
+    storeId: string;
 }
 
 export interface InvoiceProduct {

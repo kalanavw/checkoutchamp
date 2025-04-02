@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "payboss-e9f9b",
+    "test": "test-react-466bf",
+    "dev": "payboss-e9f9b"
+  },
+  "targets": {},
+  "etags": {}
+}

@@ -69,19 +69,13 @@ export class CustomerService {
         type: 'retail' | 'wholesale';
     }): Promise<Customer> {
         try {
-            const id = uuidv4();
             const now = new Date();
 
             const newCustomer: Customer = {
-                id,
                 name: customerData.name,
                 email: customerData.email,
                 phone: customerData.phone,
                 type: customerData.type,
-                createdAt: now,
-                modifiedDate: now,
-                createdBy: "user",
-                modifiedBy: "",
                 registrationDate: now
             };
 

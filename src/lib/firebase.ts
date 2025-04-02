@@ -1,7 +1,5 @@
 import {initializeApp} from 'firebase/app';
-import {v4 as uuidv4} from 'uuid';
 import {
-    addDoc,
     CACHE_SIZE_UNLIMITED,
     collection,
     CollectionReference,
@@ -15,19 +13,24 @@ import {
     limit,
     persistentLocalCache,
     query,
+    setDoc,
     updateDoc,
-    where
+    where,
+    writeBatch
 } from 'firebase/firestore';
 import {getAuth, GoogleAuthProvider} from 'firebase/auth';
+import {getStorage} from 'firebase/storage';
+import {generateCustomUUID} from "@/utils/Util.ts";
+
 
 const firebaseConfig = {
-    apiKey: "AIzaSyA_ReJ3a7qewp89vsp8-MpN_tfWI8oRUtI",
-    authDomain: "stock-champ-2a9df.firebaseapp.com",
-    projectId: "stock-champ-2a9df",
-    storageBucket: "stock-champ-2a9df.appspot.com",
-    messagingSenderId: "274289865490",
-    appId: "1:274289865490:web:b160e0705ae509179279cb",
-    measurementId: "G-3F0JVEY523"
+    apiKey: "AIzaSyC6whbU2S11QdDZpY5yDWbwaYh-4aeINaI",
+    authDomain: "payboss-e9f9b.firebaseapp.com",
+    projectId: "payboss-e9f9b",
+    storageBucket: "payboss-e9f9b.firebasestorage.app",
+    messagingSenderId: "1093419350977",
+    appId: "1:1093419350977:web:5460ba5de1254b7e058d40",
+    measurementId: "G-2MV305KJ2L"
 };
 
 
@@ -42,6 +45,7 @@ export const db = initializeFirestore(app, {
 // Initialize Authentication with browserPopupRedirectResolver
 
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 // Add Drive API scope to Google provider (for Google Drive integration)
 
@@ -138,26 +142,34 @@ export async function findById<T>(collectionName: string, id: string): Promise<T
 // Insert or Update a document
 export async function insertDocument<T extends { id?: string }>(collectionName: string, document: T): Promise<T | null> {
     try {
+        let user = "Unknown";
         const { id, ...data } = document;
         let docRef: DocumentReference;
-
-        if (id) {
+        const authUser = localStorage.getItem("user");
+        if (authUser) {
+            const parsedUser = JSON.parse(authUser);
+            user = parsedUser.displayName;
+        }
+        if (id && id !== "G") {
             // Update existing document
             docRef = doc(db, collectionName, id);
             await updateDoc(docRef, {
                 ...data,
                 modifiedDate: new Date(),
-                modifiedBy: localStorage.getItem("userName") || "Unknown",
+                modifiedBy: user,
             });
         } else {
             // Create new document
-            docRef = await addDoc(collection(db, collectionName), {
-                id: uuidv4(),
+            const docId = generateCustomUUID();
+            const collectionRef = collection(db, collectionName);
+            docRef = doc(collectionRef, docId);
+            await setDoc(docRef, {
+                id: docId,
                 ...data,
                 modifiedDate: new Date(),
-                modifiedBy: localStorage.getItem("userName") || "Unknown",
+                modifiedBy: user,
                 createdAt: new Date(),
-                createdBy: localStorage.getItem("userName") || "Unknown"
+                createdBy: user
             });
         }
 
@@ -172,6 +184,53 @@ export async function insertDocument<T extends { id?: string }>(collectionName: 
     }
 }
 
+export async function insertDocuments<T extends { id?: string }>(collectionName: string, documents: T[]): Promise<T[]> {
+    try {
+        let user = "Unknown";
+        const authUser = localStorage.getItem("user");
+        if (authUser) {
+            const parsedUser = JSON.parse(authUser);
+            user = parsedUser.displayName;
+        }
+
+        const batch = writeBatch(db);
+
+        documents.forEach((document) => {
+            const {id, ...data} = document;
+            let docRef: DocumentReference;
+
+            if (id && id !== "G") {
+                // Update existing document
+                docRef = doc(db, collectionName, id);
+                batch.update(docRef, {
+                    ...data,
+                    modifiedDate: new Date(),
+                    modifiedBy: user,
+                });
+            } else {
+                // Create new document
+                const docId = generateCustomUUID();
+                const collectionRef = collection(db, collectionName);
+                docRef = doc(collection(db, collectionName));
+                const newDoc = {
+                    id: docId,
+                    ...data,
+                    modifiedDate: new Date(),
+                    modifiedBy: user,
+                    createdAt: new Date(),
+                    createdBy: user,
+                };
+                batch.set(docRef, newDoc);
+            }
+        });
+
+        await batch.commit();
+        return [];
+    } catch (error) {
+        console.error(`Error saving documents in ${collectionName}:`, error);
+        throw error;
+    }
+}
 
 // Delete a document
 export async function deleteOne(collectionName: string, id: string): Promise<boolean> {

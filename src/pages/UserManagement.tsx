@@ -1,63 +1,39 @@
-
 // Import the relevant components and hooks
-import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {db, USER_COLLECTION} from "@/lib/firebase";
+import {useEffect, useRef, useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {auth, db, USER_COLLECTION} from "@/lib/firebase";
+import {addDoc, collection, doc, getDocs, orderBy, query, serverTimestamp, updateDoc, where,} from "firebase/firestore";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  updateDoc,
-  query,
-  orderBy,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { 
-  Search,
-  UserPlus, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  RefreshCw, 
+  Eye,
+  EyeOff,
   Image as ImageIcon,
-  X,
-  User as UserIcon
+  Lock,
+  Mail,
+  RefreshCw,
+  Search,
+  User as UserIcon,
+  UserPlus,
+  X
 } from "lucide-react";
-import { UserRole } from "@/types/user";
-import { Switch } from "@/components/ui/switch";
-import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { optimizeImageToBase64 } from "@/utils/imageUtils";
-import { isCacheValid, saveToCache, getFromCache } from "@/utils/cacheUtils";
-import { 
-  COLLECTION_KEYS, 
-  saveCollectionUpdateTime, 
+import {UserRole} from "@/types/user";
+import {Switch} from "@/components/ui/switch";
+import {createUserWithEmailAndPassword} from "firebase/auth";
+import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils";
+import {
+  COLLECTION_KEYS,
   saveCollectionFetchTime,
+  saveCollectionUpdateTime,
   shouldFetchCollection
 } from "@/utils/collectionUtils";
 import UserManagementTable from "@/components/users/UserManagementTable";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Notifications } from "@/utils/notifications";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Badge} from "@/components/ui/badge";
+import {Notifications} from "@/utils/notifications";
+import {fileStorageService} from "@/services/FileStorageService.ts";
 
 // Cache key
 const USERS_CACHE_KEY = "users_cache";
@@ -171,10 +147,11 @@ const UserManagement = () => {
 
   const uploadUserImage = async (): Promise<string | null> => {
     if (!selectedImage) return null;
-    
+    debugger
     try {
       // Convert to base64
-      return await optimizeImageToBase64(selectedImage);
+      // return await optimizeImageToBase64(selectedImage);
+      return await fileStorageService.uploadImage(selectedImage, "user")
     } catch (error) {
       console.error("Error processing image:", error);
       throw error;

@@ -169,7 +169,8 @@ const AddInventory = () => {
         try {
             setIsSaving(true);
 
-            const storeItems: Omit<Store, 'id'>[] = items.map(item => ({
+            const storeItems: Store[] = items.map(item => ({
+                id: 'G',
                 costPrice: item.costPrice,
                 sellingPrice: item.sellingPrice,
                 location: {id: warehouse.id, name: warehouse.name, code: warehouse.code},

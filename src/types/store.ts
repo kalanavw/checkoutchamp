@@ -1,5 +1,5 @@
 export interface Store {
-    id?: string; //generate UUID when save
+    id: string; //generate UUID when save
     costPrice: number;
     sellingPrice: number;
     location: { id: string; name: string; code: string };

@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { collection, getDocs, doc, setDoc, updateDoc, query, orderBy, limit } from "firebase/firestore";
-import { db, STOREINFO_COLLECTION } from "@/lib/firebase";
-import { StoreInfo } from "@/types/storeInfo";
-import { Notifications } from "@/utils/notifications";
-import { optimizeImageToBase64 } from "@/utils/imageUtils";
-import { isCacheValid, saveToCache, getFromCache, getLastModifiedTime } from "@/utils/cacheUtils";
+import {useEffect, useState} from "react";
+import {collection, doc, getDocs, limit, orderBy, query, setDoc, updateDoc} from "firebase/firestore";
+import {db, STOREINFO_COLLECTION} from "@/lib/firebase";
+import {StoreInfo} from "@/types/storeInfo";
+import {Notifications} from "@/utils/notifications";
+import {optimizeImageToBase64} from "@/utils/imageUtils";
+import {getFromCache, getLastModifiedTime, isCacheValid, saveToCache} from "@/utils/cacheUtils";
 
 // Cache key for store info
 const STORE_INFO_CACHE_KEY = "store_info_cache";
@@ -157,6 +157,7 @@ export const useStoreInfo = () => {
         try {
           // Optimize and convert to base64
           logoUrl = await optimizeImageToBase64(logoFile);
+          //logoUrl = await fileStorageService.uploadImage(logoFile, "user/business/")
         } catch (error) {
           console.error("Error converting logo to base64:", error);
           Notifications.warning("Failed to process logo. Using previous logo if available.");

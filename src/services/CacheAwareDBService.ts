@@ -5,7 +5,7 @@ import {
     shouldFetchCollection
 } from "@/utils/collectionUtils.ts";
 import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
-import {findAll, findById, insertDocument} from "@/lib/firebase.ts";
+import {findAll, findById, insertDocument, insertDocuments} from "@/lib/firebase.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 
 export class CacheAwareDBService {
@@ -70,6 +70,21 @@ export class CacheAwareDBService {
         }
     }
 
+    async saveDocuments<T>(collectionData: CollectionData<T>,): Promise<T[] | null> {
+        try {
+            const newDocuments = await insertDocuments(collectionData.collection, collectionData.documents);
+
+            saveCollectionUpdateTime(collectionData.collectionKey);
+
+            const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
+            saveToCache(collectionData.cacheKey, [...newDocuments, ...cachedDocuments]);
+
+            return newDocuments;
+        } catch (error) {
+            console.error(`Error saving documents in ${collectionData.collectionKey}:`, error);
+            throw error;
+        }
+    }
 
 }
 
