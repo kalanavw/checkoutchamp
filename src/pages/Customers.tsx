@@ -1,30 +1,17 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Notifications } from "@/utils/notifications";
-import { CUSTOMER_COLLECTION, db } from "@/lib/firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter
-} from "@/components/ui/dialog";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, User, Mail, Phone, MapPin } from "lucide-react";
-import { Customer } from "@/types/customer";
+import {useState} from "react";
+import {Button} from "@/components/ui/button";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Notifications} from "@/utils/notifications";
+import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
+import {addDoc, collection, serverTimestamp} from "firebase/firestore";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Textarea} from "@/components/ui/textarea";
+import {Mail, MapPin, Phone, Plus, Search, User} from "lucide-react";
+import {Customer} from "@/types/customer";
 
 const Customers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -75,8 +62,8 @@ const Customers = () => {
         createdAt: new Date(),
         modifiedDate: new Date()
       };
-      
-      setCustomers([...customers, customerWithId]);
+
+      // setCustomers([...customers, customerWithId]);
       
       Notifications.success("Customer registered successfully.");
       

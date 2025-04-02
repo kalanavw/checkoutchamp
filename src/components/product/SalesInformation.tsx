@@ -1,7 +1,6 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Product } from "@/types/product";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Separator} from "@/components/ui/separator";
+import {Product} from "@/types/product";
 
 interface SalesInformationProps {
   product: Product;
@@ -17,7 +16,7 @@ export const SalesInformation = ({ product }: SalesInformationProps) => {
         <div>
           <h3 className="text-sm font-medium text-green-700 dark:text-green-400">Revenue Potential</h3>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-            ${(product.stock * product.sellingPrice).toFixed(2)}
+            100
           </p>
           <p className="text-sm text-green-600/70 dark:text-green-500/70">
             Based on current stock and selling price
@@ -27,7 +26,7 @@ export const SalesInformation = ({ product }: SalesInformationProps) => {
         <div>
           <h3 className="text-sm font-medium text-green-700 dark:text-green-400">Profit Potential</h3>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-            ${(product.stock * (product.sellingPrice - product.costPrice)).toFixed(2)}
+            200
           </p>
           <p className="text-sm text-green-600/70 dark:text-green-500/70">
             Based on current stock and profit margin

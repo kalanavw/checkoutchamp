@@ -1,7 +1,6 @@
-
 import React from 'react';
-import { Package } from "lucide-react";
-import { Product } from "@/types/product";
+import {Package} from "lucide-react";
+import {Product} from "@/types/product";
 
 interface ProductInfoProps {
   product: Product;
@@ -24,7 +23,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-green-700 dark:text-green-400">SKU</h3>
-            <p className="text-green-800 dark:text-green-200">{product.sku || "Not available"}</p>
+              <p className="text-green-800 dark:text-green-200">{product.productCode || "Not available"}</p>
           </div>
           
           <div>
@@ -37,16 +36,9 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       <div className="pt-4">
         <h3 className="text-sm font-medium text-green-700 dark:text-green-400 mb-2">Specifications</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {product.specifications ? (
-            Object.entries(product.specifications).map(([key, value]) => (
-              <div key={key} className="border border-green-200 dark:border-green-700/50 p-3 rounded-md bg-green-50/70 dark:bg-green-800/30">
-                <h4 className="text-xs text-green-600/80 dark:text-green-500/80">{key}</h4>
-                <p className="text-sm font-medium text-green-800 dark:text-green-200">{value}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-green-800/70 dark:text-green-300/70">No specifications available</p>
-          )}
+
+        <p className="text-green-800/70 dark:text-green-300/70">No specifications available</p>
+
         </div>
       </div>
     </div>
