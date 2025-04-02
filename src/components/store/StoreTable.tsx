@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {ExternalLink, Info} from 'lucide-react';
 import {Link} from 'react-router-dom';
@@ -20,6 +19,8 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Product</TableHead>
+                        <TableHead>Cat</TableHead>
+                        <TableHead>Sub.Cat</TableHead>
                         <TableHead>Location</TableHead>
                         <TableHead>GRN Number</TableHead>
                         <TableHead>Cost Price(Rs)</TableHead>
@@ -51,6 +52,8 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                                         </div>
                                     </div>
                                 </TableCell>
+                                <TableCell>{item.product?.category || '-'}</TableCell>
+                                <TableCell>{item?.product?.subcategory || '-'}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-1">
                                         {item?.location?.name}

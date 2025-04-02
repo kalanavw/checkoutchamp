@@ -5,7 +5,15 @@ export interface Store {
     location: { id: string; name: string; code: string };
     discount?: number;
     grnNumber?: string;
-    product: { id: string; name: string; productCode: string; imageUrl: string; barcode: string };
+    product: {
+        id: string;
+        name: string;
+        productCode: string;
+        imageUrl: string;
+        barcode: string;
+        category: string,
+        subcategory: string
+    };
     qty: StockQuantity;
     createdAt?: Date;
     createdBy?: string;

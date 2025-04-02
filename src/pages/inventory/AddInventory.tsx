@@ -193,7 +193,9 @@ const AddInventory = () => {
                     name: item.product.name,
                     productCode: item.product.productCode,
                     barcode: item.product.barcode,
-                    imageUrl: item.product.imageUrl
+                    imageUrl: item.product.imageUrl,
+                    category: item.product.category,
+                    subcategory: item.product.subcategory
                 },
                 qty: {
                     totalQty: item.quantity,
