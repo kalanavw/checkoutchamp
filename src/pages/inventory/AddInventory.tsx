@@ -1,3 +1,4 @@
+
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {PackagePlus, PlusCircle, Save, Trash2} from 'lucide-react';
@@ -40,6 +41,7 @@ const AddInventory = () => {
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
 
     const fetchWarehouses = async () => {
         try {
@@ -61,7 +63,7 @@ const AddInventory = () => {
         fetchWarehouses();
     }, []);
 
-    // Search products
+    // Search products using the enhanced ProductService
     useEffect(() => {
         const searchProducts = async () => {
             if (searchTerm.trim() === '') {
@@ -70,12 +72,14 @@ const AddInventory = () => {
             }
 
             try {
+                setIsSearching(true);
                 const products = await productService.searchProducts(searchTerm);
-                console.log(products)
                 setFilteredProducts(products);
             } catch (error) {
                 console.error("Error searching products:", error);
                 setFilteredProducts([]);
+            } finally {
+                setIsSearching(false);
             }
         };
 
@@ -294,7 +298,14 @@ const AddInventory = () => {
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                     placeholder="Start typing to search products..."
+                                    disabled={isSearching}
                                 />
+                                {isSearching && (
+                                    <div className="text-sm text-muted-foreground flex items-center">
+                                        <span className="animate-spin mr-2">⊚</span>
+                                        Searching...
+                                    </div>
+                                )}
                             </div>
 
                             {filteredProducts.length > 0 && (

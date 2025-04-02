@@ -1,3 +1,4 @@
+
 import {SearchBar} from "@/components/products/SearchBar";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {Label} from "@/components/ui/label";
@@ -14,8 +15,7 @@ interface ProductsFilterProps {
   loading: boolean;
 }
 
-export const
-    ProductsFilter = ({
+export const ProductsFilter = ({
   searchQuery, 
   onSearch, 
   categoryFilter, 
@@ -33,6 +33,7 @@ export const
           value={searchQuery} 
           onChange={onSearch} 
           placeholder="Search by name, code, category, keywords..."
+          disabled={loading}
         />
       </div>
       

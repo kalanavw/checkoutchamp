@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {Package} from "lucide-react";
 import {Product} from "@/types/product";
@@ -36,9 +37,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
       <div className="pt-4">
         <h3 className="text-sm font-medium text-green-700 dark:text-green-400 mb-2">Specifications</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <p className="text-green-800/70 dark:text-green-300/70">No specifications available</p>
-
+          <p className="text-green-800/70 dark:text-green-300/70">No specifications available</p>
         </div>
       </div>
     </div>
