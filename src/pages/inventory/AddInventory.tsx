@@ -1,4 +1,3 @@
-
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {PackagePlus, PlusCircle, Save, Trash2} from 'lucide-react';
@@ -43,7 +42,6 @@ const AddInventory = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
-    const [useLocalSearch, setUseLocalSearch] = useState(true);
 
     const fetchWarehouses = async () => {
         try {
@@ -68,23 +66,15 @@ const AddInventory = () => {
     // Search products using the enhanced ProductService
     useEffect(() => {
         const searchProducts = async () => {
-            if (searchTerm.trim() === '') {
+            if (searchTerm.trim().length < 3) {
                 setFilteredProducts([]);
                 return;
             }
 
             try {
-                // setIsSearching(true);
-                // const products = await productService.searchProducts(searchTerm, useLocalSearch);
-                //
-                // // If local search returned no results and we were using local search,
-                // // try again with Firebase search
-                // if (products.length === 0 && useLocalSearch) {
-                //     const firebaseProducts = await productService.searchProducts(searchTerm, false);
-                //     setFilteredProducts(firebaseProducts);
-                // } else {
-                //     setFilteredProducts(products);
-                // }
+                setIsSearching(true);
+                const products = await productService.searchProducts(searchTerm);
+                setFilteredProducts(products);
             } catch (error) {
                 console.error("Error searching products:", error);
                 setFilteredProducts([]);
@@ -98,7 +88,7 @@ const AddInventory = () => {
         }, 300); // Debounce the search
 
         return () => clearTimeout(timer);
-    }, [searchTerm, useLocalSearch]);
+    });
 
     const handleSearchChange = (value: string) => {
         setSearchTerm(value);
@@ -300,19 +290,6 @@ const AddInventory = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    type="checkbox"
-                                    id="localSearch"
-                                    checked={useLocalSearch}
-                                    onChange={() => setUseLocalSearch(!useLocalSearch)}
-                                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                                />
-                                <Label htmlFor="localSearch" className="text-sm">
-                                    Use local inventory first (faster search)
-                                </Label>
-                            </div>
                         </CardContent>
                     </Card>
 
@@ -322,7 +299,7 @@ const AddInventory = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid gap-3">
-                                <Label htmlFor="productSearch">Search by name, SKU, barcode, category or
+                                <Label htmlFor="productSearch">Search by name, code, barcode, category or
                                     keywords</Label>
                                 <SearchBar
                                     value={searchTerm}
@@ -344,7 +321,7 @@ const AddInventory = () => {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Product</TableHead>
-                                                <TableHead>SKU</TableHead>
+                                                <TableHead>Code</TableHead>
                                                 <TableHead>Category</TableHead>
                                                 <TableHead>Actions</TableHead>
                                             </TableRow>

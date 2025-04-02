@@ -5,7 +5,7 @@ import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {auth, db, USER_COLLECTION} from "@/lib/firebase";
-import {addDoc, collection, doc, getDocs, orderBy, query, serverTimestamp, updateDoc, where,} from "firebase/firestore";
+import {collection, doc, getDocs, orderBy, query, serverTimestamp, setDoc, updateDoc, where,} from "firebase/firestore";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {
   Eye,
@@ -179,20 +179,21 @@ const UserManagement = () => {
       }
 
       const authCreateUser = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const userDocRef = doc(db, USER_COLLECTION, authCreateUser.user.uid);
       const newUser = {
         ...formData,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         id: authCreateUser.user.uid
       };
-      const docRef = await addDoc(collection(db, USER_COLLECTION), newUser);
+      await setDoc(userDocRef, newUser)
       console.log("User created:", formData.email);
       
       let photoURL = "";
       if (selectedImage) {
         try {
           photoURL = await uploadUserImage() || "";
-          await updateDoc(doc(db, USER_COLLECTION, docRef.id), { photoURL });
+          await updateDoc(doc(db, USER_COLLECTION, newUser.id), {photoURL});
         } catch (error) {
           console.error("Error with user image:", error);
           Notifications.warning("User created but profile image upload failed.");
