@@ -74,17 +74,17 @@ const AddInventory = () => {
             }
 
             try {
-                setIsSearching(true);
-                const products = await productService.searchProducts(searchTerm, useLocalSearch);
-                
-                // If local search returned no results and we were using local search,
-                // try again with Firebase search
-                if (products.length === 0 && useLocalSearch) {
-                    const firebaseProducts = await productService.searchProducts(searchTerm, false);
-                    setFilteredProducts(firebaseProducts);
-                } else {
-                    setFilteredProducts(products);
-                }
+                // setIsSearching(true);
+                // const products = await productService.searchProducts(searchTerm, useLocalSearch);
+                //
+                // // If local search returned no results and we were using local search,
+                // // try again with Firebase search
+                // if (products.length === 0 && useLocalSearch) {
+                //     const firebaseProducts = await productService.searchProducts(searchTerm, false);
+                //     setFilteredProducts(firebaseProducts);
+                // } else {
+                //     setFilteredProducts(products);
+                // }
             } catch (error) {
                 console.error("Error searching products:", error);
                 setFilteredProducts([]);

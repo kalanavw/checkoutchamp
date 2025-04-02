@@ -1,4 +1,3 @@
-
 import {
     getCollectionTimestamps,
     saveCollectionFetchTime,
@@ -87,15 +86,6 @@ export class CacheAwareDBService {
         }
     }
 
-    // Generic method to get from cache with a specific key
-    async getFromCacheWithKey<T>(cacheKey: string): Promise<T | null> {
-        return getFromCache<T>(cacheKey);
-    }
-    
-    // Generic method to save to cache with a specific key
-    async saveToCache<T>(cacheKey: string, data: T): Promise<void> {
-        saveToCache(cacheKey, data);
-    }
 }
 
 export const cacheAwareDBService = new CacheAwareDBService()
