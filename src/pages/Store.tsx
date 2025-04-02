@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {PackagePlus} from 'lucide-react';
 import {Link} from 'react-router-dom';
@@ -7,6 +8,8 @@ import StoreSearch from '@/components/store/StoreSearch';
 import StoreTable from '@/components/store/StoreTable';
 import StorePagination from '@/components/store/StorePagination';
 import {useStoreData} from "@/hooks/useStoreData.ts";
+import {Skeleton} from "@/components/ui/skeleton";
+import {toast} from "sonner";
 
 const StorePage = () => {
     const {
@@ -18,8 +21,16 @@ const StorePage = () => {
         currentData,
         totalPages,
         pageSize,
-        resetSearch
+        resetSearch,
+        isLoading,
+        error
     } = useStoreData(20);
+
+    React.useEffect(() => {
+        if (error) {
+            toast.error(error);
+        }
+    }, [error]);
 
     return (
         <div className="container px-4 py-6 mx-auto">
@@ -51,16 +62,28 @@ const StorePage = () => {
                             resetSearch={resetSearch}
                         />
 
-                        <StoreTable storeItems={currentData}/>
+                        {isLoading ? (
+                            <div className="space-y-2">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        ) : (
+                            <>
+                                <StoreTable storeItems={currentData} />
 
-                        {filteredData.length > 0 && (
-                            <StorePagination
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                totalItems={filteredData.length}
-                                pageSize={pageSize}
-                                onPageChange={setCurrentPage}
-                            />
+                                {filteredData.length > 0 && (
+                                    <StorePagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        totalItems={filteredData.length}
+                                        pageSize={pageSize}
+                                        onPageChange={setCurrentPage}
+                                    />
+                                )}
+                            </>
                         )}
                     </CardContent>
                 </Card>

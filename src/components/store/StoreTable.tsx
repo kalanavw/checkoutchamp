@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {ExternalLink, Info} from 'lucide-react';
 import {Link} from 'react-router-dom';
@@ -66,19 +67,26 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                                     </div>
                                 </TableCell>
                                 <TableCell>{item?.grnNumber || '-'}</TableCell>
-                                <TableCell>{item?.costPrice.toFixed(2)}</TableCell>
-                                <TableCell>{item?.sellingPrice.toFixed(2)}</TableCell>
-                                <TableCell>{item?.qty.totalQty}</TableCell>
+                                <TableCell>{item?.costPrice?.toFixed(2) || '-'}</TableCell>
+                                <TableCell>{item?.sellingPrice?.toFixed(2) || '-'}</TableCell>
+                                <TableCell>{item?.qty?.totalQty || 0}</TableCell>
                                 <TableCell>
                                     <Badge
-                                        variant={item.qty.availableQty < 10 ? "destructive" : "outline"}
-                                        className={item.qty.availableQty >= 10 ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-amber-600-100 text-red-700 hover:bg-amber-100"}
+                                        variant={(item.qty?.availableQty || 0) < 10 ? "destructive" : "outline"}
+                                        className={(item.qty?.availableQty || 0) >= 10 ? "bg-green-100 text-green-800 hover:bg-green-100" : "bg-amber-600-100 text-red-700 hover:bg-amber-100"}
                                     >
-                                        {item.qty.availableQty}
+                                        {item.qty?.availableQty || 0}
                                     </Badge>
                                 </TableCell>
                                 <TableCell>{item.discount ? `${item.discount.toFixed(1)}%` : '-'}</TableCell>
-                                <TableCell><span>{item.discount ? `${handleAfterDiscount(item).toFixed(2)}` : '-'}</span></TableCell>
+                                <TableCell>
+                                    <span>
+                                        {item.discount && item.sellingPrice ? 
+                                            `${handleAfterDiscount(item).toFixed(2)}` : 
+                                            '-'
+                                        }
+                                    </span>
+                                </TableCell>
                                 <TableCell className="text-right">
                                     <Button
                                         asChild
