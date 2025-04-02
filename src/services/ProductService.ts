@@ -16,7 +16,7 @@ export class ProductService {
         document: null
     }
     
-    async searchProducts(searchTerm: string): Promise<Product[]> {
+    async searchProducts(searchTerm: string, useLocalOnly: boolean = false): Promise<Product[]> {
         try {
             if (!searchTerm || searchTerm.trim() === '') {
                 // If empty search term, return all products from cache
@@ -31,6 +31,11 @@ export class ProductService {
             if (cachedResults && cachedResults.length > 0) {
                 console.log("Using cached search results for:", searchTerm);
                 return cachedResults;
+            }
+            
+            // If useLocalOnly is true, only search in local cache
+            if (useLocalOnly) {
+                return this.searchLocalProducts(searchTerm);
             }
             
             // Not in cache, search across multiple fields
@@ -71,6 +76,30 @@ export class ProductService {
             return results;
         } catch (error) {
             console.error("Error searching products:", error);
+            return [];
+        }
+    }
+
+    // Search only in local cache
+    async searchLocalProducts(searchTerm: string): Promise<Product[]> {
+        try {
+            const searchLower = searchTerm.toLowerCase();
+            
+            // Get products from cache
+            const allProducts = await cacheAwareDBService.getFromCache<Product[]>(CACHE_KEYS.PRODUCTS_CACHE_KEY) || [];
+            
+            // Filter in memory
+            return allProducts.filter(product => {
+                if (product.name.toLowerCase().includes(searchLower)) return true;
+                if (product.productCode && product.productCode.toLowerCase().includes(searchLower)) return true;
+                if (product.barcode && product.barcode.toLowerCase().includes(searchLower)) return true;
+                if (product.category && product.category.toLowerCase().includes(searchLower)) return true;
+                if (product.subcategory && product.subcategory.toLowerCase().includes(searchLower)) return true;
+                if (product.keywords && product.keywords.some(keyword => keyword.toLowerCase().includes(searchLower))) return true;
+                return false;
+            });
+        } catch (error) {
+            console.error("Error searching local products:", error);
             return [];
         }
     }

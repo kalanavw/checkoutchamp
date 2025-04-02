@@ -1,3 +1,4 @@
+
 import {Input} from "@/components/ui/input";
 import {Search} from "lucide-react";
 import React from "react";
@@ -7,9 +8,10 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onSearch?: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-export const SearchBar = ({ value, onChange, onSearch, placeholder = "Search products..." }: SearchBarProps) => {
+export const SearchBar = ({ value, onChange, onSearch, placeholder = "Search products...", disabled = false }: SearchBarProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
@@ -28,6 +30,7 @@ export const SearchBar = ({ value, onChange, onSearch, placeholder = "Search pro
         value={value}
         onChange={handleChange}
         className="pl-10"
+        disabled={disabled}
       />
     </div>
   );
