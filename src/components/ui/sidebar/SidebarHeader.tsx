@@ -9,14 +9,15 @@ interface SidebarHeaderProps {
 
 export const SidebarHeader = ({ onCloseSidebar, isMobile }: SidebarHeaderProps) => {
   return (
-    <div className="p-6 flex justify-between items-center">
+    <div className="p-4 flex justify-between items-center border-b">
       <h2 className="text-xl font-bold">POS System</h2>
-      {isMobile && (
+      {isMobile && onCloseSidebar && (
         <Button
           variant="ghost"
           size="icon"
           onClick={onCloseSidebar}
           className="md:hidden text-green-700 hover:bg-green-100/50"
+          aria-label="Close sidebar"
         >
           <X className="h-5 w-5" />
         </Button>
