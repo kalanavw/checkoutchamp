@@ -1,3 +1,4 @@
+
 import React, {useEffect, useMemo, useState} from 'react';
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from '@/components/ui/card.tsx';
 import {Button} from '@/components/ui/button.tsx';
@@ -16,7 +17,7 @@ import {Notifications} from "@/utils/notifications.ts";
 import {Invoice, InvoiceItem, InvoiceProduct} from "@/types/invoce.ts";
 import {Customer} from "@/types/customer.ts";
 import {Product} from "@/types/product.ts";
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@radix-ui/react-select";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {storeService} from "@/services/StoreService.ts";
 import {Store} from "@/types/store.ts";
 import {handleAfterDiscount} from "@/utils/Util.ts";
@@ -83,7 +84,24 @@ const CreateInvoice: React.FC = () => {
                 return;
             }
             try {
-                const results = await storeService.getStoreItems();
+                const storeItems = await storeService.getStoreItems();
+                // Enhanced filtering with case-insensitive search across multiple fields
+                const results = storeItems.filter(item => {
+                    const searchTermLower = productSearchTerm.toLowerCase();
+                    
+                    return (
+                        // Product fields
+                        item.product.name.toLowerCase().includes(searchTermLower) ||
+                        item.product.productCode.toLowerCase().includes(searchTermLower) ||
+                        (item.product.barcode && item.product.barcode.toLowerCase().includes(searchTermLower)) ||
+                        item.product.category.toLowerCase().includes(searchTermLower) ||
+                        item.product.subcategory.toLowerCase().includes(searchTermLower) ||
+                        
+                        // GRN number
+                        (item.grnNumber && item.grnNumber.toLowerCase().includes(searchTermLower))
+                    );
+                });
+                
                 setSearchedProducts(results);
                 setShowProductDropdown(true);
             } catch (error) {
@@ -385,10 +403,12 @@ const CreateInvoice: React.FC = () => {
 
                                 <div>
                                     <Label htmlFor="status">Status</Label>
-                                    <Select value={status}
-                                            onValueChange={(value: 'pending' | 'paid' | 'overdue' | 'canceled' | 'draft') => setStatus(value)}>
+                                    <Select 
+                                        value={status} 
+                                        onValueChange={(value) => setStatus(value as 'pending' | 'paid' | 'overdue' | 'canceled' | 'draft')}
+                                    >
                                         <SelectTrigger className="mt-1">
-                                            <SelectValue placeholder="Select status"/>
+                                            <SelectValue placeholder="Select status" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="pending">Pending</SelectItem>
@@ -412,7 +432,7 @@ const CreateInvoice: React.FC = () => {
                                 <Search
                                     className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4"/>
                                 <Input
-                                    placeholder="Search product by name, ID or barcode..."
+                                    placeholder="Search by product name, ID, barcode, category, subcategory or GRN..."
                                     className="pl-8 pr-4"
                                     value={productSearchTerm}
                                     onChange={e => setProductSearchTerm(e.target.value)}
@@ -438,9 +458,21 @@ const CreateInvoice: React.FC = () => {
                                                             variant="outline">Rs:{store.sellingPrice.toFixed(2)}</Badge>
                                                     </div>
                                                     <div className="text-xs text-muted-foreground flex justify-between">
-                                                        <span>Product Code: {store.product.productCode}</span>
+                                                        <span>Code: {store.product.productCode}</span>
                                                         <span>Stock: {store.qty.availableQty}</span>
                                                     </div>
+                                                    {(store.product.category || store.product.subcategory) && (
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {store.product.category && `Category: ${store.product.category}`}
+                                                            {store.product.category && store.product.subcategory && " | "}
+                                                            {store.product.subcategory && `Subcategory: ${store.product.subcategory}`}
+                                                        </div>
+                                                    )}
+                                                    {store.grnNumber && (
+                                                        <div className="text-xs text-muted-foreground">
+                                                            GRN: {store.grnNumber}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))
                                         ) : (

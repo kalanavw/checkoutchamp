@@ -1,3 +1,4 @@
+
 import {toast} from 'sonner';
 import {COLLECTION_KEYS, markCollectionUpdated} from '@/utils/collectionUtils';
 import {CACHE_KEYS, getFromCache, saveToCache} from '@/utils/cacheUtils';
@@ -24,7 +25,7 @@ export class StoreService {
         }
     }
 
-    // Search store items with enhanced search to include all fields
+    // Enhanced search store items with comprehensive field search 
     searchStoreItems(term: string, items: Store[]): Store[] {
         if (!term.trim()) return items;
 
@@ -33,15 +34,16 @@ export class StoreService {
             // Product fields
             item.product.name.toLowerCase().includes(searchTerm) ||
             (item.product.productCode && item.product.productCode.toLowerCase().includes(searchTerm)) ||
+            (item.product.barcode && item.product.barcode.toLowerCase().includes(searchTerm)) ||
+            (item.product.category && item.product.category.toLowerCase().includes(searchTerm)) ||
+            (item.product.subcategory && item.product.subcategory.toLowerCase().includes(searchTerm)) ||
 
             // Location fields
             item.location.name.toLowerCase().includes(searchTerm) ||
             item.location.code.toLowerCase().includes(searchTerm) ||
 
             // Store specific fields
-            item.grnNumber?.toLowerCase().includes(searchTerm) ||
-            item.product.productCode.toLowerCase().includes(searchTerm) ||
-            item.product.barcode?.toLowerCase().includes(searchTerm) ||
+            (item.grnNumber && item.grnNumber.toLowerCase().includes(searchTerm)) ||
 
             // Price related search (convert to string for searching)
             item.costPrice.toString().includes(searchTerm) ||
