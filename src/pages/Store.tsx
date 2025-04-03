@@ -92,19 +92,6 @@ const StorePage = () => {
                                 }}
                                 resetSearch={resetSearch}
                             />
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground whitespace-nowrap">Items per page:</span>
-                                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
-                                    <SelectTrigger className="w-20">
-                                        <SelectValue placeholder="50" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="50">50</SelectItem>
-                                        <SelectItem value="100">100</SelectItem>
-                                        <SelectItem value="150">150</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
                         </div>
 
                         {isLoading ? (
@@ -120,13 +107,28 @@ const StorePage = () => {
                                 <StoreTable storeItems={currentData} />
 
                                 {filteredData.length > 0 && (
-                                    <StorePagination
-                                        currentPage={currentPage}
-                                        totalPages={totalPages}
-                                        totalItems={filteredData.length}
-                                        pageSize={pageSize}
-                                        onPageChange={setCurrentPage}
-                                    />
+                                    <>
+                                        <div className="flex items-center justify-end gap-2 mt-4">
+                                            <span className="text-sm text-muted-foreground whitespace-nowrap">Items per page:</span>
+                                            <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                                                <SelectTrigger className="w-20">
+                                                    <SelectValue placeholder="50" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="50">50</SelectItem>
+                                                    <SelectItem value="100">100</SelectItem>
+                                                    <SelectItem value="150">150</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <StorePagination
+                                            currentPage={currentPage}
+                                            totalPages={totalPages}
+                                            totalItems={filteredData.length}
+                                            pageSize={pageSize}
+                                            onPageChange={setCurrentPage}
+                                        />
+                                    </>
                                 )}
                             </>
                         )}
@@ -138,3 +140,4 @@ const StorePage = () => {
 };
 
 export default StorePage;
+
