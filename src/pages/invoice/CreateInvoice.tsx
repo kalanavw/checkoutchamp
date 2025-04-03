@@ -1,4 +1,3 @@
-
 import React, {useEffect, useMemo, useState} from 'react';
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from '@/components/ui/card.tsx';
 import {Button} from '@/components/ui/button.tsx';
@@ -40,6 +39,7 @@ const CreateInvoice: React.FC = () => {
     const [showCustomerDropdown, setShowCustomerDropdown] = useState<boolean>(false);
     const [showProductDropdown, setShowProductDropdown] = useState<boolean>(false);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
     // Load initial data
     useEffect(() => {
         const loadInitialData = async () => {
@@ -85,22 +85,7 @@ const CreateInvoice: React.FC = () => {
             }
             try {
                 const storeItems = await storeService.getStoreItems();
-                // Enhanced filtering with case-insensitive search across multiple fields
-                const results = storeItems.filter(item => {
-                    const searchTermLower = productSearchTerm.toLowerCase();
-                    
-                    return (
-                        // Product fields
-                        item.product.name.toLowerCase().includes(searchTermLower) ||
-                        item.product.productCode.toLowerCase().includes(searchTermLower) ||
-                        (item.product.barcode && item.product.barcode.toLowerCase().includes(searchTermLower)) ||
-                        item.product.category.toLowerCase().includes(searchTermLower) ||
-                        item.product.subcategory.toLowerCase().includes(searchTermLower) ||
-                        
-                        // GRN number
-                        (item.grnNumber && item.grnNumber.toLowerCase().includes(searchTermLower))
-                    );
-                });
+                const results = storeService.searchStoreItems(productSearchTerm, storeItems);
                 
                 setSearchedProducts(results);
                 setShowProductDropdown(true);
@@ -121,7 +106,6 @@ const CreateInvoice: React.FC = () => {
     const taxAmount = useMemo(() => {
         return invoiceItems.reduce((sum, item) => {
             const product = item.product as unknown as Product;
-            // return sum + (item.subTotal * (product.taxRate || 0));
             return sum;
         }, 0);
     }, [invoiceItems]);

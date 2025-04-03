@@ -25,31 +25,39 @@ export class StoreService {
         }
     }
 
-    // Enhanced search store items with comprehensive field search 
+    // Enhanced search store items with comprehensive field search and null/undefined safety
     searchStoreItems(term: string, items: Store[]): Store[] {
-        if (!term.trim()) return items;
+        if (!term?.trim()) return items;
 
         const searchTerm = term.toLowerCase();
-        return items.filter(item =>
-            // Product fields
-            item.product.name.toLowerCase().includes(searchTerm) ||
-            (item.product.productCode && item.product.productCode.toLowerCase().includes(searchTerm)) ||
-            (item.product.barcode && item.product.barcode.toLowerCase().includes(searchTerm)) ||
-            (item.product.category && item.product.category.toLowerCase().includes(searchTerm)) ||
-            (item.product.subcategory && item.product.subcategory.toLowerCase().includes(searchTerm)) ||
+        return items.filter(item => {
+            // Safe check function to handle potentially undefined values
+            const safeIncludes = (value: string | number | undefined | null): boolean => {
+                if (value === undefined || value === null) return false;
+                return String(value).toLowerCase().includes(searchTerm);
+            };
 
-            // Location fields
-            item.location.name.toLowerCase().includes(searchTerm) ||
-            item.location.code.toLowerCase().includes(searchTerm) ||
+            return (
+                // Product fields - with null/undefined safety
+                safeIncludes(item.product?.name) ||
+                safeIncludes(item.product?.productCode) ||
+                safeIncludes(item.product?.barcode) ||
+                safeIncludes(item.product?.category) ||
+                safeIncludes(item.product?.subcategory) ||
 
-            // Store specific fields
-            (item.grnNumber && item.grnNumber.toLowerCase().includes(searchTerm)) ||
+                // Location fields
+                safeIncludes(item.location?.name) ||
+                safeIncludes(item.location?.code) ||
 
-            // Price related search (convert to string for searching)
-            item.costPrice.toString().includes(searchTerm) ||
-            item.sellingPrice.toString().includes(searchTerm) ||
-            (item.discount && item.discount.toString().includes(searchTerm))
-        );
+                // Store specific fields
+                safeIncludes(item.grnNumber) ||
+
+                // Price related search
+                safeIncludes(item.costPrice) ||
+                safeIncludes(item.sellingPrice) ||
+                safeIncludes(item.discount)
+            );
+        });
     }
 
     // Save store items and update cache
