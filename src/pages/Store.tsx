@@ -33,7 +33,13 @@ const StorePage = () => {
         isLoading,
         isRefreshing,
         error,
-        refreshData
+        refreshData,
+        categoryFilter,
+        setCategoryFilter,
+        subcategoryFilter,
+        setSubcategoryFilter,
+        categories,
+        subcategories
     } = useStoreData(50);
 
     React.useEffect(() => {
@@ -83,7 +89,7 @@ const StorePage = () => {
                         <CardTitle>Store Items</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                        <div className="mb-4">
                             <StoreSearch
                                 searchTerm={searchTerm}
                                 setSearchTerm={(value) => {
@@ -91,6 +97,12 @@ const StorePage = () => {
                                     setCurrentPage(1); // Reset to first page on search
                                 }}
                                 resetSearch={resetSearch}
+                                categoryFilter={categoryFilter}
+                                setCategoryFilter={setCategoryFilter}
+                                subcategoryFilter={subcategoryFilter}
+                                setSubcategoryFilter={setSubcategoryFilter}
+                                categories={categories}
+                                subcategories={subcategories}
                             />
                         </div>
 
@@ -140,4 +152,3 @@ const StorePage = () => {
 };
 
 export default StorePage;
-

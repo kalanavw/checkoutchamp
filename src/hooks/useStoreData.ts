@@ -13,6 +13,10 @@ export const useStoreData = (initialPageSize: number = 50) => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [subcategoryFilter, setSubcategoryFilter] = useState('all');
+    const [categories, setCategories] = useState<string[]>([]);
+    const [subcategories, setSubcategories] = useState<string[]>([]);
 
     // Function to fetch store data from Firebase
     const fetchStoreData = async (forceRefresh = false) => {
@@ -77,6 +81,23 @@ export const useStoreData = (initialPageSize: number = 50) => {
             }
 
             setStoreData(validatedData);
+            
+            // Extract unique categories and subcategories
+            const uniqueCategories = new Set<string>();
+            const uniqueSubcategories = new Set<string>();
+
+            validatedData.forEach(item => {
+                if (item.product.category) {
+                    uniqueCategories.add(item.product.category);
+                }
+                if (item.product.subcategory) {
+                    uniqueSubcategories.add(item.product.subcategory);
+                }
+            });
+
+            setCategories(Array.from(uniqueCategories).sort());
+            setSubcategories(Array.from(uniqueSubcategories).sort());
+            
         } catch (err) {
             console.error('Error fetching store data:', err);
             setError('Failed to fetch store data');
@@ -100,13 +121,31 @@ export const useStoreData = (initialPageSize: number = 50) => {
     // Reset to page 1 when pageSize changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [pageSize]);
+    }, [pageSize, categoryFilter, subcategoryFilter]);
 
-    // Filter store data based on search term
+    // Filter store data based on search term, category, and subcategory
     const filteredData = useMemo(() => {
         if (!storeData || storeData.length === 0) return [];
-        return storeService.searchStoreItems(searchTerm, storeData);
-    }, [searchTerm, storeData]);
+        
+        // Start with search term filter
+        let filtered = storeService.searchStoreItems(searchTerm, storeData);
+        
+        // Apply category filter if selected
+        if (categoryFilter !== 'all') {
+            filtered = filtered.filter(item => 
+                item.product.category === categoryFilter
+            );
+        }
+        
+        // Apply subcategory filter if selected
+        if (subcategoryFilter !== 'all') {
+            filtered = filtered.filter(item => 
+                item.product.subcategory === subcategoryFilter
+            );
+        }
+        
+        return filtered;
+    }, [searchTerm, storeData, categoryFilter, subcategoryFilter]);
 
     // Calculate total pages
     const totalPages = Math.ceil((filteredData?.length || 0) / pageSize);
@@ -120,6 +159,8 @@ export const useStoreData = (initialPageSize: number = 50) => {
 
     const resetSearch = () => {
         setSearchTerm('');
+        setCategoryFilter('all');
+        setSubcategoryFilter('all');
         setCurrentPage(1);
     };
 
@@ -137,6 +178,12 @@ export const useStoreData = (initialPageSize: number = 50) => {
         isLoading,
         error,
         refreshData,
-        isRefreshing
+        isRefreshing,
+        categoryFilter,
+        setCategoryFilter,
+        subcategoryFilter,
+        setSubcategoryFilter,
+        categories,
+        subcategories
     };
 };
