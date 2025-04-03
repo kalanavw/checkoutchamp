@@ -1,6 +1,6 @@
 
 import React from 'react';
-import {PackagePlus} from 'lucide-react';
+import {PackagePlus, RefreshCcw} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
@@ -10,6 +10,13 @@ import StorePagination from '@/components/store/StorePagination';
 import {useStoreData} from "@/hooks/useStoreData.ts";
 import {Skeleton} from "@/components/ui/skeleton";
 import {toast} from "sonner";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 const StorePage = () => {
     const {
@@ -17,20 +24,32 @@ const StorePage = () => {
         setSearchTerm,
         currentPage,
         setCurrentPage,
+        pageSize,
+        setPageSize,
         filteredData,
         currentData,
         totalPages,
-        pageSize,
         resetSearch,
         isLoading,
-        error
-    } = useStoreData(20);
+        isRefreshing,
+        error,
+        refreshData
+    } = useStoreData(50);
 
     React.useEffect(() => {
         if (error) {
             toast.error(error);
         }
     }, [error]);
+
+    const handleRefresh = () => {
+        toast.info("Refreshing store data...");
+        refreshData();
+    };
+
+    const handlePageSizeChange = (value: string) => {
+        setPageSize(Number(value));
+    };
 
     return (
         <div className="container px-4 py-6 mx-auto">
@@ -40,12 +59,23 @@ const StorePage = () => {
                         <h1 className="text-3xl font-bold tracking-tight">Store</h1>
                         <p className="text-muted-foreground">Manage your store across locations.</p>
                     </div>
-                    <Button className="gap-2" asChild>
-                        <Link to="/add-inventory">
-                            <PackagePlus size={18}/>
-                            Add Inventory
-                        </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            className="gap-2" 
+                            onClick={handleRefresh}
+                            disabled={isRefreshing}
+                        >
+                            <RefreshCcw size={18} className={isRefreshing ? "animate-spin" : ""} />
+                            Refresh
+                        </Button>
+                        <Button className="gap-2" asChild>
+                            <Link to="/add-inventory">
+                                <PackagePlus size={18}/>
+                                Add Inventory
+                            </Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <Card>
@@ -53,14 +83,29 @@ const StorePage = () => {
                         <CardTitle>Store Items</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <StoreSearch
-                            searchTerm={searchTerm}
-                            setSearchTerm={(value) => {
-                                setSearchTerm(value);
-                                setCurrentPage(1); // Reset to first page on search
-                            }}
-                            resetSearch={resetSearch}
-                        />
+                        <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                            <StoreSearch
+                                searchTerm={searchTerm}
+                                setSearchTerm={(value) => {
+                                    setSearchTerm(value);
+                                    setCurrentPage(1); // Reset to first page on search
+                                }}
+                                resetSearch={resetSearch}
+                            />
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">Items per page:</span>
+                                <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                                    <SelectTrigger className="w-20">
+                                        <SelectValue placeholder="50" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                        <SelectItem value="150">150</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
 
                         {isLoading ? (
                             <div className="space-y-2">

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {ExternalLink, Info} from 'lucide-react';
 import {Link} from 'react-router-dom';
@@ -70,8 +71,8 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                                     </div>
                                 </TableCell>
                                 <TableCell>{item?.grnNumber || '-'}</TableCell>
-                                <TableCell>{item?.costPrice?.toFixed(2) || '-'}</TableCell>
-                                <TableCell>{item?.sellingPrice?.toFixed(2) || '-'}</TableCell>
+                                <TableCell>{item?.costPrice !== undefined ? item.costPrice.toFixed(2) : '-'}</TableCell>
+                                <TableCell>{item?.sellingPrice !== undefined ? item.sellingPrice.toFixed(2) : '-'}</TableCell>
                                 <TableCell>{item?.qty?.totalQty || 0}</TableCell>
                                 <TableCell>
                                     <Badge
@@ -84,7 +85,7 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                                 <TableCell>{item.discount ? `${item.discount.toFixed(1)}%` : '-'}</TableCell>
                                 <TableCell>
                                     <span>
-                                        {item.discount && item.sellingPrice ? 
+                                        {item.discount !== undefined && item.sellingPrice !== undefined ? 
                                             `${handleAfterDiscount(item).toFixed(2)}` : 
                                             '-'
                                         }
@@ -106,7 +107,7 @@ const StoreTable: React.FC<StoreTableProps> = ({storeItems}) => {
                         ))
                     ) : (
                         <TableRow>
-                            <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                                 No store items found. Try adjusting your search or add new inventory.
                             </TableCell>
                         </TableRow>
