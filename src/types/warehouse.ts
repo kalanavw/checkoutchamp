@@ -1,5 +1,6 @@
+
 export interface Warehouse {
-    id?: string;
+    id: string; // Changed from optional to required
     name: string;
     code: string;
     description?: string;

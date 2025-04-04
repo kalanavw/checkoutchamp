@@ -14,7 +14,7 @@ export class WarehouseService {
     collectionData: CollectionData<Warehouse> = {
         collection: WAREHOUSE_COLLECTION,
         collectionKey: COLLECTION_KEYS.WAREHOUSE,
-        cacheKey: CACHE_KEYS.STORE_CACHE_KEY,
+        cacheKey: CACHE_KEYS.WAREHOUSE_CACHE_KEY,
         document: null
     }
 
@@ -45,8 +45,6 @@ export class WarehouseService {
             throw error;
         }
     }
-
 }
-
 
 export const warehouseService = new WarehouseService();
