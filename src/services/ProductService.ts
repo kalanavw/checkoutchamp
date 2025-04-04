@@ -1,4 +1,3 @@
-
 import {Product} from "@/types/product.ts";
 import {createSearchFilters, findAll, findByFilter, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
 // @ts-ignore
@@ -131,6 +130,35 @@ export class ProductService {
         } catch (error) {
             console.error("Error creating product:", error);
             throw error;
+        }
+    }
+
+    // Update product
+    async updateProduct(product: Product): Promise<Product | null> {
+        try {
+            this.collectionData.document = product;
+            const result = await cacheAwareDBService.saveDocument<Product>(this.collectionData);
+            
+            // Update specific product in cache
+            if (result) {
+                // Also update in the products list cache if it exists
+                const productsCache = getFromCache<Product[]>(CACHE_KEYS.PRODUCTS_CACHE_KEY);
+                if (productsCache) {
+                    const updatedCache = productsCache.map(p => 
+                        p.id === product.id ? product : p
+                    );
+                    saveToCache(CACHE_KEYS.PRODUCTS_CACHE_KEY, updatedCache);
+                }
+                
+                // Update individual product cache
+                const productCacheKey = `${CACHE_KEYS.PRODUCTS_CACHE_KEY}_${product.id}`;
+                saveToCache(productCacheKey, product);
+            }
+            
+            return result;
+        } catch (error) {
+            console.error("Error updating product:", error);
+            return null;
         }
     }
 }
