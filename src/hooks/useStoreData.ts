@@ -1,7 +1,7 @@
 
 import {useEffect, useMemo, useState} from 'react';
-import {COLLECTION_KEYS, markCollectionUpdated, shouldFetchCollection} from '@/utils/collectionUtils';
-import {CACHE_KEYS, clearCache, getFromCache, saveToCache} from '@/utils/cacheUtils';
+import {COLLECTION_KEYS, shouldFetchCollection} from '@/utils/collectionUtils';
+import {CACHE_KEYS, getFromCache} from '@/utils/cacheUtils';
 import {Store} from "@/types/store.ts";
 import {storeService} from "@/services/StoreService.ts";
 
@@ -18,7 +18,7 @@ export const useStoreData = (initialPageSize: number = 50) => {
     const [categories, setCategories] = useState<string[]>([]);
     const [subcategories, setSubcategories] = useState<string[]>([]);
 
-    // Function to fetch store data from Firebase
+    // Function to fetch store data from Firebase with improved caching
     const fetchStoreData = async (forceRefresh = false) => {
         try {
             setIsLoading(true);
@@ -26,43 +26,11 @@ export const useStoreData = (initialPageSize: number = 50) => {
             
             if (forceRefresh) {
                 setIsRefreshing(true);
-                // Clear cache if refreshing
-                clearCache(CACHE_KEYS.STORE_CACHE_KEY);
             }
 
-            // Check if we should fetch from Firebase or use cache
-            const shouldFetch = forceRefresh || shouldFetchCollection(COLLECTION_KEYS.STORE);
-            let data: Store[] = [];
-
-            if (shouldFetch) {
-                // Fetch from Firebase
-                console.log('Fetching store data from Firebase');
-                data = await storeService.getStoreItems();
-                
-                // Save to cache
-                saveToCache(CACHE_KEYS.STORE_CACHE_KEY, data);
-                
-                // Mark collection as updated
-                markCollectionUpdated(COLLECTION_KEYS.STORE);
-            } else {
-                // Get from cache
-                const cachedData = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY);
-                if (cachedData && cachedData.length > 0) {
-                    console.log('Using cached store data');
-                    data = cachedData;
-                } else {
-                    // No cache or empty cache, fetch from Firebase
-                    console.log('No cache found, fetching from Firebase');
-                    data = await storeService.getStoreItems();
-                    
-                    // Save to cache
-                    saveToCache(CACHE_KEYS.STORE_CACHE_KEY, data);
-                    
-                    // Mark collection as updated
-                    markCollectionUpdated(COLLECTION_KEYS.STORE);
-                }
-            }
-
+            // Use the improved StoreService to get data with proper cache handling
+            const data = await storeService.getStoreItems(forceRefresh);
+            
             // Validate data to ensure all required fields are present
             const validatedData = data.filter(item => {
                 // Check for required fields

@@ -16,14 +16,51 @@ export class StoreService {
         cacheKey: CACHE_KEYS.STORE_CACHE_KEY,
         document: null
     }
-    // Get all store items
-    async getStoreItems(): Promise<Store[]> {
+    
+    // Get all store items with improved caching
+    async getStoreItems(forceRefresh = false): Promise<Store[]> {
         try {
+            if (forceRefresh) {
+                console.log('Force refreshing store data from Firebase');
+                // Clear cache if force refreshing
+                this.clearStoreCache();
+            }
+            
             return await cacheAwareDBService.fetchDocuments<Store>(this.collectionData);
         } catch (error) {
             console.error("Error getting store items:", error);
             toast.error("Failed to fetch store items. Using mock data.");
+            return [];
         }
+    }
+
+    // Get a single store item by ID with cache handling
+    async getStoreItemById(id: string): Promise<Store | null> {
+        try {
+            // First try to find the store item in the cache
+            const cachedStoreItems = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY);
+            
+            if (cachedStoreItems && cachedStoreItems.length > 0) {
+                const cachedItem = cachedStoreItems.find(item => item.id === id);
+                if (cachedItem) {
+                    console.log(`Found store item ${id} in cache`);
+                    return cachedItem;
+                }
+            }
+            
+            // If not in cache, fetch from Firebase
+            console.log(`Fetching store item ${id} from Firebase`);
+            return await cacheAwareDBService.findById<Store>(this.collectionData, id);
+        } catch (error) {
+            console.error(`Error getting store item by ID ${id}:`, error);
+            return null;
+        }
+    }
+
+    // Clear the store cache
+    clearStoreCache(): void {
+        console.log('Clearing store cache');
+        saveToCache(CACHE_KEYS.STORE_CACHE_KEY, []);
     }
 
     // Enhanced search store items with comprehensive field search and null/undefined safety
@@ -79,6 +116,15 @@ export class StoreService {
         }
     }
 
+    // Update store item in cache
+    private updateStoreItemInCache(storeItem: Store): void {
+        const cachedItems = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY) || [];
+        const updatedCache = cachedItems.filter(item => item.id !== storeItem.id);
+        updatedCache.push(storeItem);
+        saveToCache(CACHE_KEYS.STORE_CACHE_KEY, updatedCache);
+        console.log(`Updated store item ${storeItem.id} in cache`);
+    }
+
     // Save store items and update cache
     async saveStoreItems(storeItems: Store[]): Promise<Store[]> {
         try {
@@ -89,13 +135,9 @@ export class StoreService {
                 const savedItem = await cacheAwareDBService.saveDocument<Store>(this.collectionData);
                 if (savedItem) {
                     savedItems.push(savedItem);
+                    this.updateStoreItemInCache(savedItem);
                 }
             }
-
-            // Update the cache with the new items
-            const cachedItems = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY) || [];
-            const updatedCache = [...cachedItems, ...savedItems];
-            saveToCache(CACHE_KEYS.STORE_CACHE_KEY, updatedCache);
 
             // Mark the collection as updated
             markCollectionUpdated(COLLECTION_KEYS.STORE);
@@ -108,15 +150,42 @@ export class StoreService {
     }
 
     async updateProductQuantityAfterInvoice(result: Invoice) {
-        let updateble: Store[] = [];
-        if (result && result.products.length > 0) {
-            for (const product of result.products) {
-                const store: Store = await cacheAwareDBService.findById<Store>(this.collectionData, product.storeId);
-                store.qty.availableQty = store.qty.availableQty - product.quantity;
-                updateble.push(store)
+        try {
+            let updateable: Store[] = [];
+            
+            if (result && result.products.length > 0) {
+                for (const product of result.products) {
+                    // Get the store item with cache awareness
+                    const store: Store = await this.getStoreItemById(product.storeId);
+                    
+                    if (store) {
+                        // Update the available quantity
+                        store.qty.availableQty = store.qty.availableQty - product.quantity;
+                        updateable.push(store);
+                    } else {
+                        console.error(`Store item with ID ${product.storeId} not found`);
+                    }
+                }
+                
+                if (updateable.length > 0) {
+                    // Update all items in one batch
+                    this.collectionData.documents = updateable;
+                    const savedItems = await cacheAwareDBService.saveDocuments(this.collectionData);
+                    
+                    // Update each item in the cache
+                    if (savedItems) {
+                        savedItems.forEach(item => this.updateStoreItemInCache(item));
+                    }
+                    
+                    console.log(`Updated ${updateable.length} store items after invoice`);
+                    return savedItems;
+                }
             }
-            this.collectionData.documents = updateble;
-            await cacheAwareDBService.saveDocuments(this.collectionData);
+            return null;
+        } catch (error) {
+            console.error("Error updating product quantities after invoice:", error);
+            toast.error("Failed to update product quantities after invoice");
+            throw error;
         }
     }
 }
