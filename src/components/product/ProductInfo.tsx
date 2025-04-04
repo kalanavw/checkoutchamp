@@ -2,17 +2,22 @@
 import React from 'react';
 import { Package, Tag, CalendarClock, User } from "lucide-react";
 import { Product } from "@/types/product";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 
 interface ProductInfoProps {
   product: Product;
 }
 
 const ProductInfo = ({ product }: ProductInfoProps) => {
-  // Format dates if they exist
-  const formatDate = (date: Date | undefined) => {
-    if (!date) return "Not available";
-    return format(date, "PPP p"); // e.g., "Apr 29, 2021, 9:30 AM"
+  // Format dates if they exist and are valid
+  const formatDate = (dateValue: Date | string | undefined) => {
+    if (!dateValue) return "Not available";
+    
+    // If dateValue is a string (from Firebase), convert it to a Date object
+    const date = dateValue instanceof Date ? dateValue : parseISO(dateValue as string);
+    
+    // Check if the date is valid before formatting
+    return isValid(date) ? format(date, "PPP p") : "Invalid date";
   };
 
   return (
