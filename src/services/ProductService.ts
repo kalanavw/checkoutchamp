@@ -64,9 +64,9 @@ export class ProductService {
         });
     }
     
-    async getAllProducts(): Promise<Product[]> {
+    async getAllProducts(forceRefresh = false): Promise<Product[]> {
         try {
-            if (isCacheValid(CACHE_KEYS.PRODUCTS_CACHE_KEY)) {
+            if (!forceRefresh && isCacheValid(CACHE_KEYS.PRODUCTS_CACHE_KEY)) {
                 const cachedProducts = getFromCache<Product[]>(CACHE_KEYS.PRODUCTS_CACHE_KEY);
                 if (cachedProducts && cachedProducts.length > 0) {
                     console.log('Using cached products list');
