@@ -5,7 +5,7 @@ import {
     saveCollectionUpdateTime,
     shouldFetchCollection
 } from "@/utils/collectionUtils.ts";
-import {clearCache, getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
+import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
 import {deleteDocument, findAll, findById, insertDocument, insertDocuments} from "@/lib/firebase.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 

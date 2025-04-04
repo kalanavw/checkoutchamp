@@ -6,8 +6,6 @@ import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {Notifications} from "@/utils/notifications.ts";
-// @ts-ignore
-import { v4 as uuidv4 } from 'uuid';
 
 export class WarehouseService {
 
@@ -29,7 +27,7 @@ export class WarehouseService {
 
     async createWareHouse(warehouse: Omit<Warehouse, 'id'>): Promise<Warehouse> {
         try {
-            const id = uuidv4();
+            const id = "G";
             
             this.collectionData.document = {
                 id,

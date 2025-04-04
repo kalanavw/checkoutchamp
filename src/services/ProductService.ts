@@ -1,8 +1,6 @@
 
 import {Product} from "@/types/product.ts";
-import {createSearchFilters, findAll, findByFilter, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
-// @ts-ignore
-import {v4 as uuidv4} from 'uuid';
+import { findAll, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
 import {CACHE_KEYS, clearCache, getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
@@ -116,7 +114,7 @@ export class ProductService {
     // Create product
     async createProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
         try {
-            const id = uuidv4();
+            const id = "G";
             const now = new Date();
 
             const newProduct: Product = {

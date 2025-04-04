@@ -14,10 +14,10 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
     if (!dateValue) return "Not available";
     
     // If dateValue is a string (from Firebase), convert it to a Date object
-    const date = dateValue instanceof Date ? dateValue : parseISO(dateValue as string);
+    //const date = dateValue instanceof Date ? dateValue : parseISO(dateValue as string);
     
     // Check if the date is valid before formatting
-    return isValid(date) ? format(date, "PPP p") : "Invalid date";
+    return ''
   };
 
   return (

@@ -5,12 +5,13 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, si
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_API_KEY,
-  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_APP_ID
+  apiKey: "AIzaSyC6whbU2S11QdDZpY5yDWbwaYh-4aeINaI",
+  authDomain: "payboss-e9f9b.firebaseapp.com",
+  projectId: "payboss-e9f9b",
+  storageBucket: "payboss-e9f9b.firebasestorage.app",
+  messagingSenderId: "1093419350977",
+  appId: "1:1093419350977:web:5460ba5de1254b7e058d40",
+  measurementId: "G-2MV305KJ2L"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -26,8 +27,7 @@ const STOREINFO_COLLECTION = "storeinfo"; // Adding this missing export
 const PRODUCT_COLLECTION = "products";
 const CUSTOMER_COLLECTION = "customers";
 const INVOICE_COLLECTION = "invoices";
-const USERS_COLLECTION = "users";
-const USER_COLLECTION = USERS_COLLECTION; // Alias for backward compatibility
+const USER_COLLECTION = "users";
 
 export {
   db,
@@ -40,7 +40,6 @@ export {
   PRODUCT_COLLECTION,
   CUSTOMER_COLLECTION,
   INVOICE_COLLECTION,
-  USERS_COLLECTION,
   USER_COLLECTION,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
