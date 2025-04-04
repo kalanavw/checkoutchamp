@@ -1,11 +1,12 @@
+
 import {
     getCollectionTimestamps,
     saveCollectionFetchTime,
     saveCollectionUpdateTime,
     shouldFetchCollection
 } from "@/utils/collectionUtils.ts";
-import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
-import {findAll, findById, insertDocument, insertDocuments} from "@/lib/firebase.ts";
+import {clearCache, getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
+import {deleteDocument, findAll, findById, insertDocument, insertDocuments} from "@/lib/firebase.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 
 export class CacheAwareDBService {
@@ -44,7 +45,10 @@ export class CacheAwareDBService {
             const document = await findById<T>(collectionData.collection, id);
 
             if (document) {
-                saveToCache(collectionData.cacheKey, [...cachedDocuments.filter(doc => doc.id !== id), document]);
+                // Update the document in the cache
+                const updatedCache = cachedDocuments.filter(doc => doc.id !== id);
+                updatedCache.push(document);
+                saveToCache(collectionData.cacheKey, updatedCache);
             }
 
             return document;
@@ -54,30 +58,40 @@ export class CacheAwareDBService {
         }
     }
 
-    async saveDocument<T>(collectionData: CollectionData<T>): Promise<T | null> {
+    async saveDocument<T extends { id: string }>(collectionData: CollectionData<T>): Promise<T | null> {
         try {
-            const newUser = await insertDocument(collectionData.collection, collectionData.document);
+            const newDocument = await insertDocument(collectionData.collection, collectionData.document);
+            
+            saveCollectionUpdateTime(collectionData.collectionKey);
 
-            saveCollectionUpdateTime(collectionData.collectionKey)
-
+            // Update the document in the cache
             const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
-            saveToCache(collectionData.cacheKey, [newUser, ...cachedDocuments]);
+            const updatedCache = cachedDocuments.filter(doc => doc.id !== newDocument.id);
+            updatedCache.push(newDocument);
+            saveToCache(collectionData.cacheKey, updatedCache);
 
-            return newUser;
+            return newDocument;
         } catch (error) {
             console.error(`Error saving document in ${collectionData.collectionKey}:`, error);
             throw error;
         }
     }
 
-    async saveDocuments<T>(collectionData: CollectionData<T>,): Promise<T[] | null> {
+    async saveDocuments<T extends { id: string }>(collectionData: CollectionData<T>,): Promise<T[] | null> {
         try {
             const newDocuments = await insertDocuments(collectionData.collection, collectionData.documents);
 
             saveCollectionUpdateTime(collectionData.collectionKey);
 
+            // Update all documents in the cache
             const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
-            saveToCache(collectionData.cacheKey, [...newDocuments, ...cachedDocuments]);
+            
+            // Remove old versions of these documents from cache
+            const documentIds = newDocuments.map(doc => doc.id);
+            const filteredCache = cachedDocuments.filter(doc => !documentIds.includes(doc.id));
+            
+            // Add the new documents
+            saveToCache(collectionData.cacheKey, [...filteredCache, ...newDocuments]);
 
             return newDocuments;
         } catch (error) {
@@ -85,7 +99,24 @@ export class CacheAwareDBService {
             throw error;
         }
     }
-
+    
+    async deleteDocument<T extends { id: string }>(collectionData: CollectionData<T>, id: string): Promise<boolean> {
+        try {
+            await deleteDocument(collectionData.collection, id);
+            
+            saveCollectionUpdateTime(collectionData.collectionKey);
+            
+            // Remove the document from the cache
+            const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
+            const updatedCache = cachedDocuments.filter(doc => doc.id !== id);
+            saveToCache(collectionData.cacheKey, updatedCache);
+            
+            return true;
+        } catch (error) {
+            console.error(`Error deleting document from ${collectionData.collection}:`, error);
+            return false;
+        }
+    }
 }
 
-export const cacheAwareDBService = new CacheAwareDBService()
+export const cacheAwareDBService = new CacheAwareDBService();

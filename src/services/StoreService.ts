@@ -7,6 +7,7 @@ import {Store} from "@/types/store.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 import {Invoice} from "@/types/invoce.ts";
+import {productService} from '@/services/ProductService.ts';
 
 export class StoreService {
     collectionData: CollectionData<Store> = {
@@ -59,11 +60,28 @@ export class StoreService {
             );
         });
     }
+    
+    // Search products by term - utilizes the centralized ProductService
+    async searchProducts(term: string): Promise<Store[]> {
+        try {
+            if (!term?.trim()) {
+                return this.getStoreItems();
+            }
+            
+            // First get all store items
+            const storeItems = await this.getStoreItems();
+            
+            // Use the enhanced search
+            return this.searchStoreItems(term, storeItems);
+        } catch (error) {
+            console.error("Error searching products:", error);
+            return [];
+        }
+    }
 
     // Save store items and update cache
     async saveStoreItems(storeItems: Store[]): Promise<Store[]> {
         try {
-
             // Save each item to Firebase
             const savedItems: Store[] = [];
             for (const item of storeItems) {
