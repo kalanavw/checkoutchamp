@@ -1,6 +1,7 @@
+
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, query, where, limit, doc, getDoc, addDoc, updateDoc, deleteDoc, orderBy, startAfter } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider } from "firebase/auth";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
@@ -16,25 +17,31 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
+const googleProvider = new GoogleAuthProvider();
 
 // Collections
 const WAREHOUSE_COLLECTION = "warehouses";
 const STORE_COLLECTION = "stores";
+const STOREINFO_COLLECTION = "storeinfo"; // Adding this missing export
 const PRODUCT_COLLECTION = "products";
 const CUSTOMER_COLLECTION = "customers";
 const INVOICE_COLLECTION = "invoices";
 const USERS_COLLECTION = "users";
+const USER_COLLECTION = USERS_COLLECTION; // Alias for backward compatibility
 
 export {
   db,
   auth,
   storage,
+  googleProvider,
   WAREHOUSE_COLLECTION,
   STORE_COLLECTION,
+  STOREINFO_COLLECTION,
   PRODUCT_COLLECTION,
   CUSTOMER_COLLECTION,
   INVOICE_COLLECTION,
   USERS_COLLECTION,
+  USER_COLLECTION,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
@@ -119,7 +126,7 @@ export const findById = async <T>(collectionName: string, documentId: string): P
 };
 
 // Function to insert a new document
-export const insertDocument = async <T>(collectionName: string, data: T): Promise<T> => {
+export const insertDocument = async <T extends Record<string, any>>(collectionName: string, data: T): Promise<T & { id: string }> => {
   try {
     const collectionRef = collection(db, collectionName);
     const docRef = await addDoc(collectionRef, data);
@@ -131,10 +138,10 @@ export const insertDocument = async <T>(collectionName: string, data: T): Promis
       return {
         id: newDocSnap.id,
         ...newDocSnap.data()
-      } as T;
+      } as T & { id: string };
     } else {
       console.log("No such document!");
-      return null;
+      throw new Error("Document not found after creation");
     }
   } catch (error) {
     console.error(`Error adding document to ${collectionName}:`, error);
@@ -143,10 +150,10 @@ export const insertDocument = async <T>(collectionName: string, data: T): Promis
 };
 
 // Function to insert multiple documents
-export const insertDocuments = async <T>(collectionName: string, documents: T[]): Promise<T[]> => {
+export const insertDocuments = async <T extends Record<string, any>>(collectionName: string, documents: T[]): Promise<(T & { id: string })[]> => {
   try {
     const collectionRef = collection(db, collectionName);
-    const newDocs: T[] = [];
+    const newDocs: (T & { id: string })[] = [];
 
     for (const data of documents) {
       const docRef = await addDoc(collectionRef, data);
@@ -158,7 +165,7 @@ export const insertDocuments = async <T>(collectionName: string, documents: T[])
         newDocs.push({
           id: newDocSnap.id,
           ...newDocSnap.data()
-        } as T);
+        } as T & { id: string });
       } else {
         console.log("No such document!");
       }
@@ -172,10 +179,10 @@ export const insertDocuments = async <T>(collectionName: string, documents: T[])
 };
 
 // Function to update an existing document
-export const updateDocument = async <T>(collectionName: string, documentId: string, data: T): Promise<void> => {
+export const updateDocument = async <T extends Record<string, any>>(collectionName: string, documentId: string, data: Partial<T>): Promise<void> => {
   try {
     const docRef = doc(db, collectionName, documentId);
-    await updateDoc(docRef, data);
+    await updateDoc(docRef, data as Record<string, any>);
   } catch (error) {
     console.error(`Error updating document in ${collectionName} with ID ${documentId}:`, error);
     throw error;

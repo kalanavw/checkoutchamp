@@ -1,3 +1,4 @@
+
 import {WAREHOUSE_COLLECTION} from '@/lib/firebase';
 import {Warehouse} from "@/types/warehouse.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
@@ -5,6 +6,8 @@ import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {Notifications} from "@/utils/notifications.ts";
+// @ts-ignore
+import { v4 as uuidv4 } from 'uuid';
 
 export class WarehouseService {
 
@@ -26,7 +29,13 @@ export class WarehouseService {
 
     async createWareHouse(warehouse: Omit<Warehouse, 'id'>): Promise<Warehouse> {
         try {
-            this.collectionData.document = warehouse;
+            const id = uuidv4();
+            
+            this.collectionData.document = {
+                id,
+                ...warehouse
+            };
+            
             const savedWarehouse = await cacheAwareDBService.saveDocument<Warehouse>(this.collectionData);
 
             Notifications.success('Warehouse added successfully');

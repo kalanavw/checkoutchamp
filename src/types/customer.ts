@@ -1,5 +1,6 @@
+
 export interface Customer {
-    id?: string;
+    id: string;  // Changed from optional to required
     name: string;
     phone: string;
     type: string;

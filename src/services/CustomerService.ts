@@ -1,11 +1,14 @@
+
 import {Customer} from '@/types/customer';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
-import {CUSTOMER_COLLECTION, findAll, findByFilter, findById} from '@/lib/firebase';
+import {CUSTOMER_COLLECTION, findAll, findById} from '@/lib/firebase';
 import {CollectionData} from "@/utils/collectionData.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
 import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export class CustomerService {
     collectionData: CollectionData<Customer> = {
@@ -20,35 +23,17 @@ export class CustomerService {
             return await findAll<Customer>(CUSTOMER_COLLECTION);
         } catch (error) {
             console.error("Error getting customers:", error);
+            return [];
         }
     }
 
     // Search customers
     async searchCustomers(searchTerm: string): Promise<Customer[]> {
         try {
-            // Create search filters for name, phone, and email
-            const nameFilters = [
-                {field: 'name', operator: '>=', value: searchTerm},
-                {field: 'name', operator: '<=', value: searchTerm + '\uf8ff'}
-            ];
-
-            const phoneFilters = [
-                {field: 'phone', operator: '>=', value: searchTerm},
-                {field: 'phone', operator: '<=', value: searchTerm + '\uf8ff'}
-            ];
-
-            const emailFilters = [
-                {field: 'email', operator: '>=', value: searchTerm},
-                {field: 'email', operator: '<=', value: searchTerm + '\uf8ff'}
-            ];
-
-            // Firebase doesn't support $or queries like MongoDB
-            // So we need to run multiple queries and combine the results
-            const [nameResults, phoneResults, emailResults] = await Promise.all([
-                findByFilter<Customer>(CUSTOMER_COLLECTION, nameFilters),
-                findByFilter<Customer>(CUSTOMER_COLLECTION, phoneFilters),
-                findByFilter<Customer>(CUSTOMER_COLLECTION, emailFilters)
-            ]);
+            // We need to use Firestore query directly since findByFilter doesn't support our use case
+            const nameResults = await this.searchByField('name', searchTerm);
+            const phoneResults = await this.searchByField('phone', searchTerm);
+            const emailResults = await this.searchByField('email', searchTerm);
 
             // Combine and remove duplicates
             const allResults = [...nameResults, ...phoneResults, ...emailResults];
@@ -57,7 +42,26 @@ export class CustomerService {
             return uniqueResults.slice(0, 10); // Limit to 10 results
         } catch (error) {
             console.error("Error searching customers:", error);
+            return [];
+        }
+    }
 
+    private async searchByField(field: string, searchTerm: string): Promise<Customer[]> {
+        try {
+            const collectionRef = collection(db, CUSTOMER_COLLECTION);
+            const q = query(
+                collectionRef, 
+                where(field, '>=', searchTerm), 
+                where(field, '<=', searchTerm + '\uf8ff')
+            );
+            const querySnapshot = await getDocs(q);
+            return querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Customer[];
+        } catch (error) {
+            console.error(`Error searching customers by ${field}:`, error);
+            return [];
         }
     }
 
@@ -70,8 +74,12 @@ export class CustomerService {
     }): Promise<Customer> {
         try {
             const now = new Date();
+            
+            // Generate ID before saving to ensure it exists
+            const id = uuidv4();
 
             const newCustomer: Customer = {
+                id,
                 name: customerData.name,
                 email: customerData.email,
                 phone: customerData.phone,
@@ -95,6 +103,7 @@ export class CustomerService {
             return await findById<Customer>(CUSTOMER_COLLECTION, id);
         } catch (error) {
             console.error("Error getting customer by ID:", error);
+            return null;
         }
     }
 }

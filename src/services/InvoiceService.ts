@@ -1,3 +1,4 @@
+
 import {Invoice} from '@/types/invoce';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
@@ -19,6 +20,9 @@ export class InvoiceService {
     async createInvoice(invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'invoiceDate'>): Promise<Invoice> {
         try {
             const now = new Date();
+            
+            // Generate an ID for the invoice
+            const id = uuidv4();
 
             // Generate invoice number (format: INV-YYYYMMDD-XXXX) todo
             const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
@@ -26,6 +30,7 @@ export class InvoiceService {
             const invoiceNumber = `INV-${dateStr}-${randomStr}`;
 
             const newInvoice: Invoice = {
+                id,
                 invoiceNumber,
                 invoiceDate: now,
                 ...invoiceData
