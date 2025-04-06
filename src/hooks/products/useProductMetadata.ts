@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import { productService } from "@/services/ProductService";
 import { CACHE_KEYS, getFromCache, saveToCache } from "@/utils/cacheUtils";
 
+// Add the missing cache keys
+const PRODUCTS_CATEGORIES_CACHE_KEY = "products_categories_cache";
+const PRODUCTS_SUBCATEGORIES_CACHE_KEY = "products_subcategories_cache";
+
 export const useProductMetadata = (forceRefresh: boolean = false) => {
   const [categories, setCategories] = useState<string[]>([]);
   const [subcategories, setSubcategories] = useState<string[]>([]);
@@ -17,8 +21,8 @@ export const useProductMetadata = (forceRefresh: boolean = false) => {
       setLoading(true);
       
       // Try getting from cache first
-      const cachedCategories = getFromCache<string[]>(CACHE_KEYS.PRODUCTS_CATEGORIES_CACHE_KEY);
-      const cachedSubcategories = getFromCache<string[]>(CACHE_KEYS.PRODUCTS_SUBCATEGORIES_CACHE_KEY);
+      const cachedCategories = getFromCache<string[]>(PRODUCTS_CATEGORIES_CACHE_KEY);
+      const cachedSubcategories = getFromCache<string[]>(PRODUCTS_SUBCATEGORIES_CACHE_KEY);
       
       if (!forceRefresh && cachedCategories && cachedSubcategories) {
         setCategories(cachedCategories);
@@ -45,8 +49,8 @@ export const useProductMetadata = (forceRefresh: boolean = false) => {
       setSubcategories(subcategoriesArray);
 
       // Save to cache
-      saveToCache(CACHE_KEYS.PRODUCTS_CATEGORIES_CACHE_KEY, categoriesArray);
-      saveToCache(CACHE_KEYS.PRODUCTS_SUBCATEGORIES_CACHE_KEY, subcategoriesArray);
+      saveToCache(PRODUCTS_CATEGORIES_CACHE_KEY, categoriesArray);
+      saveToCache(PRODUCTS_SUBCATEGORIES_CACHE_KEY, subcategoriesArray);
     } catch (error) {
       console.error("Error fetching categories and subcategories:", error);
     } finally {

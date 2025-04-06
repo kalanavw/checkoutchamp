@@ -14,14 +14,16 @@ import {QuickActions} from "@/components/product/QuickActions.tsx";
 import {SalesInformation} from "@/components/product/SalesInformation.tsx";
 import {ProductNotFound} from "@/components/product/ProductNotFound.tsx";
 import ProductEditForm from "@/components/product/ProductEditForm.tsx";
+import { useProductMetadata } from "@/hooks/products/useProductMetadata.ts";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [subcategories, setSubcategories] = useState<string[]>([]);
+  
+  // Use the product metadata hook to get categories and subcategories
+  const { categories, subcategories } = useProductMetadata();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -46,28 +48,7 @@ const ProductDetail = () => {
       }
     };
 
-    const fetchCategoriesAndSubcategories = async () => {
-      try {
-        // Fetch all products to extract categories and subcategories
-        const products = await productService.getAllProducts();
-        
-        const uniqueCategories = new Set<string>();
-        const uniqueSubcategories = new Set<string>();
-        
-        products.forEach(product => {
-          if (product.category) uniqueCategories.add(product.category);
-          if (product.subcategory) uniqueSubcategories.add(product.subcategory);
-        });
-        
-        setCategories(Array.from(uniqueCategories).sort());
-        setSubcategories(Array.from(uniqueSubcategories).sort());
-      } catch (error) {
-        console.error("Error fetching categories and subcategories:", error);
-      }
-    };
-
     fetchProduct();
-    fetchCategoriesAndSubcategories();
   }, [id]);
 
   if (loading) {

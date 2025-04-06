@@ -35,6 +35,8 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const [name, setName] = useState(product.name);
+  const [productCode, setProductCode] = useState(product.productCode || '');
+  const [barcode, setBarcode] = useState(product.barcode || '');
   const [category, setCategory] = useState(product.category);
   const [subcategory, setSubcategory] = useState(product.subcategory);
   const [description, setDescription] = useState(product.description || '');
@@ -64,6 +66,8 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({
       const updatedProduct: Product = {
         ...product,
         name,
+        productCode,
+        barcode,
         category,
         subcategory,
         description,
@@ -104,6 +108,16 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
+                <Label htmlFor="productCode">Product Code</Label>
+                <Input 
+                  id="productCode" 
+                  value={productCode} 
+                  onChange={(e) => setProductCode(e.target.value)} 
+                  className="mt-1"
+                />
+              </div>
+              
+              <div>
                 <Label htmlFor="name">Product Name</Label>
                 <Input 
                   id="name" 
@@ -111,6 +125,16 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({
                   onChange={(e) => setName(e.target.value)} 
                   className="mt-1"
                   required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="barcode">Barcode</Label>
+                <Input 
+                  id="barcode" 
+                  value={barcode} 
+                  onChange={(e) => setBarcode(e.target.value)} 
+                  className="mt-1"
                 />
               </div>
               
