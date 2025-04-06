@@ -154,7 +154,6 @@ export const ProductForm = () => {
     }
   };
 
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <BasicInfoSection formData={formData} handleChange={handleChange} />

@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { productService } from "@/services/ProductService";
-import { PRODUCTS_CATEGORIES_CACHE_KEY, PRODUCTS_SUBCATEGORIES_CACHE_KEY } from "@/constants/cacheKeys";
-import { saveToCache } from "@/utils/cacheUtils";
+import { CACHE_KEYS, getFromCache, saveToCache } from "@/utils/cacheUtils";
 
-export const useProductMetadata = (forceRefresh: boolean) => {
+export const useProductMetadata = (forceRefresh: boolean = false) => {
   const [categories, setCategories] = useState<string[]>([]);
   const [subcategories, setSubcategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -16,6 +15,19 @@ export const useProductMetadata = (forceRefresh: boolean) => {
   const fetchCategoriesAndSubcategories = async () => {
     try {
       setLoading(true);
+      
+      // Try getting from cache first
+      const cachedCategories = getFromCache<string[]>(CACHE_KEYS.PRODUCTS_CATEGORIES_CACHE_KEY);
+      const cachedSubcategories = getFromCache<string[]>(CACHE_KEYS.PRODUCTS_SUBCATEGORIES_CACHE_KEY);
+      
+      if (!forceRefresh && cachedCategories && cachedSubcategories) {
+        setCategories(cachedCategories);
+        setSubcategories(cachedSubcategories);
+        setLoading(false);
+        return;
+      }
+      
+      // If not in cache or force refreshing, get from service
       const products = await productService.getAllProducts();
       
       const uniqueCategories = new Set<string>();
@@ -33,8 +45,8 @@ export const useProductMetadata = (forceRefresh: boolean) => {
       setSubcategories(subcategoriesArray);
 
       // Save to cache
-      saveToCache(PRODUCTS_CATEGORIES_CACHE_KEY, categoriesArray);
-      saveToCache(PRODUCTS_SUBCATEGORIES_CACHE_KEY, subcategoriesArray);
+      saveToCache(CACHE_KEYS.PRODUCTS_CATEGORIES_CACHE_KEY, categoriesArray);
+      saveToCache(CACHE_KEYS.PRODUCTS_SUBCATEGORIES_CACHE_KEY, subcategoriesArray);
     } catch (error) {
       console.error("Error fetching categories and subcategories:", error);
     } finally {
@@ -46,5 +58,6 @@ export const useProductMetadata = (forceRefresh: boolean) => {
     categories,
     subcategories,
     loading,
+    refresh: fetchCategoriesAndSubcategories
   };
 };
