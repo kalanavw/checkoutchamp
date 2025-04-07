@@ -12,7 +12,7 @@ import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import {COLLECTION_KEYS, markCollectionUpdated} from '@/utils/collectionUtils';
-import {CACHE_KEYS, getFromCache, saveToCache} from '@/utils/cacheUtils';
+import {getFromCache, saveToCache} from '@/utils/cacheUtils';
 import {Product} from "@/types/product.ts";
 import {Warehouse} from "@/types/warehouse.ts";
 import {warehouseService} from "@/services/WarehouseService.ts";
@@ -22,6 +22,7 @@ import {storeService} from "@/services/StoreService.ts";
 import {Notifications} from "@/utils/notifications.ts";
 import {SearchBar} from "@/components/products/SearchBar";
 import {generateCustomUUID} from "@/utils/Util.ts";
+import {STORE_CACHE_KEY} from "@/constants/cacheKeys.ts";
 
 interface ProductInventoryItem {
     id: string;
@@ -211,9 +212,9 @@ const AddInventory = () => {
             markCollectionUpdated(COLLECTION_KEYS.STORE);
 
             // Update the cache directly
-            const cachedItems = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY) || [];
+            const cachedItems = getFromCache<Store[]>(STORE_CACHE_KEY) || [];
             const updatedCache = [...cachedItems, ...savedItems];
-            saveToCache(CACHE_KEYS.STORE_CACHE_KEY, updatedCache);
+            saveToCache(STORE_CACHE_KEY, updatedCache);
 
             toast.success("Inventory added successfully");
             setTimeout(() => {

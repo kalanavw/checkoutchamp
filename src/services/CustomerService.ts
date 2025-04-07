@@ -1,20 +1,18 @@
-
 import {Customer} from '@/types/customer';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
-import {CUSTOMER_COLLECTION, findAll, findById} from '@/lib/firebase';
+import {CUSTOMER_COLLECTION, db, findAll, findById} from '@/lib/firebase';
 import {CollectionData} from "@/utils/collectionData.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
-import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import {collection, getDocs, query, where} from 'firebase/firestore';
+import {CUSTOMERS_CACHE_KEY} from "@/constants/cacheKeys.ts";
 
 export class CustomerService {
     collectionData: CollectionData<Customer> = {
         collection: CUSTOMER_COLLECTION,
         collectionKey: COLLECTION_KEYS.CUSTOMERS,
-        cacheKey: CACHE_KEYS.CUSTOMERS_CACHE_KEY,
+        cacheKey: CUSTOMERS_CACHE_KEY,
         document: null
     }
     // Get all customers

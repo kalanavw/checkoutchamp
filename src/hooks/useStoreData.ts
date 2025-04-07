@@ -1,7 +1,4 @@
-
 import {useEffect, useMemo, useState} from 'react';
-import {COLLECTION_KEYS, shouldFetchCollection} from '@/utils/collectionUtils';
-import {CACHE_KEYS, getFromCache} from '@/utils/cacheUtils';
 import {Store} from "@/types/store.ts";
 import {storeService} from "@/services/StoreService.ts";
 
