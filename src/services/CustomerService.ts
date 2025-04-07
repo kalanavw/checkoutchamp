@@ -1,112 +1,120 @@
-
-import {Customer} from '@/types/customer';
-// @ts-ignore
-import {v4 as uuidv4} from 'uuid';
-import {CUSTOMER_COLLECTION, findAll, findById} from '@/lib/firebase';
-import {CollectionData} from "@/utils/collectionData.ts";
-import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
-import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
-import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where, addDoc, updateDoc, doc, getDoc, deleteDoc } from "firebase/firestore";
+import { db, CUSTOMER_COLLECTION } from "@/lib/firebase";
+import { Customer } from "@/types/customer";
+import { getFromCache, saveToCache } from "@/utils/cacheUtils.ts";
+import { saveCollectionUpdateTime } from "@/utils/collectionUtils";
+import { COLLECTION_KEYS } from "@/utils/collectionUtils";
+import { generateCustomUUID } from "@/utils/Util";
+import { CUSTOMERS_CACHE_KEY } from "@/constants/cacheKeys";
 
 export class CustomerService {
-    collectionData: CollectionData<Customer> = {
-        collection: CUSTOMER_COLLECTION,
-        collectionKey: COLLECTION_KEYS.CUSTOMERS,
-        cacheKey: CACHE_KEYS.CUSTOMERS_CACHE_KEY,
-        document: null
-    }
-    // Get all customers
-    async getCustomers(): Promise<Customer[]> {
+    async getAllCustomers(): Promise<Customer[]> {
         try {
-            return await findAll<Customer>(CUSTOMER_COLLECTION);
+            const customersCache = getFromCache<Customer[]>(CUSTOMERS_CACHE_KEY);
+            if (customersCache) {
+                console.log("Customers from cache");
+                return customersCache;
+            }
+
+            const customersRef = collection(db, CUSTOMER_COLLECTION);
+            const querySnapshot = await getDocs(customersRef);
+            const customers: Customer[] = [];
+
+            querySnapshot.forEach((doc) => {
+                customers.push({ id: doc.id, ...doc.data() } as Customer);
+            });
+
+            saveToCache(CUSTOMERS_CACHE_KEY, customers);
+            return customers;
         } catch (error) {
-            console.error("Error getting customers:", error);
-            return [];
+            console.error("Error fetching customers:", error);
+            throw error;
         }
     }
 
-    // Search customers
-    async searchCustomers(searchTerm: string): Promise<Customer[]> {
+    async getCustomerById(id: string): Promise<Customer | null> {
         try {
-            // We need to use Firestore query directly since findByFilter doesn't support our use case
-            const nameResults = await this.searchByField('name', searchTerm);
-            const phoneResults = await this.searchByField('phone', searchTerm);
-            const emailResults = await this.searchByField('email', searchTerm);
+            const customerCache = getFromCache<Customer>(`${CUSTOMERS_CACHE_KEY}_${id}`);
+            if (customerCache) {
+                console.log("Customer from cache");
+                return customerCache;
+            }
 
-            // Combine and remove duplicates
-            const allResults = [...nameResults, ...phoneResults, ...emailResults];
-            const uniqueResults = Array.from(new Map(allResults.map(item => [item.id, item])).values());
+            const customerDocRef = doc(db, CUSTOMER_COLLECTION, id);
+            const customerDocSnap = await getDoc(customerDocRef);
 
-            return uniqueResults.slice(0, 10); // Limit to 10 results
+            if (customerDocSnap.exists()) {
+                const customer = { id: customerDocSnap.id, ...customerDocSnap.data() } as Customer;
+                saveToCache(`${CUSTOMERS_CACHE_KEY}_${id}`, customer);
+                return customer
+            } else {
+                console.log("Customer not found");
+                return null;
+            }
         } catch (error) {
-            console.error("Error searching customers:", error);
-            return [];
+            console.error("Error fetching customer:", error);
+            throw error;
         }
     }
 
-    private async searchByField(field: string, searchTerm: string): Promise<Customer[]> {
+    async createCustomer(customer: Customer): Promise<Customer> {
         try {
-            const collectionRef = collection(db, CUSTOMER_COLLECTION);
-            const q = query(
-                collectionRef, 
-                where(field, '>=', searchTerm), 
-                where(field, '<=', searchTerm + '\uf8ff')
-            );
-            const querySnapshot = await getDocs(q);
-            return querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as Customer[];
-        } catch (error) {
-            console.error(`Error searching customers by ${field}:`, error);
-            return [];
-        }
-    }
-
-    // Create customer
-    async createCustomer(customerData: {
-        name: string;
-        email: string;
-        phone: string;
-        type: 'retail' | 'wholesale';
-    }): Promise<Customer> {
-        try {
-            const now = new Date();
-            
-            // Generate ID before saving to ensure it exists
-            const id = uuidv4();
-
-            const newCustomer: Customer = {
-                id,
-                name: customerData.name,
-                email: customerData.email,
-                phone: customerData.phone,
-                type: customerData.type,
-                registrationDate: now
+            const customersRef = collection(db, CUSTOMER_COLLECTION);
+            const newCustomer = {
+                ...customer,
+                id: generateCustomUUID(),
             };
+            await addDoc(customersRef, newCustomer);
 
-            this.collectionData.document = newCustomer;
-            const result = await cacheAwareDBService.saveDocument<Customer>(this.collectionData);
-
-            return result || newCustomer;
+            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMERS);
+            saveToCache(`${CUSTOMERS_CACHE_KEY}_${newCustomer.id}`, newCustomer);
+            return newCustomer;
         } catch (error) {
             console.error("Error creating customer:", error);
             throw error;
         }
     }
 
-    // Get customer by ID
-    async getCustomerById(id: string): Promise<Customer | null> {
+    async updateCustomer(id: string, updates: Partial<Customer>): Promise<void> {
         try {
-            return await findById<Customer>(CUSTOMER_COLLECTION, id);
+            const customerDocRef = doc(db, CUSTOMER_COLLECTION, id);
+            await updateDoc(customerDocRef, updates);
+            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMERS);
+            const updatedCustomer = { id, ...updates } as Customer;
+            saveToCache(`${CUSTOMERS_CACHE_KEY}_${id}`, updatedCustomer);
         } catch (error) {
-            console.error("Error getting customer by ID:", error);
-            return null;
+            console.error("Error updating customer:", error);
+            throw error;
+        }
+    }
+
+    async deleteCustomer(id: string): Promise<void> {
+        try {
+            const customerDocRef = doc(db, CUSTOMER_COLLECTION, id);
+            await deleteDoc(customerDocRef);
+            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMERS);
+        } catch (error) {
+            console.error("Error deleting customer:", error);
+            throw error;
+        }
+    }
+
+    async getCustomerByEmail(email: string): Promise<Customer | null> {
+        try {
+            const customersRef = collection(db, CUSTOMER_COLLECTION);
+            const q = query(customersRef, where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                const customerDoc = querySnapshot.docs[0];
+                return { id: customerDoc.id, ...customerDoc.data() } as Customer;
+            } else {
+                console.log("No customer found with this email.");
+                return null;
+            }
+        } catch (error) {
+            console.error("Error fetching customer by email:", error);
+            throw error;
         }
     }
 }
-
-// Export singleton instance
-export const customerService = new CustomerService();
