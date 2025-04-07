@@ -1,11 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { productService } from "@/services/ProductService";
-import { CACHE_KEYS, getFromCache, saveToCache } from "@/utils/cacheUtils";
-
-// Add the missing cache keys
-const PRODUCTS_CATEGORIES_CACHE_KEY = "products_categories_cache";
-const PRODUCTS_SUBCATEGORIES_CACHE_KEY = "products_subcategories_cache";
+import { getFromCache, saveToCache } from "@/utils/cacheUtils";
+import { PRODUCTS_CATEGORIES_CACHE_KEY, PRODUCTS_SUBCATEGORIES_CACHE_KEY } from "@/constants/cacheKeys";
 
 export const useProductMetadata = (forceRefresh: boolean = false) => {
   const [categories, setCategories] = useState<string[]>([]);

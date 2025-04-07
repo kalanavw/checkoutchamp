@@ -40,7 +40,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
   // Filtered subcategories based on selected category
   const relevantSubcategories = subcategories.filter(sub => 
     !formData.category || // Show all if no category selected
-    subcategories.some(s => s.toLowerCase().includes(formData.category.toLowerCase())) // Or if related to category
+    sub.toLowerCase().includes(formData.category.toLowerCase()) // Or if related to category
   );
 
   return (
@@ -61,12 +61,12 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                 }}
                 className="w-full"
                 autoComplete="off"
+                onFocus={() => setCategoryOpen(true)}
               />
             </div>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0" align="start">
             <Command>
-              <CommandInput placeholder="Search categories..." />
               <CommandList>
                 <CommandEmpty>No category found.</CommandEmpty>
                 <CommandGroup>
@@ -115,12 +115,12 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                 }}
                 className="w-full"
                 autoComplete="off"
+                onFocus={() => setSubcategoryOpen(true)}
               />
             </div>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0" align="start">
             <Command>
-              <CommandInput placeholder="Search subcategories..." />
               <CommandList>
                 <CommandEmpty>No subcategory found.</CommandEmpty>
                 <CommandGroup>
