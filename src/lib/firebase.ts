@@ -1,8 +1,29 @@
-
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, query, where, limit, doc, getDoc, addDoc, updateDoc, deleteDoc, orderBy, startAfter } from "firebase/firestore";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {initializeApp} from "firebase/app";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  limit,
+  orderBy,
+  query,
+  setDoc,
+  startAfter,
+  updateDoc,
+  where
+} from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signOut
+} from "firebase/auth";
+import {getDownloadURL, getStorage, ref, uploadBytes} from "firebase/storage";
+import {generateCustomUUID} from "@/utils/Util.ts";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6whbU2S11QdDZpY5yDWbwaYh-4aeINaI",
@@ -127,8 +148,11 @@ export const findById = async <T>(collectionName: string, documentId: string): P
 // Function to insert a new document
 export const insertDocument = async <T extends Record<string, any>>(collectionName: string, data: T): Promise<T & { id: string }> => {
   try {
+    debugger
     const collectionRef = collection(db, collectionName);
-    const docRef = await addDoc(collectionRef, data);
+    const docRef = doc(collectionRef, data.id === "G" ? data.id == generateCustomUUID() : data.id);
+
+    await setDoc(docRef, data);
 
     // After adding the document, fetch it to return the complete object
     const newDocSnap = await getDoc(doc(db, collectionName, docRef.id));

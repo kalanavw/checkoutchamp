@@ -1,16 +1,16 @@
-
 import {Product} from "@/types/product.ts";
-import { findAll, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
+import {findAll, PRODUCT_COLLECTION} from "@/lib/firebase.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
-import {CACHE_KEYS, clearCache, getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
+import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
+import {PRODUCTS_CACHE_KEY} from "@/constants/cacheKeys.ts";
 
 export class ProductService {
     collectionData: CollectionData<Product> = {
         collection: PRODUCT_COLLECTION,
         collectionKey: COLLECTION_KEYS.PRODUCTS,
-        cacheKey: CACHE_KEYS.PRODUCTS_CACHE_KEY,
+        cacheKey: PRODUCTS_CACHE_KEY,
         document: null
     }
 
@@ -64,8 +64,8 @@ export class ProductService {
     
     async getAllProducts(forceRefresh = false): Promise<Product[]> {
         try {
-            if (!forceRefresh && isCacheValid(CACHE_KEYS.PRODUCTS_CACHE_KEY)) {
-                const cachedProducts = getFromCache<Product[]>(CACHE_KEYS.PRODUCTS_CACHE_KEY);
+            if (!forceRefresh && isCacheValid(PRODUCTS_CACHE_KEY)) {
+                const cachedProducts = getFromCache<Product[]>(PRODUCTS_CACHE_KEY);
                 if (cachedProducts && cachedProducts.length > 0) {
                     console.log('Using cached products list');
                     return cachedProducts;
@@ -74,7 +74,7 @@ export class ProductService {
             
             console.log('Fetching products from Firebase');
             const products = await findAll<Product>(PRODUCT_COLLECTION);
-            saveToCache(CACHE_KEYS.PRODUCTS_CACHE_KEY, products);
+            saveToCache(PRODUCTS_CACHE_KEY, products);
             return products;
         } catch (error) {
             console.error("Error getting all products:", error);
@@ -86,7 +86,7 @@ export class ProductService {
     async getProductById(id: string): Promise<Product | null> {
         try {
             // First try to find the product in the cache
-            const cachedProducts = getFromCache<Product[]>(CACHE_KEYS.PRODUCTS_CACHE_KEY);
+            const cachedProducts = getFromCache<Product[]>(PRODUCTS_CACHE_KEY);
             if (cachedProducts && cachedProducts.length > 0) {
                 const cachedProduct = cachedProducts.find(p => p.id === id);
                 if (cachedProduct) {
@@ -161,10 +161,10 @@ export class ProductService {
     async deleteProduct(id: string): Promise<boolean> {
         try {
             // First try to remove from the cache
-            const cachedProducts = getFromCache<Product[]>(CACHE_KEYS.PRODUCTS_CACHE_KEY);
+            const cachedProducts = getFromCache<Product[]>(PRODUCTS_CACHE_KEY);
             if (cachedProducts) {
                 const updatedCache = cachedProducts.filter(p => p.id !== id);
-                saveToCache(CACHE_KEYS.PRODUCTS_CACHE_KEY, updatedCache);
+                saveToCache(PRODUCTS_CACHE_KEY, updatedCache);
             }
             
             // Then delete from Firebase using cacheAwareDBService
@@ -180,10 +180,10 @@ export class ProductService {
     
     // Update product in cache
     private updateProductInCache(product: Product): void {
-        const cachedProducts = getFromCache<Product[]>(CACHE_KEYS.PRODUCTS_CACHE_KEY) || [];
+        const cachedProducts = getFromCache<Product[]>(PRODUCTS_CACHE_KEY) || [];
         const updatedCache = cachedProducts.filter(p => p.id !== product.id);
         updatedCache.push(product);
-        saveToCache(CACHE_KEYS.PRODUCTS_CACHE_KEY, updatedCache);
+        saveToCache(PRODUCTS_CACHE_KEY, updatedCache);
         console.log(`Updated product ${product.id} in cache`);
     }
 }

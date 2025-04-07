@@ -21,6 +21,7 @@ import {Store} from "@/types/store.ts";
 import {storeService} from "@/services/StoreService.ts";
 import {Notifications} from "@/utils/notifications.ts";
 import {SearchBar} from "@/components/products/SearchBar";
+import {generateCustomUUID} from "@/utils/Util.ts";
 
 interface ProductInventoryItem {
     id: string;
@@ -182,7 +183,7 @@ const AddInventory = () => {
             setIsSaving(true);
 
             const storeItems: Store[] = items.map(item => ({
-                id: 'G',
+                id: generateCustomUUID(),
                 costPrice: item.costPrice,
                 sellingPrice: item.sellingPrice,
                 location: {id: warehouse.id, name: warehouse.name, code: warehouse.code},
