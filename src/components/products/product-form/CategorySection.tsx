@@ -15,7 +15,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProductMetadata } from "@/hooks/products/useProductMetadata";
 
@@ -47,9 +48,9 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
-          <PopoverTrigger asChild>
-            <div className="relative">
+        <div className="flex gap-2">
+          <Popover open={categoryOpen} onOpenChange={setCategoryOpen}>
+            <div className="flex-1">
               <Input
                 id="category"
                 name="category"
@@ -57,53 +58,61 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                 value={formData.category}
                 onChange={(e) => {
                   handleChange(e);
-                  setCategoryOpen(true);
                 }}
                 className="w-full"
                 autoComplete="off"
-                onFocus={() => setCategoryOpen(true)}
               />
             </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0" align="start">
-            <Command>
-              <CommandList>
-                <CommandEmpty>No category found.</CommandEmpty>
-                <CommandGroup>
-                  {categories
-                    .filter(category => 
-                      category.toLowerCase().includes(formData.category.toLowerCase())
-                    )
-                    .map(category => (
-                      <CommandItem
-                        key={category}
-                        value={category}
-                        onSelect={() => {
-                          handleSelectChange("category", category);
-                          setCategoryOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            formData.category === category ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {category}
-                      </CommandItem>
-                    ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon"
+                type="button"
+                className="shrink-0"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="end">
+              <Command>
+                <CommandList>
+                  <CommandEmpty>No category found.</CommandEmpty>
+                  <CommandGroup>
+                    {categories
+                      .filter(category => 
+                        category.toLowerCase().includes(formData.category.toLowerCase())
+                      )
+                      .map(category => (
+                        <CommandItem
+                          key={category}
+                          value={category}
+                          onSelect={() => {
+                            handleSelectChange("category", category);
+                            setCategoryOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.category === category ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {category}
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="subcategory">Subcategory</Label>
-        <Popover open={subcategoryOpen} onOpenChange={setSubcategoryOpen}>
-          <PopoverTrigger asChild>
-            <div className="relative">
+        <div className="flex gap-2">
+          <Popover open={subcategoryOpen} onOpenChange={setSubcategoryOpen}>
+            <div className="flex-1">
               <Input
                 id="subcategory"
                 name="subcategory"
@@ -111,46 +120,54 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                 value={formData.subcategory}
                 onChange={(e) => {
                   handleChange(e);
-                  setSubcategoryOpen(true);
                 }}
                 className="w-full"
                 autoComplete="off"
-                onFocus={() => setSubcategoryOpen(true)}
               />
             </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-full p-0" align="start">
-            <Command>
-              <CommandList>
-                <CommandEmpty>No subcategory found.</CommandEmpty>
-                <CommandGroup>
-                  {relevantSubcategories
-                    .filter(subcategory => 
-                      subcategory.toLowerCase().includes(formData.subcategory.toLowerCase())
-                    )
-                    .map(subcategory => (
-                      <CommandItem
-                        key={subcategory}
-                        value={subcategory}
-                        onSelect={() => {
-                          handleSelectChange("subcategory", subcategory);
-                          setSubcategoryOpen(false);
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            formData.subcategory === subcategory ? "opacity-100" : "opacity-0"
-                          )}
-                        />
-                        {subcategory}
-                      </CommandItem>
-                    ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="icon"
+                type="button"
+                className="shrink-0"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="end">
+              <Command>
+                <CommandList>
+                  <CommandEmpty>No subcategory found.</CommandEmpty>
+                  <CommandGroup>
+                    {relevantSubcategories
+                      .filter(subcategory => 
+                        subcategory.toLowerCase().includes(formData.subcategory.toLowerCase())
+                      )
+                      .map(subcategory => (
+                        <CommandItem
+                          key={subcategory}
+                          value={subcategory}
+                          onSelect={() => {
+                            handleSelectChange("subcategory", subcategory);
+                            setSubcategoryOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.subcategory === subcategory ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {subcategory}
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
     </div>
   );
