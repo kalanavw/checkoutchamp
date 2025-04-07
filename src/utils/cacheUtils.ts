@@ -3,14 +3,6 @@
  */
 import {getCollectionTimestamps, shouldFetchCollection} from './collectionUtils';
 
-export const CACHE_KEYS = {
-    WAREHOUSE_CACHE_KEY: "warehouse_cache",
-    STORE_CACHE_KEY: "users_cache",
-    PRODUCTS_CACHE_KEY: "products_cache",
-    CUSTOMERS_CACHE_KEY: "customers_cache",
-    INVOICE_CACHE_KEY: "invoices_cache",
-}
-
 interface CacheMetadata {
     lastFetched: number;  // Timestamp when data was last fetched
     lastModified: number; // Timestamp of the last modification on server

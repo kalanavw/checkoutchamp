@@ -1,19 +1,19 @@
-
 import {Invoice} from '@/types/invoce';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
 import {CollectionData} from "@/utils/collectionData.ts";
 import {INVOICE_COLLECTION} from "@/lib/firebase.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
-import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 import {storeService} from "@/services/StoreService.ts";
+import {generateCustomUUID} from "@/utils/Util.ts";
+import {INVOICE_CACHE_KEY} from "@/constants/cacheKeys.ts";
 
 export class InvoiceService {
     collectionData: CollectionData<Invoice> = {
         collection: INVOICE_COLLECTION,
         collectionKey: COLLECTION_KEYS.INVOICE,
-        cacheKey: CACHE_KEYS.INVOICE_CACHE_KEY,
+        cacheKey: INVOICE_CACHE_KEY,
         document: null
     }
     // Create invoice
@@ -22,7 +22,7 @@ export class InvoiceService {
             const now = new Date();
             
             // Generate an ID for the invoice
-            const id = uuidv4();
+            const id = generateCustomUUID();
 
             // Generate invoice number (format: INV-YYYYMMDD-XXXX) todo
             const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');

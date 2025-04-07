@@ -1,19 +1,19 @@
-
 import {toast} from 'sonner';
 import {COLLECTION_KEYS, markCollectionUpdated} from '@/utils/collectionUtils';
-import {CACHE_KEYS, getFromCache, saveToCache} from '@/utils/cacheUtils';
+import {getFromCache, saveToCache} from '@/utils/cacheUtils';
 import {STORE_COLLECTION} from '@/lib/firebase';
 import {Store} from "@/types/store.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 import {Invoice} from "@/types/invoce.ts";
-import {productService} from '@/services/ProductService.ts';
+import {Notifications} from "@/utils/notifications.ts";
+import {STORE_CACHE_KEY} from "@/constants/cacheKeys.ts";
 
 export class StoreService {
     collectionData: CollectionData<Store> = {
         collection: STORE_COLLECTION,
         collectionKey: COLLECTION_KEYS.STORE,
-        cacheKey: CACHE_KEYS.STORE_CACHE_KEY,
+        cacheKey: STORE_CACHE_KEY,
         document: null
     }
     
@@ -38,7 +38,7 @@ export class StoreService {
     async getStoreItemById(id: string): Promise<Store | null> {
         try {
             // First try to find the store item in the cache
-            const cachedStoreItems = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY);
+            const cachedStoreItems = getFromCache<Store[]>(STORE_CACHE_KEY);
             
             if (cachedStoreItems && cachedStoreItems.length > 0) {
                 const cachedItem = cachedStoreItems.find(item => item.id === id);
@@ -60,7 +60,7 @@ export class StoreService {
     // Clear the store cache
     clearStoreCache(): void {
         console.log('Clearing store cache');
-        saveToCache(CACHE_KEYS.STORE_CACHE_KEY, []);
+        saveToCache(STORE_CACHE_KEY, []);
     }
 
     // Enhanced search store items with comprehensive field search and null/undefined safety
@@ -116,13 +116,44 @@ export class StoreService {
         }
     }
 
-    // Update store item in cache
-    private updateStoreItemInCache(storeItem: Store): void {
-        const cachedItems = getFromCache<Store[]>(CACHE_KEYS.STORE_CACHE_KEY) || [];
-        const updatedCache = cachedItems.filter(item => item.id !== storeItem.id);
-        updatedCache.push(storeItem);
-        saveToCache(CACHE_KEYS.STORE_CACHE_KEY, updatedCache);
-        console.log(`Updated store item ${storeItem.id} in cache`);
+    async updateProductQuantityAfterInvoice(result: Invoice) {
+        try {
+            let updateable: Store[] = [];
+
+            if (result && result.products.length > 0) {
+                for (const product of result.products) {
+                    // Get the store item with cache awareness
+                    const store: Store = await this.getStoreItemById(product.storeId);
+
+                    if (store) {
+                        // Update the available quantity
+                        store.qty.availableQty = store.qty.availableQty - product.quantity;
+                        updateable.push(store);
+                    } else {
+                        console.error(`Store item with ID ${product.storeId} not found`);
+                    }
+                }
+
+                if (updateable.length > 0) {
+                    // Update all items in one batch
+                    this.collectionData.documents = updateable;
+                    const savedItems = await cacheAwareDBService.saveDocuments(this.collectionData);
+
+                    // Update each item in the cache
+                    if (savedItems) {
+                        savedItems.forEach(item => this.updateStoreItemInCache(item));
+                    }
+
+                    console.log(`Updated ${updateable.length} store items after invoice`);
+                    return savedItems;
+                }
+            }
+            return null;
+        } catch (error) {
+            console.error("Error updating product quantities after invoice:", error);
+            Notifications.error("Failed to update product quantities after invoice");
+            throw error;
+        }
     }
 
     // Save store items and update cache
@@ -149,44 +180,13 @@ export class StoreService {
         }
     }
 
-    async updateProductQuantityAfterInvoice(result: Invoice) {
-        try {
-            let updateable: Store[] = [];
-            
-            if (result && result.products.length > 0) {
-                for (const product of result.products) {
-                    // Get the store item with cache awareness
-                    const store: Store = await this.getStoreItemById(product.storeId);
-                    
-                    if (store) {
-                        // Update the available quantity
-                        store.qty.availableQty = store.qty.availableQty - product.quantity;
-                        updateable.push(store);
-                    } else {
-                        console.error(`Store item with ID ${product.storeId} not found`);
-                    }
-                }
-                
-                if (updateable.length > 0) {
-                    // Update all items in one batch
-                    this.collectionData.documents = updateable;
-                    const savedItems = await cacheAwareDBService.saveDocuments(this.collectionData);
-                    
-                    // Update each item in the cache
-                    if (savedItems) {
-                        savedItems.forEach(item => this.updateStoreItemInCache(item));
-                    }
-                    
-                    console.log(`Updated ${updateable.length} store items after invoice`);
-                    return savedItems;
-                }
-            }
-            return null;
-        } catch (error) {
-            console.error("Error updating product quantities after invoice:", error);
-            toast.error("Failed to update product quantities after invoice");
-            throw error;
-        }
+    // Update store item in cache
+    private updateStoreItemInCache(storeItem: Store): void {
+        const cachedItems = getFromCache<Store[]>(STORE_CACHE_KEY) || [];
+        const updatedCache = cachedItems.filter(item => item.id !== storeItem.id);
+        updatedCache.push(storeItem);
+        saveToCache(STORE_CACHE_KEY, updatedCache);
+        console.log(`Updated store item ${storeItem.id} in cache`);
     }
 }
 

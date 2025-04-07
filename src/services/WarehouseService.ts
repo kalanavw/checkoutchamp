@@ -1,18 +1,17 @@
-
 import {WAREHOUSE_COLLECTION} from '@/lib/firebase';
 import {Warehouse} from "@/types/warehouse.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
-import {CACHE_KEYS} from "@/utils/cacheUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
 import {Notifications} from "@/utils/notifications.ts";
+import {WAREHOUSE_CACHE_KEY} from "@/constants/cacheKeys.ts";
 
 export class WarehouseService {
 
     collectionData: CollectionData<Warehouse> = {
         collection: WAREHOUSE_COLLECTION,
         collectionKey: COLLECTION_KEYS.WAREHOUSE,
-        cacheKey: CACHE_KEYS.WAREHOUSE_CACHE_KEY,
+        cacheKey: WAREHOUSE_CACHE_KEY,
         document: null
     }
 
