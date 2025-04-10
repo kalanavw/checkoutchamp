@@ -20,7 +20,7 @@ import {Package} from "lucide-react";
 
 const AddInventory = () => {
     const navigate = useNavigate();
-    const { stores } = useStoreData();
+    const { stores } = useStoreData(); // Now correctly accessing the stores property
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [formData, setFormData] = useState({
@@ -135,8 +135,8 @@ const AddInventory = () => {
                                     <SelectValue placeholder="Select a store" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {stores.map(store => (
-                                        <SelectItem key={store.id} value={store.id}>ssss</SelectItem>
+                                    {stores && stores.map(store => (
+                                        <SelectItem key={store.id} value={store.id}>{store.product?.name || 'Unnamed Store'}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

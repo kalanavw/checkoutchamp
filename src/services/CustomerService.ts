@@ -1,4 +1,3 @@
-
 import {collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where} from "firebase/firestore";
 import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
 import {Customer} from "@/types/customer";
@@ -15,6 +14,7 @@ export class CustomerService {
         cacheKey: CUSTOMERS_CACHE_KEY,
         document: null
     }
+    
     async getAllCustomers(): Promise<Customer[]> {
         try {
             const customersCache = getFromCache<Customer[]>(CUSTOMERS_CACHE_KEY);
@@ -36,6 +36,33 @@ export class CustomerService {
         } catch (error) {
             console.error("Error fetching customers:", error);
             throw error;
+        }
+    }
+
+    async getCustomers(): Promise<Customer[]> {
+        return this.getAllCustomers();
+    }
+
+    async searchCustomers(searchTerm: string): Promise<Customer[]> {
+        try {
+            const allCustomers = await this.getAllCustomers();
+            
+            if (!searchTerm?.trim()) {
+                return allCustomers;
+            }
+            
+            const term = searchTerm.toLowerCase();
+            return allCustomers.filter(customer => {
+                return (
+                    customer.name?.toLowerCase().includes(term) ||
+                    customer.phone?.toLowerCase().includes(term) ||
+                    customer.email?.toLowerCase().includes(term) ||
+                    customer.address?.toLowerCase().includes(term)
+                );
+            });
+        } catch (error) {
+            console.error("Error searching customers:", error);
+            return [];
         }
     }
 

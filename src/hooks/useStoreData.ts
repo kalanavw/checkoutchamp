@@ -108,6 +108,7 @@ export const useStoreData = (initialPageSize: number = 50) => {
   };
 
   return {
+    stores, // Added this property so AddInventory.tsx can access it
     searchTerm,
     setSearchTerm,
     currentPage,
