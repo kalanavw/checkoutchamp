@@ -1,24 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useStoreData } from '@/hooks/useStoreData';
-import { useNavigate } from 'react-router-dom';
-import { Warehouse } from '@/types/warehouse';
-import { Product } from '@/types/product';
-import { WarehouseService } from '@/services/WarehouseService';
-import { productService } from '@/services/ProductService';
-import { getFromCache, saveToCache } from '@/utils/cacheUtils';
-import { WAREHOUSE_CACHE_KEY, PRODUCTS_CACHE_KEY } from "@/constants/cacheKeys";
-import { Notifications } from "@/utils/notifications";
-import { generateCustomUUID } from "@/utils/Util";
-import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUtils";
-import { Package } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import React, {useEffect, useState} from 'react';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
+import {Label} from '@/components/ui/label';
+import {Input} from '@/components/ui/input';
+import {Textarea} from '@/components/ui/textarea';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {useStoreData} from '@/hooks/useStoreData';
+import {useNavigate} from 'react-router-dom';
+import {Warehouse} from '@/types/warehouse';
+import {Product} from '@/types/product';
+import {warehouseService} from '@/services/WarehouseService';
+import {productService} from '@/services/ProductService';
+import {getFromCache, saveToCache} from '@/utils/cacheUtils';
+import {PRODUCTS_CACHE_KEY, WAREHOUSE_CACHE_KEY} from "@/constants/cacheKeys";
+import {Notifications} from "@/utils/notifications";
+import {generateCustomUUID} from "@/utils/Util";
+import {COLLECTION_KEYS, saveCollectionUpdateTime} from "@/utils/collectionUtils";
+import {Package} from "lucide-react";
 
 const AddInventory = () => {
     const navigate = useNavigate();
@@ -44,8 +42,7 @@ const AddInventory = () => {
         try {
             let cachedWarehouses = getFromCache<Warehouse[]>(WAREHOUSE_CACHE_KEY);
             if (!cachedWarehouses) {
-                const warehouseService = new WarehouseService();
-                cachedWarehouses = await warehouseService.getAllWarehouses();
+                cachedWarehouses = await warehouseService.fetchWarehouses();
                 saveToCache<Warehouse[]>(WAREHOUSE_CACHE_KEY, cachedWarehouses);
             }
             setWarehouses(cachedWarehouses);
@@ -139,7 +136,7 @@ const AddInventory = () => {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {stores.map(store => (
-                                        <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                                        <SelectItem key={store.id} value={store.id}>ssss</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>

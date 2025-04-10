@@ -12,8 +12,8 @@ import {
 import {Input} from "@/components/ui/input"
 import {Label} from "@/components/ui/label"
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group"
-import {customerService} from "@/services/CustomerService.ts";
 import {Notifications} from "@/utils/notifications.ts";
+import {customerService} from "@/services/CustomerService.ts";
 
 interface AddCustomerDialogProps {
     onCustomerAdded: (customerName: string) => void;
@@ -26,7 +26,10 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({onCustomerAdded}) 
         name: '',
         email: '',
         phone: '',
-        type: 'retail' as 'retail' | 'wholesale'
+        type: 'retail' as 'retail' | 'wholesale',
+        address: '',
+        registrationDate: new Date(),
+        id: 'G'
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +59,10 @@ const AddCustomerDialog: React.FC<AddCustomerDialogProps> = ({onCustomerAdded}) 
                 name: '',
                 email: '',
                 phone: '',
-                type: 'retail'
+                type: 'retail',
+                address: '',
+                registrationDate: new Date(),
+                id: 'G'
             });
         } catch (error) {
             Notifications.error("Failed to create customer")

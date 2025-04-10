@@ -1,13 +1,19 @@
-import { collection, getDocs, query, where, addDoc, updateDoc, doc, getDoc, deleteDoc } from "firebase/firestore";
-import { db, CUSTOMER_COLLECTION } from "@/lib/firebase";
-import { Customer } from "@/types/customer";
-import { getFromCache, saveToCache } from "@/utils/cacheUtils.ts";
-import { saveCollectionUpdateTime } from "@/utils/collectionUtils";
-import { COLLECTION_KEYS } from "@/utils/collectionUtils";
-import { generateCustomUUID } from "@/utils/Util";
-import { CUSTOMERS_CACHE_KEY } from "@/constants/cacheKeys";
+import {collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where} from "firebase/firestore";
+import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
+import {Customer} from "@/types/customer";
+import {getFromCache, saveToCache} from "@/utils/cacheUtils.ts";
+import {COLLECTION_KEYS, saveCollectionUpdateTime} from "@/utils/collectionUtils";
+import {CUSTOMERS_CACHE_KEY} from "@/constants/cacheKeys";
+import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
+import {CollectionData} from "@/utils/collectionData.ts";
 
 export class CustomerService {
+    collectionData: CollectionData<Customer> = {
+        collection: CUSTOMER_COLLECTION,
+        collectionKey: COLLECTION_KEYS.CUSTOMER,
+        cacheKey: CUSTOMERS_CACHE_KEY,
+        document: null
+    }
     async getAllCustomers(): Promise<Customer[]> {
         try {
             const customersCache = getFromCache<Customer[]>(CUSTOMERS_CACHE_KEY);
@@ -59,14 +65,10 @@ export class CustomerService {
 
     async createCustomer(customer: Customer): Promise<Customer> {
         try {
-            const customersRef = collection(db, CUSTOMER_COLLECTION);
-            const newCustomer = {
-                ...customer,
-                id: generateCustomUUID(),
-            };
-            await addDoc(customersRef, newCustomer);
+            this.collectionData.document = customer;
+            const newCustomer = await cacheAwareDBService.saveDocument<Customer>(this.collectionData);
 
-            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMERS);
+            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMER);
             saveToCache(`${CUSTOMERS_CACHE_KEY}_${newCustomer.id}`, newCustomer);
             return newCustomer;
         } catch (error) {
@@ -79,7 +81,7 @@ export class CustomerService {
         try {
             const customerDocRef = doc(db, CUSTOMER_COLLECTION, id);
             await updateDoc(customerDocRef, updates);
-            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMERS);
+            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMER);
             const updatedCustomer = { id, ...updates } as Customer;
             saveToCache(`${CUSTOMERS_CACHE_KEY}_${id}`, updatedCustomer);
         } catch (error) {
@@ -92,7 +94,7 @@ export class CustomerService {
         try {
             const customerDocRef = doc(db, CUSTOMER_COLLECTION, id);
             await deleteDoc(customerDocRef);
-            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMERS);
+            saveCollectionUpdateTime(COLLECTION_KEYS.CUSTOMER);
         } catch (error) {
             console.error("Error deleting customer:", error);
             throw error;
@@ -118,3 +120,5 @@ export class CustomerService {
         }
     }
 }
+
+export const customerService = new CustomerService();

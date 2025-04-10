@@ -11,7 +11,7 @@ export const COLLECTION_KEYS = {
   GRN: "grn_collection",
   STORE: "store_collection",
   WAREHOUSE: "warehouse_collection",
-  CUSTOMERS: "customers_collection",
+  CUSTOMER: "customers_collection",
   INVOICE: "invoices_collection"
 };
 

@@ -150,7 +150,7 @@ export const insertDocument = async <T extends Record<string, any>>(collectionNa
   try {
     debugger
     const collectionRef = collection(db, collectionName);
-    const docRef = doc(collectionRef, data.id === "G" ? data.id == generateCustomUUID() : data.id);
+    const docRef = doc(collectionRef, (data.id === "G" || !data.id) ? data.id == generateCustomUUID() : data.id);
 
     await setDoc(docRef, data);
 
