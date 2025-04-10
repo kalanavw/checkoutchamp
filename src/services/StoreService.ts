@@ -1,3 +1,4 @@
+
 import {toast} from 'sonner';
 import {COLLECTION_KEYS, markCollectionUpdated} from '@/utils/collectionUtils';
 import {getFromCache, saveToCache} from '@/utils/cacheUtils';
@@ -32,6 +33,11 @@ export class StoreService {
             toast.error("Failed to fetch store items. Using mock data.");
             return [];
         }
+    }
+
+    // For compatibility with older code
+    async findAll(): Promise<Store[]> {
+        return this.getStoreItems();
     }
 
     // Get a single store item by ID with cache handling

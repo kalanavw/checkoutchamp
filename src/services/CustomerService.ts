@@ -1,3 +1,4 @@
+
 import {collection, deleteDoc, doc, getDoc, getDocs, query, updateDoc, where} from "firebase/firestore";
 import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
 import {Customer} from "@/types/customer";
@@ -121,4 +122,5 @@ export class CustomerService {
     }
 }
 
+// Export singleton instance
 export const customerService = new CustomerService();
