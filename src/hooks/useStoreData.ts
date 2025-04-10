@@ -22,7 +22,7 @@ export const useStoreData = (forceRefresh: boolean = false) => {
       }
       
       const storeService = new StoreService();
-      const fetchedStores = await storeService.getAllStores();
+      const fetchedStores = await storeService.findAll();
       
       setStores(fetchedStores);
       

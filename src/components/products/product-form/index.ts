@@ -5,3 +5,4 @@ export * from './PricingSection';
 export * from './CategorySection';
 export * from './StockSection';
 export * from './ImageSection';
+export * from './ProductFormActions';
