@@ -59,10 +59,49 @@ export class InvoiceService {
     // Get all invoices
     async getInvoices(forceRefresh: boolean = false): Promise<Invoice[]> {
         try {
-            return await cacheAwareDBService.fetchDocuments<Invoice>(this.collectionData);
+            const invoices = await cacheAwareDBService.fetchDocuments<Invoice>(this.collectionData);
+            
+            // Process dates to ensure they are proper Date objects
+            return invoices.map(invoice => ({
+                ...invoice,
+                invoiceDate: this.ensureDate(invoice.invoiceDate),
+                createdAt: this.ensureDate(invoice.createdAt),
+                modifiedDate: this.ensureDate(invoice.modifiedDate)
+            }));
         } catch (error) {
             console.error("Error getting invoices:", error);
             return [];
+        }
+    }
+    
+    // Helper method to ensure date values are proper Date objects
+    private ensureDate(dateValue: any): Date | undefined {
+        if (!dateValue) return undefined;
+        
+        try {
+            // If it's already a Date object
+            if (dateValue instanceof Date) return dateValue;
+            
+            // If it's a Firebase timestamp with seconds and nanoseconds
+            if (dateValue.seconds !== undefined && dateValue.nanoseconds !== undefined) {
+                return new Date(dateValue.seconds * 1000);
+            }
+            
+            // If it's a string date, parse it
+            if (typeof dateValue === 'string') {
+                const parsed = new Date(dateValue);
+                return isNaN(parsed.getTime()) ? undefined : parsed;
+            }
+            
+            // If it's a number (timestamp)
+            if (typeof dateValue === 'number') {
+                return new Date(dateValue);
+            }
+            
+            return undefined;
+        } catch (error) {
+            console.error("Error processing date:", error);
+            return undefined;
         }
     }
     
@@ -87,4 +126,3 @@ export class InvoiceService {
 
 // Export singleton instance
 export const invoiceService = new InvoiceService();
-

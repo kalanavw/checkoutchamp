@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from "react";
-import { format } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -95,6 +94,30 @@ const InvoiceRecords = () => {
     } finally {
       setLoading(false);
       setIsRefreshing(false);
+    }
+  };
+
+  // Helper function to safely format dates
+  const formatDate = (date: Date | string | number | null | undefined, formatStr: string): string => {
+    if (!date) return "N/A";
+    
+    try {
+      // If it's already a Date object and valid
+      if (date instanceof Date && isValid(date)) {
+        return format(date, formatStr);
+      }
+      
+      // If it's a string/number, try to parse it
+      const parsedDate = typeof date === 'string' ? parseISO(date) : new Date(date);
+      
+      if (isValid(parsedDate)) {
+        return format(parsedDate, formatStr);
+      }
+      
+      return "Invalid date";
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Error";
     }
   };
 
@@ -503,9 +526,7 @@ const InvoiceRecords = () => {
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5 text-gray-500" />
                           <span>
-                            {invoice.invoiceDate instanceof Date 
-                              ? format(invoice.invoiceDate, 'MMM dd, yyyy') 
-                              : format(new Date(invoice.invoiceDate), 'MMM dd, yyyy')}
+                            {formatDate(invoice.invoiceDate, 'MMM dd, yyyy')}
                           </span>
                         </div>
                       </TableCell>
@@ -584,9 +605,7 @@ const InvoiceRecords = () => {
               <div>
                 <h3 className="font-semibold mb-1">Date</h3>
                 <p>
-                  {selectedInvoice.invoiceDate instanceof Date 
-                    ? format(selectedInvoice.invoiceDate, 'MMMM dd, yyyy') 
-                    : format(new Date(selectedInvoice.invoiceDate), 'MMMM dd, yyyy')}
+                  {formatDate(selectedInvoice.invoiceDate, 'MMMM dd, yyyy')}
                 </p>
               </div>
             </div>
