@@ -17,6 +17,7 @@ export class InvoiceService {
         cacheKey: INVOICE_CACHE_KEY,
         document: null
     }
+    
     // Create invoice
     async createInvoice(invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'invoiceDate'>): Promise<Invoice> {
         try {
@@ -49,7 +50,16 @@ export class InvoiceService {
     // Get invoice by ID
     async getInvoiceById(id: string): Promise<Invoice | null> {
         try {
-            return await cacheAwareDBService.findById<Invoice>(this.collectionData, id);
+            const invoice = await cacheAwareDBService.findById<Invoice>(this.collectionData, id);
+            if (invoice) {
+                return {
+                    ...invoice,
+                    invoiceDate: this.ensureDate(invoice.invoiceDate),
+                    createdAt: this.ensureDate(invoice.createdAt),
+                    modifiedDate: this.ensureDate(invoice.modifiedDate)
+                };
+            }
+            return null;
         } catch (error) {
             console.error("Error getting invoice by ID:", error);
             return null;
@@ -59,7 +69,7 @@ export class InvoiceService {
     // Get all invoices
     async getInvoices(forceRefresh: boolean = false): Promise<Invoice[]> {
         try {
-            const invoices = await cacheAwareDBService.fetchDocuments<Invoice>(this.collectionData);
+            const invoices = await cacheAwareDBService.fetchDocuments<Invoice>(this.collectionData, forceRefresh);
             
             // Process dates to ensure they are proper Date objects
             return invoices.map(invoice => ({
@@ -90,7 +100,8 @@ export class InvoiceService {
             // If it's a string date, parse it
             if (typeof dateValue === 'string') {
                 const parsed = new Date(dateValue);
-                return isNaN(parsed.getTime()) ? undefined : parsed;
+                if (isNaN(parsed.getTime())) return undefined;
+                return parsed;
             }
             
             // If it's a number (timestamp)
