@@ -30,7 +30,9 @@ export const useStoreData = (initialPageSize: number = 50) => {
       const storeService = new StoreService();
       const fetchedStores = await storeService.getStoreItems(forceRefresh);
       
-      setStores(fetchedStores);
+      // Ensure store data is unique by ID before setting state
+      const uniqueStores = removeDuplicateStores(fetchedStores);
+      setStores(uniqueStores);
     } catch (error) {
       console.error("Error fetching stores:", error);
       setError("Failed to load store data. Please try again later.");
@@ -38,6 +40,15 @@ export const useStoreData = (initialPageSize: number = 50) => {
       setLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  // Helper function to remove duplicate stores by ID
+  const removeDuplicateStores = (storeItems: Store[]): Store[] => {
+    const uniqueMap = new Map<string, Store>();
+    storeItems.forEach(item => {
+      uniqueMap.set(item.id, item);
+    });
+    return Array.from(uniqueMap.values());
   };
 
   useEffect(() => {

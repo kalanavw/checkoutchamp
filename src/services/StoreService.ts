@@ -172,6 +172,7 @@ export class StoreService {
                 const savedItem = await cacheAwareDBService.saveDocument<Store>(this.collectionData);
                 if (savedItem) {
                     savedItems.push(savedItem);
+                    // Update cache with proper deduplication
                     this.updateStoreItemInCache(savedItem);
                 }
             }
@@ -186,9 +187,10 @@ export class StoreService {
         }
     }
 
-    // Update store item in cache
+    // Update store item in cache with proper deduplication
     private updateStoreItemInCache(storeItem: Store): void {
         const cachedItems = getFromCache<Store[]>(STORE_CACHE_KEY) || [];
+        // Remove any existing items with the same ID to prevent duplication
         const updatedCache = cachedItems.filter(item => item.id !== storeItem.id);
         updatedCache.push(storeItem);
         saveToCache(STORE_CACHE_KEY, updatedCache);
