@@ -20,23 +20,28 @@ export const useInvoiceFilters = (invoices: Invoice[]) => {
   const applyFilters = () => {
     let filtered = [...invoices];
     
-    // Filter by invoice number
+    // Filter by invoice number - case insensitive
     if (invoiceNumberFilter) {
+      const lowerCaseFilter = invoiceNumberFilter.toLowerCase();
       filtered = filtered.filter(invoice => 
-        invoice.invoiceNumber.toLowerCase().includes(invoiceNumberFilter.toLowerCase())
+        invoice.invoiceNumber.toLowerCase().includes(lowerCaseFilter)
       );
     }
     
-    // Filter by customer name
+    // Filter by customer name - case insensitive
     if (customerNameFilter) {
+      const lowerCaseFilter = customerNameFilter.toLowerCase();
       filtered = filtered.filter(invoice => 
-        invoice.customerName.toLowerCase().includes(customerNameFilter.toLowerCase())
+        invoice.customerName.toLowerCase().includes(lowerCaseFilter)
       );
     }
     
-    // Filter by status
+    // Filter by status - case insensitive
     if (statusFilter !== "all") {
-      filtered = filtered.filter(invoice => invoice.status === statusFilter);
+      const lowerCaseStatus = statusFilter.toLowerCase();
+      filtered = filtered.filter(invoice => 
+        invoice.status.toLowerCase() === lowerCaseStatus
+      );
     }
     
     // Filter by date range
