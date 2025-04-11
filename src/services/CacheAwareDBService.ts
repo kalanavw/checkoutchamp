@@ -1,4 +1,3 @@
-
 import {
     getCollectionTimestamps,
     saveCollectionFetchTime,
@@ -8,6 +7,7 @@ import {
 import {getFromCache, isCacheValid, saveToCache} from "@/utils/cacheUtils.ts";
 import {deleteDocument, findAll, findById, insertDocument, insertDocuments} from "@/lib/firebase.ts";
 import {CollectionData} from "@/utils/collectionData.ts";
+import {generateCustomUUID, loggedUser} from "@/utils/Util.ts";
 
 export class CacheAwareDBService {
     async fetchDocuments<T>(collectionData: CollectionData<T>): Promise<T[]> {
@@ -58,10 +58,27 @@ export class CacheAwareDBService {
         }
     }
 
-    async saveDocument<T extends { id: string }>(collectionData: CollectionData<T>): Promise<T | null> {
+    async saveDocument<T extends {
+        id: string,
+        createdDate?: Date;
+        createdBy?: string;
+        modifiedDate?: Date;
+        modifiedBy?: string;
+    }>(collectionData: CollectionData<T>): Promise<T | null> {
         try {
-            const newDocument = await insertDocument(collectionData.collection, collectionData.document);
-            
+            const document = collectionData.document;
+            if (document.id === "G" || !document.id) {
+                document.id = generateCustomUUID();
+                document.createdDate = new Date();
+                document.createdBy = loggedUser();
+                document.modifiedDate = new Date();
+                document.modifiedBy = loggedUser();
+            } else {
+                document.modifiedDate = new Date();
+                document.modifiedBy = loggedUser();
+            }
+            const newDocument = await insertDocument(collectionData.collection, document);
+
             saveCollectionUpdateTime(collectionData.collectionKey);
 
             // Update the document in the cache
@@ -77,7 +94,13 @@ export class CacheAwareDBService {
         }
     }
 
-    async saveDocuments<T extends { id: string }>(collectionData: CollectionData<T>,): Promise<T[] | null> {
+    async saveDocuments<T extends {
+        id: string,
+        createdDate?: Date;
+        createdBy?: string;
+        modifiedDate?: Date;
+        modifiedBy?: string;
+    }>(collectionData: CollectionData<T>,): Promise<T[] | null> {
         try {
             const newDocuments = await insertDocuments(collectionData.collection, collectionData.documents);
 
@@ -85,11 +108,11 @@ export class CacheAwareDBService {
 
             // Update all documents in the cache
             const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
-            
+
             // Remove old versions of these documents from cache
             const documentIds = newDocuments.map(doc => doc.id);
             const filteredCache = cachedDocuments.filter(doc => !documentIds.includes(doc.id));
-            
+
             // Add the new documents
             saveToCache(collectionData.cacheKey, [...filteredCache, ...newDocuments]);
 
@@ -99,18 +122,18 @@ export class CacheAwareDBService {
             throw error;
         }
     }
-    
+
     async deleteDocument<T extends { id: string }>(collectionData: CollectionData<T>, id: string): Promise<boolean> {
         try {
             await deleteDocument(collectionData.collection, id);
-            
+
             saveCollectionUpdateTime(collectionData.collectionKey);
-            
+
             // Remove the document from the cache
             const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
             const updatedCache = cachedDocuments.filter(doc => doc.id !== id);
             saveToCache(collectionData.cacheKey, updatedCache);
-            
+
             return true;
         } catch (error) {
             console.error(`Error deleting document from ${collectionData.collection}:`, error);

@@ -9,7 +9,7 @@ export interface Product {
   barcode?: string;
   imageUrl?: string;
   description?: string;
-  createdAt?: Date;
+    createdDate?: Date;
   createdBy?: string;
   modifiedDate?: Date;
   modifiedBy?: string;

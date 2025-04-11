@@ -1,11 +1,9 @@
-
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Product } from "@/types/product";
-import { Edit, Trash2, Eye } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Link } from "react-router-dom";
-import {fontStyle} from "html2canvas/dist/types/css/property-descriptors/font-style";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Button} from "@/components/ui/button";
+import {Product} from "@/types/product";
+import {Eye, Trash2} from "lucide-react";
+import {Badge} from "@/components/ui/badge";
+import {Link} from "react-router-dom";
 
 interface ProductsTableProps {
   products: Product[];
@@ -89,14 +87,7 @@ export function ProductsTable({ products, loading, onDelete, onView }: ProductsT
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button 
-                    size="sm" 
-                    variant="ghost" 
-                    className="hover:text-green-600 transition-colors"
-                    onClick={() => onView(product.id)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+
                   <Button 
                     size="sm" 
                     variant="ghost" 

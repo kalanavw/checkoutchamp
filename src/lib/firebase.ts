@@ -23,7 +23,6 @@ import {
   signOut
 } from "firebase/auth";
 import {getDownloadURL, getStorage, ref, uploadBytes} from "firebase/storage";
-import {generateCustomUUID} from "@/utils/Util.ts";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC6whbU2S11QdDZpY5yDWbwaYh-4aeINaI",
@@ -148,9 +147,8 @@ export const findById = async <T>(collectionName: string, documentId: string): P
 // Function to insert a new document
 export const insertDocument = async <T extends Record<string, any>>(collectionName: string, data: T): Promise<T & { id: string }> => {
   try {
-    debugger
     const collectionRef = collection(db, collectionName);
-    const docRef = doc(collectionRef, (data.id === "G" || !data.id) ? data.id == generateCustomUUID() : data.id);
+    const docRef = doc(collectionRef, data.id);
 
     await setDoc(docRef, data);
 

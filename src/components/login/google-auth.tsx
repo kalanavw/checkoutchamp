@@ -1,9 +1,9 @@
-import { useNavigate } from "react-router-dom";
-import { auth, googleProvider, db, USER_COLLECTION } from "@/lib/firebase";
-import { signInWithPopup, browserPopupRedirectResolver } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { Notifications } from "@/utils/notifications";
-import { AuthUser } from "@/types/authUser";
+import {useNavigate} from "react-router-dom";
+import {auth, db, googleProvider, USER_COLLECTION} from "@/lib/firebase";
+import {browserPopupRedirectResolver, signInWithPopup} from "firebase/auth";
+import {doc, getDoc, serverTimestamp, setDoc} from "firebase/firestore";
+import {Notifications} from "@/utils/notifications";
+import {AuthUser} from "@/types/authUser";
 
 export const useGoogleAuth = () => {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ export const useGoogleAuth = () => {
           role: "cashier", // Default role for new users
           active: true,
           photoURL: user.photoURL || "",
-          createdAt: serverTimestamp()
+          createdDate: serverTimestamp()
         });
       } else {
         // Existing user, update their profile info in case it changed on Google's side

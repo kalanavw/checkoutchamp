@@ -1,4 +1,3 @@
-
 import {useEffect, useState} from "react";
 import {useParams} from "react-router-dom";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
@@ -10,11 +9,10 @@ import {productService} from "@/services/ProductService.ts";
 // Imported components
 import {ProductDetailHeader} from "@/components/product/ProductDetailHeader.tsx";
 import ProductInfo from "@/components/product/ProductInfo.tsx";
-import {QuickActions} from "@/components/product/QuickActions.tsx";
 import {SalesInformation} from "@/components/product/SalesInformation.tsx";
 import {ProductNotFound} from "@/components/product/ProductNotFound.tsx";
 import ProductEditForm from "@/components/product/ProductEditForm.tsx";
-import { useProductMetadata } from "@/hooks/products/useProductMetadata.ts";
+import {useProductMetadata} from "@/hooks/products/useProductMetadata.ts";
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -89,7 +87,7 @@ const ProductDetail = () => {
         </div>
         
         <div className="space-y-6">
-          <QuickActions productId={product.id} />
+            {/*<QuickActions productId={product.id} />*/}
           <SalesInformation product={product} />
         </div>
       </div>
