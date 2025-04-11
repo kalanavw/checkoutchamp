@@ -45,7 +45,7 @@ export class CacheAwareDBService {
             const document = await findById<T>(collectionData.collection, id);
 
             if (document) {
-                // Update the document in the cache
+                // Update the document in the cache with deduplication
                 const updatedCache = cachedDocuments.filter(doc => doc.id !== id);
                 updatedCache.push(document);
                 saveToCache(collectionData.cacheKey, updatedCache);
@@ -64,7 +64,7 @@ export class CacheAwareDBService {
             
             saveCollectionUpdateTime(collectionData.collectionKey);
 
-            // Update the document in the cache
+            // Update the document in the cache with deduplication
             const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
             const updatedCache = cachedDocuments.filter(doc => doc.id !== newDocument.id);
             updatedCache.push(newDocument);
@@ -83,10 +83,10 @@ export class CacheAwareDBService {
 
             saveCollectionUpdateTime(collectionData.collectionKey);
 
-            // Update all documents in the cache
+            // Update all documents in the cache with deduplication
             const cachedDocuments = getFromCache<T[]>(collectionData.cacheKey) || [];
             
-            // Remove old versions of these documents from cache
+            // Create a new cache by first removing any documents with IDs that match our new documents
             const documentIds = newDocuments.map(doc => doc.id);
             const filteredCache = cachedDocuments.filter(doc => !documentIds.includes(doc.id));
             
