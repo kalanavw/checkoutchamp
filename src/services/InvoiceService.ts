@@ -1,3 +1,4 @@
+
 import {Invoice} from '@/types/invoce';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
@@ -48,7 +49,7 @@ export class InvoiceService {
     // Get invoice by ID
     async getInvoiceById(id: string): Promise<Invoice | null> {
         try {
-            return null;
+            return await cacheAwareDBService.findById<Invoice>(this.collectionData, id);
         } catch (error) {
             console.error("Error getting invoice by ID:", error);
             return null;
@@ -56,15 +57,34 @@ export class InvoiceService {
     }
 
     // Get all invoices
-    async getInvoices(): Promise<Invoice[]> {
+    async getInvoices(forceRefresh: boolean = false): Promise<Invoice[]> {
         try {
-            return [];
+            return await cacheAwareDBService.fetchDocuments<Invoice>(this.collectionData);
         } catch (error) {
             console.error("Error getting invoices:", error);
             return [];
+        }
+    }
+    
+    // Update invoice status
+    async updateInvoiceStatus(id: string, status: string): Promise<boolean> {
+        try {
+            const invoice = await this.getInvoiceById(id);
+            if (!invoice) return false;
+            
+            invoice.status = status;
+            invoice.modifiedDate = new Date();
+            
+            this.collectionData.document = invoice;
+            await cacheAwareDBService.saveDocument<Invoice>(this.collectionData);
+            return true;
+        } catch (error) {
+            console.error("Error updating invoice status:", error);
+            return false;
         }
     }
 }
 
 // Export singleton instance
 export const invoiceService = new InvoiceService();
+
