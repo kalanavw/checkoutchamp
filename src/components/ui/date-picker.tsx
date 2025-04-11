@@ -12,12 +12,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-interface DatePickerProps extends React.HTMLAttributes<HTMLDivElement> {
+// Modified interface to fix the TypeScript error
+interface DatePickerProps {
   date?: Date
   selected?: Date
   onSelect?: (date: Date | undefined) => void
   placeholder?: string
   disabled?: boolean
+  className?: string
 }
 
 export function DatePicker({
@@ -28,7 +30,7 @@ export function DatePicker({
   disabled = false,
   className,
   ...props
-}: DatePickerProps) {
+}: DatePickerProps & Omit<React.HTMLAttributes<HTMLDivElement>, 'onSelect'>) {
   const [isOpen, setIsOpen] = React.useState(false)
   
   // Use either date or selected (for backward compatibility)
@@ -61,6 +63,7 @@ export function DatePicker({
               setIsOpen(false)
             }}
             initialFocus
+            className="pointer-events-auto"
           />
         </PopoverContent>
       </Popover>
