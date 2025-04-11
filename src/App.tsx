@@ -1,3 +1,4 @@
+
 import {Route, Routes} from "react-router-dom";
 import Layout from "@/components/Layout";
 import Dashboard from "@/pages/Dashboard";
@@ -7,6 +8,7 @@ import AddProduct from "@/pages/product/AddProduct.tsx";
 import Customers from "@/pages/Customers";
 import Orders from "@/pages/Orders";
 import Invoice from "@/pages/invoice/CreateInvoice.tsx";
+import InvoiceRecords from "@/pages/invoice/InvoiceRecords.tsx";
 import Reports from "@/pages/Reports";
 import Settings from "@/pages/Settings";
 import UserManagement from "@/pages/UserManagement";
@@ -32,6 +34,7 @@ function App() {
         <Route path="store" element={<StorePage/>}/>
         <Route path="/add-inventory" element={<AddInventory/>}/>
         <Route path="invoice" element={<Invoice />} />
+        <Route path="invoice-records" element={<InvoiceRecords />} />
         <Route path="checkout" element={<Checkout />} />
         <Route path="reports" element={<Reports />} />
         <Route path="settings" element={<Settings />} />
