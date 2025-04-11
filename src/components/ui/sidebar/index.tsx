@@ -1,29 +1,25 @@
-
-import {NavLink, useLocation, useNavigate} from "react-router-dom";
-import {Button} from "@/components/ui/button";
+import {useNavigate} from "react-router-dom";
 import {
   ClipboardList,
   FileBarChart,
   FileSpreadsheet,
   FileText,
   LayoutDashboard,
-  LogOut,
   Package,
   Settings,
   ShoppingCart,
   Store,
   Truck,
-  Users,
-  X
+  Users
 } from "lucide-react";
 import {auth} from "@/lib/firebase";
 import {signOut} from "firebase/auth";
 import {clearAllAppCache} from "@/utils/cacheUtils";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { SidebarHeader } from "./SidebarHeader";
-import { SidebarNavItem } from "./SidebarNavItem";
-import { SidebarSection } from "./SidebarSection";
-import { SidebarFooter } from "./SidebarFooter";
+import {useIsMobile} from "@/hooks/use-mobile";
+import {SidebarHeader} from "./SidebarHeader";
+import {SidebarNavItem} from "./SidebarNavItem";
+import {SidebarSection} from "./SidebarSection";
+import {SidebarFooter} from "./SidebarFooter";
 
 interface SidebarProps {
   onCloseSidebar?: () => void;
@@ -31,7 +27,6 @@ interface SidebarProps {
 
 const Sidebar = ({ onCloseSidebar }: SidebarProps) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const isMobile = useIsMobile();
 
   const handleLogout = async () => {
@@ -112,8 +107,8 @@ const Sidebar = ({ onCloseSidebar }: SidebarProps) => {
           onClick={handleNavClick} 
         />
 
-        <SidebarNavItem 
-          to="/invoice-list" 
+        <SidebarNavItem
+            to="/invoice-records"
           icon={<FileBarChart className="mr-2 h-4 w-4" />} 
           label="Invoice Records" 
           onClick={handleNavClick} 
