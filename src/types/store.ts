@@ -15,7 +15,7 @@ export interface Store {
         subcategory: string
     };
     qty: StockQuantity;
-    createdAt?: Date;
+    createdDate?: Date;
     createdBy?: string;
     modifiedDate?: Date;
     modifiedBy?: string;

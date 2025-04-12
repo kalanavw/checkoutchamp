@@ -45,7 +45,7 @@ interface UserData {
   password: string;
   role: UserRole;
   active: boolean;
-  createdAt: Date;
+  createdDate: Date;
   photoURL?: string;
 }
 
@@ -89,7 +89,7 @@ const UserManagement = () => {
       }
       
       // Fetch from Firestore if cache is invalid or doesn't exist
-      const usersQuery = query(collection(db, USER_COLLECTION), orderBy("createdAt", "desc"));
+      const usersQuery = query(collection(db, USER_COLLECTION), orderBy("createdDate", "desc"));
       const snapshot = await getDocs(usersQuery);
       
       const fetchedUsers: UserData[] = [];
@@ -102,7 +102,7 @@ const UserManagement = () => {
           password: userData.password || "",
           role: userData.role || "cashier",
           active: userData.active ?? true,
-          createdAt: userData.createdAt?.toDate() || new Date(),
+          createdDate: userData.createdDate?.toDate() || new Date(),
           photoURL: userData.photoURL || "",
         });
       });
@@ -182,8 +182,8 @@ const UserManagement = () => {
       const userDocRef = doc(db, USER_COLLECTION, authCreateUser.user.uid);
       const newUser = {
         ...formData,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+        createdDate: serverTimestamp(),
+        modifiedDate: serverTimestamp(),
         id: authCreateUser.user.uid
       };
       await setDoc(userDocRef, newUser)
@@ -202,7 +202,7 @@ const UserManagement = () => {
       
       const userWithId: UserData = {
         ...newUser,
-        createdAt: new Date(),
+        createdDate: new Date(),
         photoURL,
       };
       // Update the collection update timestamp

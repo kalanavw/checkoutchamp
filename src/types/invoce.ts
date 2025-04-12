@@ -14,7 +14,7 @@ export interface Invoice {
     amountPaid: number,
     balance: number
     status: string; // Pending, Paid, Overdue, Canceled
-    createdAt?: Date;
+    createdDate?: Date;
     createdBy?: string;
     modifiedDate?: Date;
     modifiedBy?: string;

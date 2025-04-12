@@ -1,32 +1,22 @@
-
-import { useState, useEffect, useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { db, USER_COLLECTION, auth } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { 
-  User as UserIcon, 
-  Mail, 
-  Shield, 
-  Calendar, 
-  Image as ImageIcon,
-  X,
-  LogOut,
-  ArrowLeft
-} from "lucide-react";
-import { signOut } from "firebase/auth";
-import { UserRole } from "@/types/user";
-import { optimizeImageToBase64 } from "@/utils/imageUtils";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Notifications } from "@/utils/notifications";
+import {useEffect, useRef, useState} from "react";
+import {useNavigate, useParams} from "react-router-dom";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Button} from "@/components/ui/button";
+import {Label} from "@/components/ui/label";
+import {Input} from "@/components/ui/input";
+import {auth, db, USER_COLLECTION} from "@/lib/firebase";
+import {doc, getDoc, serverTimestamp, updateDoc} from "firebase/firestore";
+import {ArrowLeft, Calendar, Image as ImageIcon, LogOut, Mail, Shield, User as UserIcon, X} from "lucide-react";
+import {signOut} from "firebase/auth";
+import {UserRole} from "@/types/user";
+import {optimizeImageToBase64} from "@/utils/imageUtils";
+import {Badge} from "@/components/ui/badge";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Switch} from "@/components/ui/switch";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Notifications} from "@/utils/notifications";
 
 interface UserData {
   id: string;
@@ -34,7 +24,7 @@ interface UserData {
   email: string;
   role: UserRole;
   active: boolean;
-  createdAt: Date;
+  createdDate: Date;
   photoURL?: string;
   lastLogin?: Date;
 }
@@ -94,7 +84,7 @@ const UserProfile = () => {
             email: userData.email || "",
             role: userData.role || "cashier",
             active: userData.active ?? true,
-            createdAt: userData.createdAt?.toDate() || new Date(),
+            createdDate: userData.createdDate?.toDate() || new Date(),
             photoURL: userData.photoURL || "",
             lastLogin: userData.lastLogin?.toDate() || undefined,
           };
@@ -348,7 +338,7 @@ const UserProfile = () => {
               <div className="mt-6 w-full">
                 <div className="flex items-center justify-between py-2 border-b">
                   <span className="text-muted-foreground">Joined</span>
-                  <span>{user.createdAt.toLocaleDateString()}</span>
+                  <span>{user.createdDate.toLocaleDateString()}</span>
                 </div>
                 
                 {user.lastLogin && (
@@ -473,7 +463,7 @@ const UserProfile = () => {
                     Joined Date
                   </Label>
                   <div className="p-2 border rounded-md border-primary/20 bg-secondary/20">
-                    {user.createdAt.toLocaleDateString()}
+                    {user.createdDate.toLocaleDateString()}
                   </div>
                 </div>
                 

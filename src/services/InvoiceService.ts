@@ -2,12 +2,12 @@ import {Invoice} from '@/types/invoce';
 // @ts-ignore
 import {v4 as uuidv4} from 'uuid';
 import {CollectionData} from "@/utils/collectionData.ts";
-import {INVOICE_COLLECTION} from "@/lib/firebase.ts";
+import {db, INVOICE_COLLECTION} from "@/lib/firebase.ts";
 import {COLLECTION_KEYS} from "@/utils/collectionUtils.ts";
 import {cacheAwareDBService} from "@/services/CacheAwareDBService.ts";
 import {storeService} from "@/services/StoreService.ts";
-import {generateCustomUUID} from "@/utils/Util.ts";
 import {INVOICE_CACHE_KEY} from "@/constants/cacheKeys.ts";
+import {collection, getDocs, query, where} from "firebase/firestore";
 
 export class InvoiceService {
     collectionData: CollectionData<Invoice> = {
@@ -18,22 +18,30 @@ export class InvoiceService {
     }
     
     // Create invoice
-    async createInvoice(invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'invoiceDate'>): Promise<Invoice> {
+    async createInvoice(invoiceData: Omit<Invoice, 'invoiceNumber'>): Promise<Invoice> {
         try {
             const now = new Date();
-            
-            // Generate an ID for the invoice
-            const id = generateCustomUUID();
 
             // Generate invoice number (format: INV-YYYYMMDD-XXXX) todo
             const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-            const randomStr = Math.floor(1000 + Math.random() * 9000).toString();
-            const invoiceNumber = `INV-${dateStr}-${randomStr}`;
+            const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+            const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+
+            // Query all invoices created today
+            const invoicesRef = collection(db, "invoices");
+            const q = query(
+                invoicesRef,
+                where("createdAt", ">=", startOfDay),
+                where("createdAt", "<=", endOfDay)
+            );
+
+            const snapshot = await getDocs(q);
+            const count = snapshot.size + 1;
+            const invoiceNumber = `INV-${dateStr}-${count}`;
+            console.log("invoiceNumber", invoiceNumber);
 
             const newInvoice: Invoice = {
-                id,
                 invoiceNumber,
-                invoiceDate: now,
                 ...invoiceData
             };
             this.collectionData.document = newInvoice;
@@ -54,7 +62,7 @@ export class InvoiceService {
                 return {
                     ...invoice,
                     invoiceDate: this.ensureDate(invoice.invoiceDate),
-                    createdAt: this.ensureDate(invoice.createdAt),
+                    createdDate: this.ensureDate(invoice.createdDate),
                     modifiedDate: this.ensureDate(invoice.modifiedDate)
                 };
             }
@@ -68,13 +76,13 @@ export class InvoiceService {
     // Get all invoices
     async getInvoices(forceRefresh: boolean = false): Promise<Invoice[]> {
         try {
-            const invoices = await cacheAwareDBService.fetchDocuments<Invoice>(this.collectionData, forceRefresh);
+            const invoices = await cacheAwareDBService.fetchDocuments<Invoice>(this.collectionData);
             
             // Process dates to ensure they are proper Date objects
             return invoices.map(invoice => ({
                 ...invoice,
                 invoiceDate: this.ensureDate(invoice.invoiceDate),
-                createdAt: this.ensureDate(invoice.createdAt),
+                createdDate: this.ensureDate(invoice.createdDate),
                 modifiedDate: this.ensureDate(invoice.modifiedDate)
             }));
         } catch (error) {

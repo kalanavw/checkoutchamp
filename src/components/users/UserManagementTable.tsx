@@ -1,32 +1,17 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db, USER_COLLECTION } from "@/lib/firebase";
-import { UserRole } from "@/types/user";
-import { saveCollectionUpdateTime } from "@/utils/collectionUtils";
-import { COLLECTION_KEYS } from "@/utils/collectionUtils";
-import { saveToCache } from "@/utils/cacheUtils";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from "@/components/ui/select";
+import {Button} from "@/components/ui/button";
+import {Switch} from "@/components/ui/switch";
+import {Badge} from "@/components/ui/badge";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight} from "lucide-react";
+import {doc, serverTimestamp, updateDoc} from "firebase/firestore";
+import {db, USER_COLLECTION} from "@/lib/firebase";
+import {UserRole} from "@/types/user";
+import {COLLECTION_KEYS, saveCollectionUpdateTime} from "@/utils/collectionUtils";
+import {saveToCache} from "@/utils/cacheUtils";
 import {Notifications} from "@/utils/notifications.ts";
 
 interface UserData {
@@ -36,7 +21,7 @@ interface UserData {
   password: string;
   role: UserRole;
   active: boolean;
-  createdAt: Date;
+  createdDate: Date;
   photoURL?: string;
 }
 
@@ -308,9 +293,9 @@ const UserManagementTable = ({ users, searchQuery, onUpdateUsers }: UserManageme
                   </div>
                 </TableCell>
                 <TableCell>
-                  {user.createdAt instanceof Date
-                    ? user.createdAt.toLocaleDateString()
-                    : new Date(user.createdAt).toLocaleDateString()}
+                  {user.createdDate instanceof Date
+                      ? user.createdDate.toLocaleDateString()
+                      : new Date(user.createdDate).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button 

@@ -34,32 +34,32 @@ export class ProductService {
         }
     }
     
-    private filterProductsByTerm(products: Product[], searchTermLower: string): Product[] {
-        return products.filter(product => {
-            // Check name
-            if (product.name.toLowerCase().includes(searchTermLower)) return true;
-            
-            // Check product code
-            if (product.productCode && product.productCode.toLowerCase().includes(searchTermLower)) return true;
-            
-            // Check category
-            if (product.category.toLowerCase().includes(searchTermLower)) return true;
-            
-            // Check subcategory
-            if (product.subcategory.toLowerCase().includes(searchTermLower)) return true;
-            
-            // Check barcode
-            if (product.barcode && product.barcode.toLowerCase().includes(searchTermLower)) return true;
-            
-            // Check description
-            if (product.description && product.description.toLowerCase().includes(searchTermLower)) return true;
-            
-            // Check keywords
-            if (product.keywords && product.keywords.some(keyword => 
-                keyword.toLowerCase().includes(searchTermLower))) return true;
-            
-            return false;
-        });
+    // Create product
+    async createProduct(productData: Omit<Product, 'id' | 'createdDate' | 'updatedDate'>): Promise<Product> {
+        try {
+            const id = "G";
+            const now = new Date();
+
+            const newProduct: Product = {
+                id,
+                ...productData,
+                createdDate: now,
+                modifiedDate: now
+            };
+            this.collectionData.document = newProduct;
+
+            const result = await cacheAwareDBService.saveDocument<Product>(this.collectionData);
+
+            // Update the cache with the new product
+            if (result) {
+                this.updateProductInCache(result);
+            }
+
+            return result || newProduct;
+        } catch (error) {
+            console.error("Error creating product:", error);
+            throw error;
+        }
     }
     
     async getAllProducts(forceRefresh = false): Promise<Product[]> {
@@ -111,32 +111,32 @@ export class ProductService {
         }
     }
 
-    // Create product
-    async createProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
-        try {
-            const id = "G";
-            const now = new Date();
+    private filterProductsByTerm(products: Product[], searchTermLower: string): Product[] {
+        return products.filter(product => {
+            // Check name
+            if (product.name.toLowerCase().includes(searchTermLower)) return true;
 
-            const newProduct: Product = {
-                id,
-                ...productData,
-                createdAt: now,
-                modifiedDate: now
-            };
-            this.collectionData.document = newProduct;
+            // Check product code
+            if (product.productCode && product.productCode.toLowerCase().includes(searchTermLower)) return true;
 
-            const result = await cacheAwareDBService.saveDocument<Product>(this.collectionData);
-            
-            // Update the cache with the new product
-            if (result) {
-                this.updateProductInCache(result);
-            }
+            // Check category
+            if (product.category.toLowerCase().includes(searchTermLower)) return true;
 
-            return result || newProduct;
-        } catch (error) {
-            console.error("Error creating product:", error);
-            throw error;
-        }
+            // Check subcategory
+            if (product.subcategory.toLowerCase().includes(searchTermLower)) return true;
+
+            // Check barcode
+            if (product.barcode && product.barcode.toLowerCase().includes(searchTermLower)) return true;
+
+            // Check description
+            if (product.description && product.description.toLowerCase().includes(searchTermLower)) return true;
+
+            // Check keywords
+            return product.keywords && product.keywords.some(keyword =>
+                keyword.toLowerCase().includes(searchTermLower));
+
+
+        });
     }
 
     // Update product

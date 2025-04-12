@@ -4,7 +4,7 @@ export interface Warehouse {
     name: string;
     code: string;
     description?: string;
-    createdAt?: Date;
+    createdDate?: Date;
     createdBy?: string;
     modifiedDate?: Date;
     modifiedBy?: string;

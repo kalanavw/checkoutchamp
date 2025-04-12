@@ -5,13 +5,12 @@ import {Input} from "@/components/ui/input";
 import {Label} from "@/components/ui/label";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Notifications} from "@/utils/notifications";
-import {CUSTOMER_COLLECTION, db} from "@/lib/firebase";
-import {addDoc, collection, serverTimestamp} from "firebase/firestore";
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {Textarea} from "@/components/ui/textarea";
 import {Mail, MapPin, Phone, Plus, Search, User} from "lucide-react";
 import {Customer} from "@/types/customer";
+import {customerService} from "@/services/CustomerService.ts";
 
 const Customers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -41,29 +40,15 @@ const Customers = () => {
     setLoading(true);
     
     try {
-      // Get the current user name from localStorage or use "Unknown"
-      const userName = localStorage.getItem("userName") || "Unknown";
-      
-      const newCustomer = {
+      const newCustomer: Customer = {
         ...formData,
         registrationDate: new Date(),
-        createdAt: serverTimestamp(),
-        createdBy: userName,
-        modifiedDate: serverTimestamp(),
-        modifiedBy: userName
+        id: 'G',
+        type: 'retail'
       };
-      
-      const docRef = await addDoc(collection(db, CUSTOMER_COLLECTION), newCustomer);
-      
-      const customerWithId = { 
-        id: docRef.id, 
-        ...newCustomer,
-        registrationDate: new Date(),
-        createdAt: new Date(),
-        modifiedDate: new Date()
-      };
+      const customerWithId = await customerService.createCustomer(newCustomer);
 
-      // setCustomers([...customers, customerWithId]);
+      setCustomers([...customers, customerWithId]);
       
       Notifications.success("Customer registered successfully.");
       

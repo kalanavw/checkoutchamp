@@ -13,7 +13,7 @@ export interface GRN {
   receivedDate: Date;
   items: GRNItem[];
   createdBy: string;
-  createdAt?: Date;
+  createdDate?: Date;
   notes?: string;
   modifiedDate?: Date;
   modifiedBy?: string;

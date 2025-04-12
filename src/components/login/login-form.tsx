@@ -1,12 +1,12 @@
-import {useState, useRef} from "react";
+import {useRef, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
 import {Eye, EyeOff, Image as ImageIcon, X} from "lucide-react";
 import {auth, db, USER_COLLECTION} from "@/lib/firebase";
-import {signInWithEmailAndPassword, createUserWithEmailAndPassword,} from "firebase/auth";
-import {doc, getDoc, setDoc, serverTimestamp} from "firebase/firestore";
-import {Avatar, AvatarImage, AvatarFallback} from "@/components/ui/avatar";
+import {createUserWithEmailAndPassword, signInWithEmailAndPassword,} from "firebase/auth";
+import {doc, getDoc, serverTimestamp, setDoc} from "firebase/firestore";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {Label} from "@/components/ui/label";
 import {Badge} from "@/components/ui/badge";
 import {optimizeImageToBase64} from "@/utils/imageUtils";
@@ -107,7 +107,7 @@ const LoginForm = ({onGoogleLogin, googleLoading}: LoginFormProps) => {
                 role: "cashier", // Default role for new users
                 active: false,
                 photoURL,
-                createdAt: new Date(),
+                createdDate: new Date(),
                 lastLogin: new Date(),
                 id: userCredential.user.uid
             };

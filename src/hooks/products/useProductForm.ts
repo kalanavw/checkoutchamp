@@ -1,16 +1,15 @@
-
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db, PRODUCT_COLLECTION } from "@/lib/firebase";
-import { optimizeImageToBase64 } from "@/utils/imageUtils";
-import { saveToCache } from "@/utils/cacheUtils";
-import { COLLECTION_KEYS, saveCollectionUpdateTime } from "@/utils/collectionUtils";
-import { Notifications } from "@/utils/notifications";
-import { Product } from "@/types/product";
-import { generateCustomUUID } from "@/utils/Util";
-import { PRODUCTS_CACHE_KEY } from "@/constants/cacheKeys";
-import { productService } from "@/services/ProductService";
+import {useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {collection, getDocs, query, where} from "firebase/firestore";
+import {db, PRODUCT_COLLECTION} from "@/lib/firebase";
+import {optimizeImageToBase64} from "@/utils/imageUtils";
+import {saveToCache} from "@/utils/cacheUtils";
+import {COLLECTION_KEYS, saveCollectionUpdateTime} from "@/utils/collectionUtils";
+import {Notifications} from "@/utils/notifications";
+import {Product} from "@/types/product";
+import {generateCustomUUID} from "@/utils/Util";
+import {PRODUCTS_CACHE_KEY} from "@/constants/cacheKeys";
+import {productService} from "@/services/ProductService";
 
 export interface ProductFormData {
   productCode: string;
@@ -110,7 +109,7 @@ export const useProductForm = () => {
         keywords: keywordsArray,
         barcode: formData.barcode || null,
         imageUrl: imageUrl || null,
-        createdAt: new Date(),
+        createdDate: new Date(),
         createdBy: userName,
         modifiedDate: new Date(),
         modifiedBy: userName,

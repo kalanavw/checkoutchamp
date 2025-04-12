@@ -6,7 +6,7 @@ export function handleAfterDiscount(item: Store) {
     if (item.discount) {
         return item.sellingPrice - (item.sellingPrice * item.discount) / 100;
     }
-    return 0;
+    return item.sellingPrice;
 }
 
 export function generateCustomUUID() {

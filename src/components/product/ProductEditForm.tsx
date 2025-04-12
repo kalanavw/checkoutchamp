@@ -1,24 +1,17 @@
-
-import React, { useState } from 'react';
-import { Product } from '@/types/product';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { ImageSection } from '@/components/products/product-form';
-import { toast } from 'sonner';
-import { productService } from '@/services/ProductService';
-import { Notifications } from '@/utils/notifications';
-import { useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import React, {useState} from 'react';
+import {Product} from '@/types/product';
+import {Card, CardContent} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Label} from '@/components/ui/label';
+import {Textarea} from '@/components/ui/textarea';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
+import {ImageSection} from '@/components/products/product-form';
+import {toast} from 'sonner';
+import {productService} from '@/services/ProductService';
+import {Notifications} from '@/utils/notifications';
+import {useNavigate} from 'react-router-dom';
+import {X} from 'lucide-react';
 
 interface ProductEditFormProps {
   product: Product;
@@ -89,7 +82,7 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({
       if (result) {
         Notifications.success("Product updated successfully");
         // Redirect back to the product details page
-        navigate(`/product/${product.id}`);
+        navigate("/products");
       } else {
         throw new Error("Failed to update product");
       }

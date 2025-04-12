@@ -7,7 +7,7 @@ export interface Customer {
     address?: string;
     email?: string;
     registrationDate: Date;
-    createdAt?: Date;
+    createdDate?: Date;
     createdBy?: string;
     modifiedDate?: Date;
     modifiedBy?: string;

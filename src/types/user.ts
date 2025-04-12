@@ -8,7 +8,7 @@ export interface User {
   password?: string; // Optional because users from Google auth won't have a password
   role: UserRole;
   active: boolean;
-  createdAt: Date;
+  createdDate: Date;
   photoURL?: string; // Store base64 image or URL from Google
   lastLogin?: Date;
 }

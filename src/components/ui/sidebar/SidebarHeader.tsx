@@ -1,6 +1,5 @@
-
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {X} from "lucide-react";
 
 interface SidebarHeaderProps {
   onCloseSidebar?: () => void;
@@ -10,7 +9,7 @@ interface SidebarHeaderProps {
 export const SidebarHeader = ({ onCloseSidebar, isMobile }: SidebarHeaderProps) => {
   return (
     <div className="p-4 flex justify-between items-center border-b">
-      <h2 className="text-xl font-bold">POS System</h2>
+      <h2 className="text-xl font-bold">PayBoss</h2>
       {isMobile && onCloseSidebar && (
         <Button
           variant="ghost"

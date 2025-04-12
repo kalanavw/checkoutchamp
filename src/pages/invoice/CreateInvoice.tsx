@@ -19,7 +19,7 @@ import {Product} from "@/types/product.ts";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import {storeService} from "@/services/StoreService.ts";
 import {Store} from "@/types/store.ts";
-import {handleAfterDiscount} from "@/utils/Util.ts";
+import {generateCustomUUID, handleAfterDiscount} from "@/utils/Util.ts";
 
 const CreateInvoice: React.FC = () => {
     // State to track invoice data
@@ -126,7 +126,7 @@ const CreateInvoice: React.FC = () => {
         };
 
         const newItem: InvoiceItem = {
-            id: uuidv4(),
+            id: generateCustomUUID(),
             product: invoiceProduct,
             quantity: 1,
             costPrice: store.costPrice,
@@ -233,7 +233,7 @@ const CreateInvoice: React.FC = () => {
             const invoiceStatus = isDraft ? 'draft' : status;
 
             // Prepare invoice data
-            const invoiceData: Omit<Invoice, 'id' | 'invoiceNumber' | 'invoiceDate'> = {
+            const invoiceData: Omit<Invoice, 'invoiceNumber'> = {
                 customerName,
                 products: invoiceItems,
                 subTotal,
@@ -243,13 +243,15 @@ const CreateInvoice: React.FC = () => {
                 paymentType,
                 amountPaid,
                 balance,
-                status: invoiceStatus
+                status: invoiceStatus,
+                id: 'G',
+                invoiceDate: new Date()
             };
 
             // Create the invoice
             const newInvoice = await invoiceService.createInvoice(invoiceData);
 
-            Notifications.info(isDraft
+            Notifications.success(isDraft
                 ? `Draft invoice has been saved successfully`
                 : `Invoice ${newInvoice.invoiceNumber} has been created successfully`)
             // Reset form

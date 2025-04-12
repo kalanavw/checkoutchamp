@@ -1,8 +1,6 @@
-
 import React from 'react';
-import { Package, Tag, CalendarClock, User } from "lucide-react";
-import { Product } from "@/types/product";
-import { format, isValid, parseISO } from "date-fns";
+import {CalendarClock, Package, Tag, User} from "lucide-react";
+import {Product} from "@/types/product";
 
 interface ProductInfoProps {
   product: Product;
@@ -95,7 +93,7 @@ const ProductInfo = ({ product }: ProductInfoProps) => {
                   <CalendarClock className="h-3.5 w-3.5" /> Created
                 </h3>
                 <div className="text-green-800/70 dark:text-green-200/70 text-sm mt-1">
-                  <div>{formatDate(product.createdAt)}</div>
+                  <div>{formatDate(product.createdDate)}</div>
                   {product.createdBy && (
                     <div className="flex items-center gap-1 mt-0.5">
                       <User className="h-3 w-3" />
