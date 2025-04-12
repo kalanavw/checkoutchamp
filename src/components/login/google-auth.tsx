@@ -1,12 +1,15 @@
-import {useNavigate} from "react-router-dom";
-import {auth, db, googleProvider, USER_COLLECTION} from "@/lib/firebase";
-import {browserPopupRedirectResolver, signInWithPopup} from "firebase/auth";
-import {doc, getDoc, serverTimestamp, setDoc} from "firebase/firestore";
-import {Notifications} from "@/utils/notifications";
-import {AuthUser} from "@/types/authUser";
+
+import { useNavigate } from "react-router-dom";
+import { auth, db, googleProvider, USER_COLLECTION } from "@/lib/firebase";
+import { browserPopupRedirectResolver, signInWithPopup } from "firebase/auth";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { Notifications } from "@/utils/notifications";
+import { AuthUser } from "@/types/authUser";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useGoogleAuth = () => {
   const navigate = useNavigate();
+  const { resetInactivityTimer } = useAuth();
   
   const handleGoogleLogin = async () => {
     try {
@@ -74,6 +77,7 @@ export const useGoogleAuth = () => {
       localStorage.setItem("userId", user.uid);
       
       Notifications.success("You've been logged in with Google.");
+      resetInactivityTimer(); // Reset inactivity timer after successful login
       
       navigate("/");
       return true;

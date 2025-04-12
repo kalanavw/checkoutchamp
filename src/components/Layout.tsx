@@ -3,13 +3,12 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "@/components/ui/sidebar";
 import { collection, getDocs } from "firebase/firestore";
-import {db, auth, STOREINFO_COLLECTION} from "@/lib/firebase";
+import {db, STOREINFO_COLLECTION} from "@/lib/firebase";
 import { StoreInfo } from "@/types/storeInfo";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AuthUser } from "@/types/authUser";
-import { onAuthStateChanged } from "firebase/auth";
 import { AppHeader } from "@/components/ui/AppHeader";
 import {Notifications} from "@/utils/notifications.ts";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Layout = () => {
   const navigate = useNavigate();
@@ -17,43 +16,12 @@ const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const [storeInfo, setStoreInfo] = useState<StoreInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { currentUser, resetInactivityTimer } = useAuth();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setLoading(true);
-
-      if (currentUser) {
-        const authUser: AuthUser = {
-          uid: currentUser.uid,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-          photoURL: currentUser.photoURL,
-          role: localStorage.getItem("userRole") || "user",
-        };
-        
-        setUser(authUser);
-        localStorage.setItem("user", JSON.stringify(authUser));
-        
-        const cachedStoreInfo = localStorage.getItem("storeInfo");
-        if (cachedStoreInfo) {
-          try {
-            setStoreInfo(JSON.parse(cachedStoreInfo));
-          } catch (error) {
-            console.error("Error parsing cached store info:", error);
-          }
-        }
-      } else {
-        localStorage.removeItem("user");
-        setUser(null);
-        navigate("/login");
-      }
-      
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [navigate]);
+    // Reset inactivity timer on route change
+    resetInactivityTimer();
+  }, [resetInactivityTimer, navigate]);
 
   useEffect(() => {
     const fetchStoreInfo = async () => {
@@ -69,13 +37,15 @@ const Layout = () => {
       } catch (error) {
         console.error("Error fetching store info:", error);
         Notifications.error("Failed to load store information");
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (user) {
+    if (currentUser) {
       fetchStoreInfo();
     }
-  }, [user]);
+  }, [currentUser]);
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
@@ -122,7 +92,7 @@ const Layout = () => {
     );
   }
 
-  if (!user) {
+  if (!currentUser) {
     return null;
   }
 
@@ -147,7 +117,7 @@ const Layout = () => {
           sidebarOpen={sidebarOpen} 
           setSidebarOpen={setSidebarOpen} 
           storeInfo={storeInfo} 
-          user={user} 
+          user={currentUser} 
         />
 
         <main className="flex-1 overflow-auto bg-gradient-to-br from-green-50/50 to-white dark:from-gray-900 dark:to-green-950/30">

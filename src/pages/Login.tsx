@@ -7,19 +7,20 @@ import { useTheme } from '@/hooks/useTheme';
 import { Notifications } from '@/utils/notifications';
 import { Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
   const [googleLoading, setGoogleLoading] = useState(false);
   const { theme, setTheme } = useTheme();
   const { handleGoogleLogin: GoogleAuth } = useGoogleAuth();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
-    if (isLoggedIn) {
+    if (isAuthenticated) {
       navigate("/");
     }
-  }, [navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
