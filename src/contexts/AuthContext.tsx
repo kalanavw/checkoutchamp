@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -32,9 +31,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [inactivityTimer, setInactivityTimer] = useState<NodeJS.Timeout | null>(null);
   const navigate = useNavigate();
-  
+
   // Function to handle logout
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await auth.signOut();
       clearAllAppCache(); // Clear all app-related data from localStorage
@@ -43,31 +42,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
-  
+  }, [navigate]);
+
   // Reset inactivity timer
-  const resetInactivityTimer = () => {
+  const resetInactivityTimer = useCallback(() => {
     if (inactivityTimer) {
       clearTimeout(inactivityTimer);
     }
-    
+
     const newTimer = setTimeout(() => {
       console.log('User inactive for 10 minutes, logging out...');
       logout();
     }, INACTIVITY_TIMEOUT);
-    
-    setInactivityTimer(newTimer);
-  };
-  
+
+    //setInactivityTimer(newTimer);
+  }, [inactivityTimer, logout]);
+
   // Setup auth state listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setLoading(true);
-      
+
       if (user) {
         // Get user data from localStorage
         const userRole = localStorage.getItem("userRole") || "user";
-        
+
         const authUser: AuthUser = {
           uid: user.uid,
           email: user.email,
@@ -75,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoURL: user.photoURL,
           role: userRole,
         };
-        
+
         setCurrentUser(authUser);
         resetInactivityTimer(); // Initialize timer when user is authenticated
       } else {
@@ -86,43 +85,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setInactivityTimer(null);
         }
       }
-      
+
       setLoading(false);
     });
-    
+
     return () => unsubscribe();
-  }, []);
-  
+  }, [inactivityTimer, resetInactivityTimer]);
+
   // Setup event listeners for user activity
   useEffect(() => {
     if (!currentUser) return;
-    
+
     const eventTypes = ['mousedown', 'keypress', 'scroll', 'touchstart'];
-    
+
     const activityHandler = () => {
       resetInactivityTimer();
     };
-    
+
     // Add event listeners for user activity
     eventTypes.forEach(type => {
       window.addEventListener(type, activityHandler);
     });
-    
+
     // Initialize timer when component mounts
     resetInactivityTimer();
-    
+
     // Clean up event listeners and timer
     return () => {
       eventTypes.forEach(type => {
         window.removeEventListener(type, activityHandler);
       });
-      
+
       if (inactivityTimer) {
         clearTimeout(inactivityTimer);
       }
     };
-  }, [currentUser]);
-  
+  }, [currentUser, resetInactivityTimer, inactivityTimer]);
+
   const value = {
     currentUser,
     isAuthenticated: !!currentUser,
@@ -130,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     resetInactivityTimer,
   };
-  
+
   return (
     <AuthContext.Provider value={value}>
       {children}
