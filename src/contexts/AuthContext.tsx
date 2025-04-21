@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const newTimer = setTimeout(() => {
       console.log('User inactive for 10 minutes, logging out...');
-      logout();
+      //logout();
     }, INACTIVITY_TIMEOUT);
 
     //setInactivityTimer(newTimer);

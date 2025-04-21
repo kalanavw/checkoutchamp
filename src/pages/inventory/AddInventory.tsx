@@ -403,7 +403,7 @@ const AddInventory = () => {
                                                         <div>
                                                             <div>{item.product.name}</div>
                                                             <div
-                                                                className="text-xs text-muted-foreground">SKU: {item.product.productCode}</div>
+                                                                className="text-xs text-muted-foreground">CODE: {item.product.productCode}</div>
                                                         </div>
                                                     </div>
                                                 </TableCell>

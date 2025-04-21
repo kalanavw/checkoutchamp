@@ -27,17 +27,12 @@ export class StoreService {
                 this.clearStoreCache();
             }
             
-            return await cacheAwareDBService.fetchDocuments<Store>(this.collectionData);
+            return await cacheAwareDBService.fetchDocuments<Store>(this.collectionData)  ;
         } catch (error) {
             console.error("Error getting store items:", error);
             toast.error("Failed to fetch store items. Using mock data.");
             return [];
         }
-    }
-
-    // For compatibility with older code
-    async findAll(): Promise<Store[]> {
-        return this.getStoreItems();
     }
 
     // Get a single store item by ID with cache handling
@@ -72,7 +67,6 @@ export class StoreService {
     // Enhanced search store items with comprehensive field search and null/undefined safety
     searchStoreItems(term: string, items: Store[]): Store[] {
         if (!term?.trim()) return items;
-
         const searchTerm = term.toLowerCase();
         return items.filter(item => {
             // Safe check function to handle potentially undefined values
@@ -124,9 +118,9 @@ export class StoreService {
 
     async updateProductQuantityAfterInvoice(result: Invoice) {
         try {
-            let updateable: Store[] = [];
+            const updatable: Store[] = [];
 
-            if (result && result.products.length > 0) {
+            if (result && result.products.length > 0 && result.status === 'paid' ) {
                 for (const product of result.products) {
                     // Get the store item with cache awareness
                     const store: Store = await this.getStoreItemById(product.storeId);
@@ -134,15 +128,15 @@ export class StoreService {
                     if (store) {
                         // Update the available quantity
                         store.qty.availableQty = store.qty.availableQty - product.quantity;
-                        updateable.push(store);
+                        updatable.push(store);
                     } else {
                         console.error(`Store item with ID ${product.storeId} not found`);
                     }
                 }
 
-                if (updateable.length > 0) {
+                if (updatable.length > 0) {
                     // Update all items in one batch
-                    this.collectionData.documents = updateable;
+                    this.collectionData.documents = updatable;
                     const savedItems = await cacheAwareDBService.saveDocuments(this.collectionData);
 
                     // Update each item in the cache
@@ -150,7 +144,7 @@ export class StoreService {
                         savedItems.forEach(item => this.updateStoreItemInCache(item));
                     }
 
-                    console.log(`Updated ${updateable.length} store items after invoice`);
+                    console.log(`Updated ${updatable.length} store items after invoice`);
                     return savedItems;
                 }
             }
@@ -189,6 +183,7 @@ export class StoreService {
 
     // Update store item in cache with proper deduplication
     private updateStoreItemInCache(storeItem: Store): void {
+        debugger;
         const cachedItems = getFromCache<Store[]>(STORE_CACHE_KEY) || [];
         // Remove any existing items with the same ID to prevent duplication
         const updatedCache = cachedItems.filter(item => item.id !== storeItem.id);

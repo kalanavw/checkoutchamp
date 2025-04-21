@@ -7,8 +7,6 @@ import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/c
 import {Separator} from '@/components/ui/separator.tsx';
 import {Badge} from '@/components/ui/badge.tsx';
 import AddCustomerDialog from '@/components/AddCustomerDialog.tsx';
-// @ts-ignore
-import {v4 as uuidv4} from 'uuid';
 import {CreditCard, DollarSign, FileCheck, FileText, Printer, Save, Search, Trash2} from 'lucide-react';
 import {invoiceService} from '@/services/InvoiceService.ts';
 import {customerService,} from '@/services/CustomerService.ts';
@@ -260,7 +258,7 @@ const CreateInvoice: React.FC = () => {
             setShippingFees(0);
             setPaymentType('cash');
             setAmountPaid(0);
-            setStatus('pending');
+            setStatus('paid');
 
         } catch (error) {
             console.error("Failed to create invoice:", error);
